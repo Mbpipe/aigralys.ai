@@ -1,113 +1,116 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Aigralys — IA Agéntica para Ecosistemas Digitales</title>
-  <meta name="description" content="Aigralys: investigación y práctica en IA agéntica aplicada a ecosistemas digitales complejos, con foco en agroindustria."/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aigralys - Agentic AI for Complex Digital Ecosystems</title>
+  <meta name="description" content="Aigralys: Sistemas de IA Agéntica para ecosistemas digitales complejos. Especialización en agroindustria y operaciones de alta complejidad.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-    :root{
-      --grafito:#1C1C1E;--grafito-2:#191a1d;--off:#F8F9FA;
-      --teal:#00B3A4;--teal-2:#009688;--cyan:#00CFFF;--oliva:#7DA453;
-      --border:rgba(0,179,164,.15);--glow:rgba(0,179,164,.3);
-      --muted:rgba(248,249,250,.7)
+    /* ----------- RESET ----------- */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    :root {
+      --grafito:#1C1C1E;
+      --grafito-light:#2d2d3a;
+      --off-white:#F8F9FA;
+      --teal:#00B3A4;
+      --teal-dark:#009688;
+      --cyan:#00CFFF;
+      --oliva:#7DA453;
+      --border:rgba(0,179,164,0.15);
+      --glow:rgba(0,179,164,0.3);
     }
-    html{scroll-behavior:smooth}
-    body{font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--grafito);color:var(--off);line-height:1.6;overflow-x:hidden;min-height:100vh}
-    .bg-animation{position:fixed;inset:0;z-index:0;opacity:.4;background:
-      radial-gradient(circle at 20% 50%, rgba(0,179,164,.10) 0%,transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba(125,164,83,.08) 0%,transparent 50%),
-      radial-gradient(circle at 40% 20%, rgba(0,207,255,.05) 0%,transparent 40%);pointer-events:none}
-    .grid-overlay{position:fixed;inset:0;z-index:1;background-image:
-      linear-gradient(rgba(0,179,164,.03) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(0,179,164,.03) 1px,transparent 1px);
-      background-size:50px 50px;pointer-events:none}
-    .content{position:relative;z-index:10}
 
-    /* NAV */
-    nav{position:fixed;top:0;width:100%;background:rgba(28,28,30,.95);backdrop-filter:blur(20px);z-index:1000;border-bottom:1px solid var(--border)}
-    .nav-container{max-width:1400px;margin:0 auto;padding:1.1rem 2rem;display:flex;align-items:center;gap:1.2rem}
-    .brand{display:flex;align-items:center;gap:.8rem;margin-right:auto}
-    .brand-logo{height:40px;width:auto}
-    .brand-text{font-weight:800;letter-spacing:-.3px;background:linear-gradient(135deg,var(--teal) 0%,var(--cyan) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .nav-links{display:flex;gap:1.8rem;list-style:none}
-    .nav-links a{color:rgba(248,249,250,.82);text-decoration:none;font-weight:500;position:relative;transition:.25s}
-    .nav-links a::after{content:'';position:absolute;left:0;bottom:-6px;height:2px;width:0;background:var(--teal);transition:width .25s}
-    .nav-links a:hover{color:var(--teal)} .nav-links a:hover::after{width:100%}
-    .social{display:flex;gap:.8rem;margin-left:1rem}
-    .social a{display:inline-flex;align-items:center;gap:.4rem;background:transparent;border:1px solid var(--border);color:var(--off);padding:.45rem .8rem;border-radius:10px;font-size:.85rem;font-weight:600;transition:.25s;text-decoration:none}
-    .social a:hover{border-color:var(--teal);background:rgba(0,179,164,.08);box-shadow:0 0 16px var(--glow)}
-    .lang-switch{margin-left:.6rem;background:transparent;border:1px solid var(--border);color:var(--off);padding:.45rem .8rem;border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:600;transition:.25s}
-    .lang-switch:hover{border-color:var(--teal);background:rgba(0,179,164,.08);box-shadow:0 0 16px var(--glow)}
+    body {
+      font-family:'Inter',sans-serif;
+      background:var(--grafito);
+      color:var(--off-white);
+      line-height:1.6;
+      overflow-x:hidden;
+      min-height:100vh;
+    }
 
-    /* HERO */
-    .hero{padding:10.5rem 2rem 6rem;max-width:1200px;margin:0 auto;text-align:center}
-    .hero-logo{margin:0 auto 2rem;display:block;width:190px;height:auto;filter:drop-shadow(0 0 28px var(--glow))}
-    .hero-badge{display:inline-block;padding:.5rem 1.4rem;background:rgba(0,179,164,.1);border:1px solid var(--border);border-radius:30px;font-size:.85rem;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:1.2rem}
-    .hero h1{font-size:3.25rem;line-height:1.2;margin-bottom:1.3rem;font-weight:800;background:linear-gradient(135deg,var(--off) 0%,var(--teal) 60%,var(--cyan) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1.6px}
-    .hero h1 .highlight{background:linear-gradient(135deg,var(--cyan) 0%,var(--teal) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .hero-sub{font-size:1.15rem;color:var(--muted);max-width:900px;margin:0 auto 2.4rem}
-    .recognition{display:flex;gap:3.2rem;justify-content:center;flex-wrap:wrap}
-    .rec-item{display:flex;flex-direction:column;align-items:center;gap:.35rem}
-    .rec-num{font-size:2.4rem;font-weight:800;background:linear-gradient(135deg,var(--teal) 0%,var(--cyan) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .rec-lbl{font-size:.85rem;color:rgba(248,249,250,.6);letter-spacing:.8px;text-transform:uppercase;font-weight:700}
+    .bg-animation, .grid-overlay {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      pointer-events:none; z-index:0;
+    }
+    .bg-animation {
+      opacity:.4;
+      background:
+        radial-gradient(circle at 20% 50%,rgba(0,179,164,.1) 0%,transparent 50%),
+        radial-gradient(circle at 80% 80%,rgba(125,164,83,.08) 0%,transparent 50%),
+        radial-gradient(circle at 40% 20%,rgba(0,207,255,.05) 0%,transparent 40%);
+    }
+    .grid-overlay {
+      background-image:
+        linear-gradient(rgba(0,179,164,.03) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(0,179,164,.03) 1px,transparent 1px);
+      background-size:50px 50px;
+    }
 
-    /* SECTIONS generic */
-    section{padding:5.5rem 2rem;max-width:1400px;margin:0 auto}
-    .section-header{text-align:center;margin-bottom:4.2rem}
-    .section-title{font-size:2.6rem;font-weight:800;margin-bottom:1rem;background:linear-gradient(135deg,var(--off) 0%,var(--teal) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .section-sub{font-size:1.1rem;color:var(--muted);max-width:900px;margin:0 auto}
+    nav {
+      position:fixed; top:0; width:100%;
+      background:rgba(28,28,30,.95);
+      backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--border);
+      z-index:1000;
+    }
+    .nav-container {
+      max-width:1400px; margin:0 auto;
+      padding:1.2rem 3rem;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .brand { display:flex; align-items:center; gap:1rem; }
+    .brand-logo { height:45px; width:auto; }
+    .brand-text {
+      font-size:1.5rem; font-weight:800;
+      background:linear-gradient(135deg,var(--teal) 0%,var(--cyan) 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .nav-links { display:flex; gap:2.5rem; list-style:none; }
+    .nav-links a {
+      color:rgba(248,249,250,.8);
+      text-decoration:none; font-weight:500;
+      transition:.3s;
+    }
+    .nav-links a:hover { color:var(--teal); }
 
-    /* CARDS / GRIDS */
-    .grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:2.3rem}
-    .card{background:linear-gradient(135deg,rgba(0,179,164,.05) 0%,rgba(28,28,30,.82) 100%);border:1px solid var(--border);border-radius:18px;padding:2rem;transition:.35s;position:relative;overflow:hidden}
-    .card::before{content:'';position:absolute;inset:auto 0 0 0;height:4px;background:linear-gradient(90deg,var(--teal) 0%,var(--cyan) 50%,var(--oliva) 100%);transform:scaleX(0);transform-origin:left;transition:transform .35s}
-    .card:hover{transform:translateY(-6px);border-color:var(--teal);box-shadow:0 18px 60px rgba(0,179,164,.22)}
-    .card:hover::before{transform:scaleX(1)}
-    .card h3{color:var(--teal);font-size:1.25rem;margin-bottom:.9rem}
-    .bullets{list-style:none;display:flex;flex-direction:column;gap:.8rem}
-    .bullets li{color:rgba(248,249,250,.85);padding-left:1.1rem;position:relative}
-    .bullets li::before{content:'▸';position:absolute;left:0;color:var(--oliva);font-weight:800}
+    .hero {
+      padding:12rem 3rem 8rem; text-align:center;
+      max-width:1200px; margin:0 auto;
+    }
+    .hero-logo {
+      margin:0 auto 3rem; width:200px;
+      filter:drop-shadow(0 0 30px var(--glow));
+    }
+    .hero h1 {
+      font-size:3.5rem; font-weight:800; line-height:1.2;
+      margin-bottom:2rem;
+      background:linear-gradient(135deg,var(--off-white) 0%,var(--teal) 60%,var(--cyan) 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .hero-subtitle {
+      font-size:1.25rem; color:rgba(248,249,250,.7);
+      max-width:900px; margin:0 auto 3rem;
+    }
 
-    /* FOCUS BAND */
-    .band{background:linear-gradient(135deg,rgba(125,164,83,.08) 0%,rgba(0,179,164,.05) 100%);border-block:1px solid var(--border)}
-    .apps{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.6rem}
-    .app{background:rgba(28,28,30,.64);border:1px solid rgba(125,164,83,.22);border-left:4px solid var(--oliva);border-radius:16px;padding:1.7rem;transition:.3s}
-    .app:hover{transform:translateX(6px);border-left-color:var(--teal);background:rgba(28,28,30,.85);box-shadow:0 12px 40px rgba(125,164,83,.22)}
-    .app h4{color:var(--oliva);margin-bottom:.6rem}
+    section { padding:6rem 3rem; max-width:1400px; margin:0 auto; }
+    .section-header { text-align:center; margin-bottom:5rem; }
+    .section-title {
+      font-size:3rem; font-weight:800;
+      background:linear-gradient(135deg,var(--off-white) 0%,var(--teal) 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .section-subtitle {
+      font-size:1.2rem; color:rgba(248,249,250,.7);
+      max-width:900px; margin:0 auto;
+    }
 
-    /* NEW — Gallery (estética n8n) */
-    .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
-    .shot{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--border);background:var(--grafito-2)}
-    .shot img{width:100%;height:100%;display:block;object-fit:cover;aspect-ratio:4/3;transform:scale(1);transition:transform .6s ease}
-    .shot::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(0,179,164,.18),transparent 60%);opacity:.6;pointer-events:none}
-    .shot:hover img{transform:scale(1.04)}
-
-    /* NEW — Tech logos strip */
-    .tech-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1.2rem;align-items:center}
-    .tech{display:flex;align-items:center;justify-content:center;gap:.6rem;padding:1rem;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid var(--border);transition:.25s}
-    .tech:hover{border-color:var(--teal);box-shadow:0 10px 34px rgba(0,179,164,.15)}
-    .tech svg{width:26px;height:26px;opacity:.9}
-    .tech span{font-weight:700;letter-spacing:.2px;color:rgba(248,249,250,.9);font-size:.95rem}
-
-    /* CONNECT */
-    .connect{text-align:center;max-width:920px;margin:0 auto}
-    .footer-profile{display:flex;flex-direction:column;align-items:center;gap:1.4rem;margin-top:1.6rem}
-    .profile-thumb{width:120px;height:120px;border-radius:50%;border:3px solid var(--teal);object-fit:cover;box-shadow:0 8px 30px rgba(0,179,164,.3)}
-    .btn{display:inline-flex;align-items:center;gap:.6rem;padding:1rem 1.6rem;border-radius:12px;font-weight:800;font-size:1rem;text-decoration:none;transition:.25s;border:2px solid var(--teal);background:linear-gradient(135deg,var(--teal) 0%,var(--teal-2) 100%);color:var(--grafito)}
-    .btn:hover{transform:translateY(-3px);box-shadow:0 14px 46px var(--glow)}
-    footer{text-align:center;padding:3.2rem 2rem;border-top:1px solid var(--border);color:rgba(248,249,250,.46);font-size:.92rem}
-
-    /* Responsive */
-    @media (max-width:1024px){.nav-links{display:none}.hero h1{font-size:2.6rem}.section-title{font-size:2.2rem}}
-    @media (max-width:768px){
-      .hero{padding:8.5rem 1.2rem 5rem}.hero-logo{width:150px}
-      .hero h1{font-size:2.1rem}.hero-badge{font-size:.78rem}
-      section{padding:4rem 1.2rem}
+    footer {
+      text-align:center; padding:4rem 3rem;
+      border-top:1px solid var(--border);
+      color:rgba(248,249,250,.4); font-size:.9rem;
     }
   </style>
 </head>
@@ -115,255 +118,36 @@
   <div class="bg-animation"></div>
   <div class="grid-overlay"></div>
 
-  <div class="content">
-    <!-- NAV -->
-    <nav>
-      <div class="nav-container">
-        <div class="brand">
-          <img src="./assets/logo.png" alt="Aigralys" class="brand-logo"/>
-          <span class="brand-text">Aigralys</span>
-        </div>
-        <ul class="nav-links">
-          <li><a href="#agentic" class="nav-text">IA Agéntica</a></li>
-          <li><a href="#agro" class="nav-text">Agroindustria</a></li>
-          <li><a href="#galeria" class="nav-text">Galería</a></li>
-          <li><a href="#tecnologias" class="nav-text">Tecnologías</a></li>
-          <li><a href="#contacto" class="nav-text">Contacto</a></li>
-        </ul>
-
-        <div class="social">
-          <a href="https://instagram.com/aigralys.ai" target="_blank" rel="noopener" aria-label="Instagram @aigralys.ai">
-            <!-- Instagram icon -->
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" opacity=".7"/><circle cx="12" cy="12" r="4.3" stroke="currentColor"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg>
-            @aigralys.ai
-          </a>
-        </div>
-
-        <button class="lang-switch" onclick="toggleLanguage()">EN</button>
+  <nav>
+    <div class="nav-container">
+      <div class="brand">
+        <img src="./assets/logo.png" alt="Aigralys" class="brand-logo">
+        <span class="brand-text">Aigralys</span>
       </div>
-    </nav>
+      <ul class="nav-links">
+        <li><a href="#agentic">IA Agéntica</a></li>
+        <li><a href="#agro">Agroindustria</a></li>
+        <li><a href="#dominios">Dominios</a></li>
+        <li><a href="#practica">Práctica</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ul>
+      <a href="https://instagram.com/aigralys.ai" target="_blank" style="color:var(--cyan); font-weight:600;">@aigralys.ai</a>
+    </div>
+  </nav>
 
-    <!-- HERO -->
-    <header class="hero">
-      <img src="./assets/logo.png" alt="Aigralys" class="hero-logo"/>
-      <div class="hero-badge hero-badge-text">Agentic AI · Digital Ecosystems</div>
-      <h1><span class="highlight">IA Agéntica</span> para Ecosistemas Digitales Complejos</h1>
-      <p class="hero-sub hero-subtitle-text">
-        Aigralys documenta prácticas de diseño, implementación y gobernanza de sistemas agénticos de IA aplicados a transformación operativa en industrias de alta complejidad, con especialización en agroindustria.
-      </p>
-      <div class="recognition">
-        <div class="rec-item"><div class="rec-num">20+</div><div class="rec-lbl recog-label-1">Años en IT</div></div>
-        <div class="rec-item"><div class="rec-num">AI</div><div class="rec-lbl recog-label-2">Agéntica</div></div>
-        <div class="rec-item"><div class="rec-num">AGRO</div><div class="rec-lbl recog-label-3">Focus</div></div>
-      </div>
-    </header>
+  <!-- HERO -->
+  <section class="hero">
+    <img src="./assets/logo.png" alt="Aigralys" class="hero-logo">
+    <h1><span class="highlight">IA Agéntica</span> para Ecosistemas Digitales Complejos</h1>
+    <p class="hero-subtitle">
+      Aigralys documenta prácticas de diseño, implementación y gobernanza de sistemas agénticos aplicados a la transformación operativa en industrias de alta complejidad, con especialización en agroindustria.
+    </p>
+  </section>
 
-    <!-- QUÉ ES IA AGÉNTICA -->
-    <section id="agentic">
-      <div class="section-header">
-        <h2 class="section-title section-title-1">Qué es IA Agéntica</h2>
-        <p class="section-sub section-subtitle-1">
-          Sistemas de IA capaces de tomar decisiones autónomas, ejecutar acciones y coordinar con otros agentes para lograr objetivos complejos en entornos operativos reales. No son chatbots: son agentes que actúan.
-        </p>
-      </div>
-      <div class="grid-3">
-        <article class="card">
-          <h3 class="domain-title domain-title-1">Autonomía Supervisada</h3>
-          <ul class="bullets">
-            <li class="domain-li-1">Decisiones operativas dentro de límites definidos.</li>
-            <li class="domain-li-2">Escalamiento inteligente a humanos cuando se requiere expertise.</li>
-            <li class="domain-li-3">Aprendizaje continuo desde feedback y resultados medidos.</li>
-          </ul>
-        </article>
-        <article class="card">
-          <h3 class="domain-title domain-title-2">Orquestación Multi-agente</h3>
-          <ul class="bullets">
-            <li class="domain-li-4">Coordinación entre agentes especializados por función.</li>
-            <li class="domain-li-5">Protocolos de handoff y colas de trabajo distribuidas.</li>
-            <li class="domain-li-6">Resiliencia operativa ante fallas individuales.</li>
-          </ul>
-        </article>
-        <article class="card">
-          <h3 class="domain-title domain-title-3">Integración con Ecosistemas</h3>
-          <ul class="bullets">
-            <li class="domain-li-7">Conexión con ERPs, CRMs, legado y telemetría IoT.</li>
-            <li class="domain-li-8">Decisiones en tiempo real sobre datos distribuidos.</li>
-            <li class="domain-li-9">Trazabilidad completa de acciones y razonamiento.</li>
-          </ul>
-        </article>
-      </div>
-    </section>
+  <!-- OTRAS SECCIONES (agregás aquí Agroindustria, Dominios, Práctica, Contacto, etc.) -->
 
-    <!-- AGRO -->
-    <section id="agro" class="band">
-      <div class="section-header">
-        <h2 class="section-title section-title-2">IA Agéntica en Agroindustria</h2>
-        <p class="section-sub focus-intro-text">
-          La agroindustria reúne decisiones en tiempo real con datos climáticos, edáficos, de mercado, logística y cumplimiento. De campo a despacho, los agentes orquestan complejidad operativa crítica.
-        </p>
-      </div>
-      <div class="apps">
-        <div class="app"><h4 class="app-title-1">Planificación Operativa</h4><p class="app-text-1">Siembra, riego y cosecha integrando clima, suelo, mercados y recursos.</p></div>
-        <div class="app"><h4 class="app-title-2">Trazabilidad End-to-End</h4><p class="app-text-2">Monitoreo de insumos, lotes, transporte y almacenamiento con alertas.</p></div>
-        <div class="app"><h4 class="app-title-3">Optimización Logística</h4><p class="app-text-3">Rutas dinámicas y asignación de recursos en coordinación multi-agente.</p></div>
-        <div class="app"><h4 class="app-title-4">Gestión de Riesgos</h4><p class="app-text-4">Riesgos climáticos/fitosanitarios con simulación de escenarios.</p></div>
-        <div class="app"><h4 class="app-title-5">Copilotos Operativos</h4><p class="app-text-5">Acceso contextual y ejecución de tareas rutinarias.</p></div>
-        <div class="app"><h4 class="app-title-6">Integración Legacy</h4><p class="app-text-6">Wrappers para ERPs y sensores IoT sin refundaciones.</p></div>
-      </div>
-    </section>
-
-    <!-- NUEVO — GALERÍA TECNOLÓGICA -->
-    <section id="galeria">
-      <div class="section-header">
-        <h2 class="section-title">Galería — Práctica & Tecnología</h2>
-        <p class="section-sub">Imágenes conceptuales de agentes, orquestación y telemetría aplicadas a ecosistemas complejos (estética tecnológica, limpia y minimalista).</p>
-      </div>
-      <!-- Sube tus imágenes a /assets/ con estos nombres o cámbialos -->
-      <div class="gallery">
-        <figure class="shot"><img src="./assets/tech-1.jpg" alt="Orquestación multi-agente en operaciones"/></figure>
-        <figure class="shot"><img src="./assets/tech-2.jpg" alt="Panel de telemetría y decisiones en tiempo real"/></figure>
-        <figure class="shot"><img src="./assets/tech-3.jpg" alt="Agentes integrados con ERP y sensores IoT"/></figure>
-        <figure class="shot"><img src="./assets/tech-4.jpg" alt="Optimización logística con IA agéntica"/></figure>
-        <figure class="shot"><img src="./assets/tech-5.jpg" alt="Copilotos operativos especializados"/></figure>
-        <figure class="shot"><img src="./assets/tech-6.jpg" alt="Arquitecturas multi-agente productivas"/></figure>
-      </div>
-    </section>
-
-    <!-- NUEVO — TECNOLOGÍAS -->
-    <section id="tecnologias">
-      <div class="section-header">
-        <h2 class="section-title">Tecnologías con las que trabajamos</h2>
-        <p class="section-sub">Modelos, nubes y automatización para llevar agentes de la investigación a producción.</p>
-      </div>
-
-      <!-- Puedes reemplazar estos SVG por archivos locales en /assets/*.svg -->
-      <div class="tech-strip">
-        <!-- OpenAI -->
-        <div class="tech">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#00B3A4" stroke-width="1.5"><path d="M12 2.5a5.5 5.5 0 0 1 4.9 3l2.6 1.5a5.5 5.5 0 0 1-1.3 9.9l-.6 3a5.5 5.5 0 0 1-10.2 0l-2.6-1.5a5.5 5.5 0 0 1 1.3-9.9l.6-3A5.5 5.5 0 0 1 12 2.5z"/></svg>
-          <span>OpenAI</span>
-        </div>
-        <!-- AWS -->
-        <div class="tech">
-          <svg viewBox="0 0 64 24" fill="none"><path d="M7 18V6h4c3 0 5 1.8 5 6s-2 6-5 6H7zm4-3c1.6 0 2.6-1.1 2.6-3S12.6 9 11 9H10v6h1z" fill="#F8F9FA"/><path d="M51 6h3l-6 12h-3l2-4-3-8h3l1.8 5.2L51 6z" fill="#F8F9FA"/><path d="M58 18c-4.5 3-10.5 5-16 5-5 0-9.5-1.3-13.5-3.7" stroke="#FF9900" stroke-width="2" stroke-linecap="round"/></svg>
-          <span>AWS</span>
-        </div>
-        <!-- GCP -->
-        <div class="tech">
-          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="6.8" stroke="#4285F4" stroke-width="2"/><path d="M12 5.2a6.8 6.8 0 0 1 5.4 2.8" stroke="#34A853" stroke-width="2"/><path d="M6.6 9.4A6.8 6.8 0 0 1 12 5.2" stroke="#FBBC05" stroke-width="2"/><path d="M17.4 14.6A6.8 6.8 0 0 1 12 18.8" stroke="#EA4335" stroke-width="2"/></svg>
-          <span>GCP</span>
-        </div>
-        <!-- Azure -->
-        <div class="tech">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M4 18 12 4l4 3-7 11H4z" fill="#00A1F1"/><path d="M12 4 20 18h-9l7-11-6-3z" fill="#0078D4" opacity=".9"/></svg>
-          <span>Azure</span>
-        </div>
-        <!-- Llama -->
-        <div class="tech">
-          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#00CFFF" stroke-width="1.8"/><path d="M7 14c2-4 8-4 10 0" stroke="#00CFFF" stroke-width="1.8" stroke-linecap="round"/></svg>
-          <span>Llama</span>
-        </div>
-        <!-- n8n -->
-        <div class="tech">
-          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="12" rx="6" stroke="#FF4F64" stroke-width="2"/><circle cx="9" cy="12" r="2" fill="#FF4F64"/><circle cx="15" cy="12" r="2" fill="#FF4F64"/></svg>
-          <span>n8n</span>
-        </div>
-        <!-- Zapier -->
-        <div class="tech">
-          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="2" fill="#FF4A00"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.8 5.8l2.8 2.8M15.4 15.4l2.8 2.8M18.2 5.8l-2.8 2.8M8.6 15.4l-2.8 2.8" stroke="#FF4A00" stroke-width="2" stroke-linecap="round"/></svg>
-          <span>Zapier</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- CONTACTO -->
-    <section id="contacto" class="connect">
-      <div class="section-header">
-        <h2 class="section-title connect-title">Contacto</h2>
-        <p class="section-sub connect-text-main">
-          Este sitio documenta el enfoque de Aigralys en sistemas de IA agéntica. Para trayectoria, publicaciones y proyectos, consulta el perfil profesional.
-        </p>
-      </div>
-      <div class="footer-profile">
-        <img src="./assets/gonzalo.jpg" alt="Gonzalo Abadía" class="profile-thumb"/>
-        <div style="display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center">
-          <a class="btn" href="https://www.linkedin.com/in/gonzalo-abadia" target="_blank" rel="noopener">LinkedIn</a>
-          <a class="btn" href="https://instagram.com/aigralys.ai" target="_blank" rel="noopener">@aigralys.ai</a>
-        </div>
-      </div>
-    </section>
-
-    <footer>
-      <p class="footer-text">Aigralys — Sistemas de IA Agéntica por Gonzalo Abadía · Instagram: @aigralys.ai</p>
-    </footer>
-  </div>
-
-  <script>
-    let currentLang='es';
-    const translations={es:{
-      navLinks:['IA Agéntica','Agroindustria','Galería','Tecnologías','Contacto'],
-      heroBadge:'Agentic AI · Digital Ecosystems',
-      heroTitle:'IA Agéntica para Ecosistemas Digitales Complejos',
-      heroSubtitle:'Aigralys documenta prácticas de diseño, implementación y gobernanza de sistemas agénticos de IA aplicados a transformación operativa en industrias de alta complejidad, con especialización en agroindustria.',
-      recogLabels:['Años en IT','Agéntica','Focus'],
-      sectionTitle1:'Qué es IA Agéntica',
-      sectionSubtitle1:'Sistemas de IA capaces de tomar decisiones autónomas, ejecutar acciones y coordinar con otros agentes para lograr objetivos complejos en entornos operativos reales. No son chatbots: son agentes que actúan.',
-      sectionTitle2:'IA Agéntica en Agroindustria',
-      focusIntro:'La agroindustria reúne decisiones en tiempo real con datos climáticos, edáficos, de mercado, logística y cumplimiento. De campo a despacho, los agentes orquestan complejidad operativa crítica.',
-      connectTitle:'Contacto',
-      connectText:'Este sitio documenta el enfoque de Aigralys en sistemas de IA agéntica. Para trayectoria, publicaciones y proyectos, consulta el perfil profesional.',
-      footerText:'Aigralys — Sistemas de IA Agéntica por Gonzalo Abadía · Instagram: @aigralys.ai'
-    },en:{
-      navLinks:['Agentic AI','Agribusiness','Gallery','Technologies','Contact'],
-      heroBadge:'Agentic AI · Digital Ecosystems',
-      heroTitle:'Agentic AI for Complex Digital Ecosystems',
-      heroSubtitle:'Aigralys documents practices in design, implementation and governance of agentic AI systems, with specialization in agribusiness.',
-      recogLabels:['Years in IT','Agentic','Focus'],
-      sectionTitle1:'What is Agentic AI',
-      sectionSubtitle1:"AI systems that make autonomous decisions, execute actions and coordinate with other agents to achieve complex goals in real operations. Not chatbots: agents that act.",
-      sectionTitle2:'Agentic AI in Agribusiness',
-      focusIntro:'Real-time decisions across climate, soil, market, logistics and compliance. From field to dispatch, agents orchestrate critical operational complexity.',
-      connectTitle:'Contact',
-      connectText:"This site documents Aigralys’ approach to agentic AI systems. For background and projects, see the professional profile.",
-      footerText:'Aigralys — Agentic AI Systems by Gonzalo Abadía · Instagram: @aigralys.ai'
-    }};
-
-    function toggleLanguage(){
-      currentLang=currentLang==='es'?'en':'es';
-      document.documentElement.lang=currentLang;
-      document.querySelector('.lang-switch').textContent=currentLang==='es'?'EN':'ES';
-      const t=translations[currentLang];
-
-      document.querySelectorAll('.nav-text').forEach((el,i)=>el.textContent=t.navLinks[i]);
-      document.querySelector('.hero-badge-text').textContent=t.heroBadge;
-      document.querySelector('.hero h1').innerHTML =
-        currentLang==='es'
-          ? '<span class="highlight">IA Agéntica</span> para Ecosistemas Digitales Complejos'
-          : '<span class="highlight">Agentic AI</span> for Complex Digital Ecosystems';
-      document.querySelector('.hero-subtitle-text')?.classList.add('hero-sub');
-      document.querySelector('.hero-subtitle-text').textContent=t.heroSubtitle;
-      document.querySelectorAll('.recog-label-1,.recog-label-2,.recog-label-3').forEach((el,i)=>el.textContent=t.recogLabels[i]);
-
-      document.querySelector('.section-title-1').textContent=t.sectionTitle1;
-      document.querySelector('.section-subtitle-1').textContent=t.sectionSubtitle1;
-
-      document.querySelector('.section-title-2').textContent=t.sectionTitle2;
-      document.querySelector('.focus-intro-text').textContent=t.focusIntro;
-
-      document.querySelector('.connect-title').textContent=t.connectTitle;
-      document.querySelector('.connect-text-main').textContent=t.connectText;
-      document.querySelector('.footer-text').textContent=t.footerText;
-    }
-
-    // reveal on scroll
-    const obs=new IntersectionObserver((es)=>es.forEach(e=>{
-      if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)'}
-    }),{threshold:.1,rootMargin:'0px 0px -80px 0px'});
-
-    document.querySelectorAll('.card,.app,.shot').forEach(el=>{
-      el.style.opacity='0';el.style.transform='translateY(24px)';
-      el.style.transition='opacity .7s ease,transform .7s ease';obs.observe(el);
-    });
-  </script>
+  <footer>
+    <p>Aigralys — Sistemas de IA Agéntica por Gonzalo Abadía</p>
+  </footer>
 </body>
 </html>
