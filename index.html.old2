@@ -123,23 +123,8 @@
     .connect-text{font-size:1.15rem;color:rgba(248,249,250,.7);margin-bottom:2rem;line-height:1.8}
     .footer-profile{display:flex;flex-direction:column;align-items:center;gap:1.2rem}
     .profile-thumb{width:120px;height:120px;border-radius:50%;border:3px solid var(--teal);object-fit:cover;box-shadow:0 8px 30px rgba(0,179,164,.3)}
-    .linkedin-button{
-      display:inline-flex;align-items:center;gap:1rem;
-      padding:1.05rem 2.2rem;background:linear-gradient(135deg,var(--teal) 0%,var(--teal-dark) 100%);
-      color:var(--grafito);text-decoration:none;border-radius:12px;font-weight:700;font-size:1.02rem;transition:.3s;border:2px solid var(--teal)
-    }
+    .linkedin-button{display:inline-flex;align-items:center;gap:1rem;padding:1.05rem 2.2rem;background:linear-gradient(135deg,var(--teal) 0%,var(--teal-dark) 100%);color:var(--grafito);text-decoration:none;border-radius:12px;font-weight:700;font-size:1.02rem;transition:.3s;border:2px solid var(--teal)}
     .linkedin-button:hover{transform:translateY(-3px) scale(1.01);box-shadow:0 15px 50px var(--glow)}
-
-    /* IG button inline */
-    .social-actions{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
-    .ig-button{
-      display:inline-flex;align-items:center;gap:.8rem;
-      padding:1.05rem 2.2rem;border-radius:12px;font-weight:700;font-size:1.02rem;
-      text-decoration:none;transition:.3s;border:2px solid var(--teal);color:var(--grafito);
-      background:linear-gradient(135deg,var(--cyan) 0%,var(--teal) 100%)
-    }
-    .ig-button:hover{transform:translateY(-3px) scale(1.01);box-shadow:0 15px 50px var(--glow)}
-    .ig-icon{width:22px;height:22px;fill:currentColor}
 
     footer{text-align:center;padding:4rem 3rem;border-top:1px solid var(--border);color:rgba(248,249,250,.45);font-size:.9rem}
 
@@ -183,7 +168,7 @@
           <li><a href="#contacto" class="nav-text">Contacto</a></li>
         </ul>
         <div style="display:flex;align-items:center;gap:.75rem">
-          <a href="https://instagram.com/aigralys.ai" target="_blank" style="color:var(--cyan);font-weight:650">@aigralys.ai</a>
+          <a href="https://instagram.com/aigralys.ai" target="_blank" style="color:var(--cyan);font-weight:650">Instagram: aigralys.ai</a>
           <button class="lang-switch" onclick="toggleLanguage()">EN</button>
         </div>
       </div>
@@ -195,19 +180,19 @@
       <div class="hero-badge hero-badge-text">Agentic AI · Digital Ecosystems</div>
       <h1><span class="highlight">IA Agéntica</span> para Ecosistemas Digitales Complejos</h1>
       <p class="hero-subtitle hero-subtitle-text">
-        Aigralys documenta prácticas de diseño, implementación y gobernanza de sistemas agénticos de IA aplicados a transformación operativa en industrias de alta complejidad, con especialización en agroindustria.
+        Aigralys realiza prácticas de diseño, implementación y gobernanza de sistemas agénticos de IA aplicados a transformación operativa en industrias de alta complejidad.
       </p>
       <div class="recognition-bar">
         <div class="recognition-item">
           <div class="recognition-number">20+</div>
-          <div class="recognition-label" data-k="recog1">Años en IT</div>
+          <div class="recognition-label" data-k="recog1">Años en Tecnología de la Información</div>
         </div>
         <div class="recognition-item">
           <div class="recognition-number">AI</div>
           <div class="recognition-label" data-k="recog2">Agéntica</div>
         </div>
         <div class="recognition-item">
-          <div class="recognition-number">AGRO</div>
+          <div class="recognition-number">Industria</div>
           <div class="recognition-label" data-k="recog3">Focus</div>
         </div>
       </div>
@@ -429,24 +414,9 @@
       </p>
       <div class="footer-profile">
         <img src="./assets/gonzalo.jpg" alt="Gonzalo Abadía" class="profile-thumb">
-
-        <div class="social-actions">
-          <!-- LinkedIn -->
-          <a class="linkedin-button" href="https://www.linkedin.com/in/gonzalo-abadia" target="_blank" rel="noopener">
-            <span class="linkedin-text">Perfil Profesional en LinkedIn</span>
-          </a>
-
-          <!-- Instagram (inline SVG) -->
-          <a class="ig-button" href="https://instagram.com/aigralys.ai" target="_blank" rel="noopener" aria-label="Instagram @aigralys.ai">
-            <svg class="ig-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="3.2" y="3.2" width="17.6" height="17.6" rx="4.2" ry="4.2"
-                    fill="none" stroke="currentColor" stroke-width="1.6"/>
-              <circle cx="12" cy="12" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/>
-              <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor"/>
-            </svg>
-            <span>@aigralys.ai</span>
-          </a>
-        </div>
+        <a class="linkedin-button" href="https://www.linkedin.com/in/gonzalo-abadia" target="_blank" rel="noopener">
+          <span class="linkedin-text">Perfil Profesional en LinkedIn</span>
+        </a>
       </div>
     </section>
 
