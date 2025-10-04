@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aigralys - Agentic AI Research by Gonzalo Abadía</title>
-  <meta name="description" content="Aigralys: Investigación y educación en sistemas agénticos de IA para ecosistemas digitales complejos.">
+  <title>Aigralys - Agentic AI for Complex Digital Ecosystems</title>
+  <meta name="description" content="Aigralys: Sistemas de IA Agéntica para ecosistemas digitales complejos. Especialización en agroindustria y operaciones de alta complejidad.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -113,18 +113,10 @@
     }
 
     @keyframes float {
-      0%, 100% { 
-        transform: translateY(0px) rotate(0deg); 
-      }
-      25% { 
-        transform: translateY(-20px) rotate(5deg); 
-      }
-      50% { 
-        transform: translateY(-40px) rotate(-5deg); 
-      }
-      75% { 
-        transform: translateY(-20px) rotate(5deg); 
-      }
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      25% { transform: translateY(-20px) rotate(5deg); }
+      50% { transform: translateY(-40px) rotate(-5deg); }
+      75% { transform: translateY(-20px) rotate(5deg); }
     }
 
     .content {
@@ -265,6 +257,13 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
       letter-spacing: -2px;
+    }
+
+    .hero h1 .highlight {
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--teal) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .hero-subtitle {
@@ -672,11 +671,11 @@
           <span class="brand-text">Aigralys</span>
         </div>
         <ul class="nav-links">
-          <li><a href="#proposito">Propósito</a></li>
-          <li><a href="#marco">Marco</a></li>
-          <li><a href="#lineas">Líneas</a></li>
-          <li><a href="#materiales">Materiales</a></li>
-          <li><a href="#contacto">Contacto</a></li>
+          <li><a href="#agentic" class="nav-text">IA Agéntica</a></li>
+          <li><a href="#agro" class="nav-text">Agroindustria</a></li>
+          <li><a href="#dominios" class="nav-text">Dominios</a></li>
+          <li><a href="#practica" class="nav-text">Práctica</a></li>
+          <li><a href="#contacto" class="nav-text">Contacto</a></li>
         </ul>
         <button class="lang-switch" onclick="toggleLanguage()">EN</button>
       </div>
@@ -684,178 +683,364 @@
 
     <section class="hero">
       <img src="./assets/logo.png" alt="Aigralys" class="hero-logo">
-      <div class="hero-badge">Iniciativa de Investigación & Desarrollo</div>
-      <h1>Investigación en IA Agéntica para Ecosistemas Complejos</h1>
-      <p class="hero-subtitle">
-        Aigralys documenta y sistematiza prácticas responsables en diseño, implementación y gobernanza de sistemas agénticos aplicados a transformación operativa en industrias de alta complejidad.
+      <div class="hero-badge hero-badge-text">Agentic AI · Digital Ecosystems</div>
+      <h1><span class="highlight">IA Agéntica</span> para Ecosistemas Digitales Complejos</h1>
+      <p class="hero-subtitle hero-subtitle-text">
+        Aigralys documenta prácticas de diseño, implementación y gobernanza de sistemas agénticos de IA aplicados a transformación operativa en industrias de alta complejidad, con especialización en agroindustria.
       </p>
       <div class="recognition-bar">
         <div class="recognition-item">
           <div class="recognition-number">20+</div>
-          <div class="recognition-label">Años en IT</div>
+          <div class="recognition-label recog-label-1">Años en IT</div>
         </div>
         <div class="recognition-item">
           <div class="recognition-number">AI</div>
-          <div class="recognition-label">Agéntica</div>
+          <div class="recognition-label recog-label-2">Agéntica</div>
         </div>
         <div class="recognition-item">
-          <div class="recognition-number">7</div>
-          <div class="recognition-label">Dominios</div>
+          <div class="recognition-number">AGRO</div>
+          <div class="recognition-label recog-label-3">Focus</div>
         </div>
       </div>
     </section>
 
-    <section id="proposito" class="tight">
+    <section id="agentic" class="tight">
       <div class="section-header">
-        <h2 class="section-title">Propósito</h2>
-        <p class="section-subtitle">
-          Explorar y documentar prácticas responsables de IA agéntica: cómo se diseñan, integran y evalúan agentes que conviven con sistemas existentes y personas, priorizando trazabilidad, gobernanza y aprendizaje continuo.
+        <h2 class="section-title section-title-1">Qué es IA Agéntica</h2>
+        <p class="section-subtitle section-subtitle-1">
+          Sistemas de IA capaces de tomar decisiones autónomas, ejecutar acciones y coordinar con otros agentes para lograr objetivos complejos en entornos operativos reales. No son chatbots: son agentes que actúan.
         </p>
       </div>
       <div class="domains-grid">
         <div class="domain-card">
-          <h3 class="domain-title">Fundamentos y Arquitecturas</h3>
+          <h3 class="domain-title domain-title-1">Autonomía Supervisada</h3>
           <ul class="domain-list">
-            <li>Modelos base y trade-offs técnico-económicos</li>
-            <li>Diseño mono-agente y multi-agente para orquestación</li>
-            <li>Interfaces lingüísticas y capacidades multimodales</li>
+            <li class="domain-li-1">Agentes que toman decisiones operativas dentro de límites definidos</li>
+            <li class="domain-li-2">Escalamiento inteligente a humanos cuando se requiere expertise</li>
+            <li class="domain-li-3">Aprendizaje continuo desde feedback y resultados medidos</li>
           </ul>
         </div>
         <div class="domain-card">
-          <h3 class="domain-title">Conexión con Ecosistemas</h3>
+          <h3 class="domain-title domain-title-2">Orquestación Multi-agente</h3>
           <ul class="domain-list">
-            <li>Integración con ERPs/CRMs, operaciones de campo e IoT</li>
-            <li>Gestión de complejidad: datos, latencia, fiabilidad</li>
-            <li>Ajuste fino, empatía y diseño centrado en el usuario</li>
+            <li class="domain-li-4">Coordinación entre agentes especializados por función</li>
+            <li class="domain-li-5">Protocolos de handoff y colas de trabajo distribuidas</li>
+            <li class="domain-li-6">Resiliencia operativa ante fallas individuales</li>
           </ul>
         </div>
         <div class="domain-card">
-          <h3 class="domain-title">Gobernanza y Evaluación</h3>
+          <h3 class="domain-title domain-title-3">Integración con Ecosistemas</h3>
           <ul class="domain-list">
-            <li>Privacidad, auditoría y trazabilidad</li>
-            <li>Sandboxing, A/B testing, límites de autonomía</li>
-            <li>KPIs: tiempo a decisión, costo por interacción, handoff rate</li>
+            <li class="domain-li-7">Conexión con ERPs, CRMs, sistemas legacy y telemetría IoT</li>
+            <li class="domain-li-8">Decisiones en tiempo real sobre datos distribuidos</li>
+            <li class="domain-li-9">Trazabilidad completa de acciones y razonamiento</li>
           </ul>
         </div>
       </div>
     </section>
 
-    <section id="marco" class="focus-areas">
+    <section id="agro" class="focus-areas">
       <div class="focus-container">
         <div class="section-header">
-          <h2 class="section-title">Marco de Trabajo</h2>
-          <p class="focus-intro">
-            Un enfoque por etapas que respeta los ritmos organizacionales y prioriza aprendizaje verificable.
+          <h2 class="section-title section-title-2">IA Agéntica en Agroindustria</h2>
+          <p class="focus-intro focus-intro-text">
+            La agroindustria es uno de los contextos más exigentes para sistemas agénticos: decisiones en tiempo real con datos climáticos, edáficos, de mercado, logística y cumplimiento normativo. Desde campo hasta despacho, los agentes orquestan complejidad operativa crítica.
           </p>
         </div>
         <div class="applications-grid">
           <div class="app-card">
-            <h3>Exploración Guiada</h3>
-            <p>Definición de preguntas críticas, alcance responsable y criterios de evaluación claros desde el inicio.</p>
+            <h3 class="app-title-1">Planificación Operativa</h3>
+            <p class="app-text-1">Agentes que orquestan decisiones de siembra, riego y cosecha integrando clima, suelo, mercados y recursos en tiempo real.</p>
           </div>
           <div class="app-card">
-            <h3>Prototipos con Trazabilidad</h3>
-            <p>Instrumentación desde el inicio para observabilidad, registro detallado y reproducibilidad completa.</p>
+            <h3 class="app-title-2">Trazabilidad End-to-End</h3>
+            <p class="app-text-2">Monitoreo de insumos, lotes, transporte y almacenamiento con alertas automáticas ante desviaciones y cumplimiento normativo.</p>
           </div>
           <div class="app-card">
-            <h3>Pilotos con Control</h3>
-            <p>Límites de autonomía definidos, protocolos de seguridad y criterios de salida transparentes.</p>
+            <h3 class="app-title-3">Optimización Logística</h3>
+            <p class="app-text-3">Coordinación multi-agente para cosecha, transporte y acopio con optimización dinámica de rutas y asignación de recursos.</p>
           </div>
           <div class="app-card">
-            <h3>Transferencia y Documentación</h3>
-            <p>Materiales de aprendizaje estructurados, lecciones documentadas y rutas de mejora continua.</p>
+            <h3 class="app-title-4">Gestión de Riesgos</h3>
+            <p class="app-text-4">Evaluación continua de riesgos climáticos, fitosanitarios y de mercado con simulación de escenarios y respuestas automáticas.</p>
+          </div>
+          <div class="app-card">
+            <h3 class="app-title-5">Copilotos Operativos</h3>
+            <p class="app-text-5">Asistentes agénticos para equipos de campo, finanzas y compras con acceso contextual y ejecución de tareas rutinarias.</p>
+          </div>
+          <div class="app-card">
+            <h3 class="app-title-6">Integración Legacy</h3>
+            <p class="app-text-6">Wrappers agénticos para conectar sistemas existentes (ERPs, sensores IoT) sin refundaciones costosas.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="lineas">
+    <section id="dominios">
       <div class="section-header">
-        <h2 class="section-title">Líneas de Investigación</h2>
-        <p class="section-subtitle">
-          Temas en curso vinculados a agentes, integración y métricas en producción.
+        <h2 class="section-title section-title-3">Dominios Técnicos</h2>
+        <p class="section-subtitle section-subtitle-2">
+          Áreas de práctica en arquitectura, implementación y gobernanza de sistemas agénticos.
         </p>
       </div>
       <div class="insights-grid">
         <div class="insight-card">
-          <div class="insight-tag">Arquitectura</div>
-          <h3 class="insight-title">Patrones de Orquestación Multi-agente</h3>
-          <p class="insight-text">
-            Colas de trabajo, límites de responsabilidad y protocolos de handoff como base de resiliencia operativa.
+          <div class="insight-tag insight-tag-1">Arquitectura</div>
+          <h3 class="insight-title insight-title-1">Patrones de Orquestación</h3>
+          <p class="insight-text insight-text-1">
+            Diseño de arquitecturas mono y multi-agente. Colas de trabajo, límites de responsabilidad y protocolos de handoff para resiliencia operativa.
           </p>
         </div>
         <div class="insight-card">
-          <div class="insight-tag">Métricas</div>
-          <h3 class="insight-title">KPIs que Importan</h3>
-          <p class="insight-text">
-            Tiempo a decisión, costo por interacción y tasa de handoffs para seguimiento de impacto real.
+          <div class="insight-tag insight-tag-2">Métricas</div>
+          <h3 class="insight-title insight-title-2">KPIs Agénticos</h3>
+          <p class="insight-text insight-text-2">
+            Tiempo a decisión, costo por interacción, tasa de handoffs. Instrumentación desde día uno para observabilidad y mejora iterativa.
           </p>
         </div>
         <div class="insight-card">
-          <div class="insight-tag">Integración</div>
-          <h3 class="insight-title">Legacy como Activo</h3>
-          <p class="insight-text">
-            Capas de interoperabilidad para preservar inversiones existentes y habilitar nuevos agentes.
+          <div class="insight-tag insight-tag-3">Gobernanza</div>
+          <h3 class="insight-title insight-title-3">Seguridad y Control</h3>
+          <p class="insight-text insight-text-3">
+            Sandboxing, límites de autonomía, auditoría continua. Balance entre velocidad de innovación y controles operativos.
           </p>
         </div>
       </div>
     </section>
 
-    <section id="materiales" class="tight">
+    <section id="practica" class="tight">
       <div class="section-header">
-        <h2 class="section-title">Materiales de Referencia</h2>
-        <p class="section-subtitle">
-          Selección de notas, marcos y guías en desarrollo continuo. Formato educativo e informativo.
+        <h2 class="section-title section-title-4">Marco de Práctica</h2>
+        <p class="section-subtitle section-subtitle-3">
+          Enfoque por etapas desde exploración hasta producción sostenible.
         </p>
       </div>
       <div class="domains-grid">
         <div class="domain-card">
-          <h3 class="domain-title">Guía de Madurez Agéntica</h3>
+          <h3 class="domain-title domain-title-4">Exploración Controlada</h3>
           <ul class="domain-list">
-            <li>De asistentes a agentes autónomos supervisados</li>
-            <li>Hitos medibles por etapa de evolución</li>
-            <li>Riesgos comunes y estrategias de mitigación</li>
+            <li class="domain-li-10">Definición de alcance responsable y criterios de evaluación</li>
+            <li class="domain-li-11">Instrumentación desde el inicio para trazabilidad</li>
+            <li class="domain-li-12">Identificación de límites de autonomía apropiados</li>
           </ul>
         </div>
         <div class="domain-card">
-          <h3 class="domain-title">Diseño de KPIs Agénticos</h3>
+          <h3 class="domain-title domain-title-5">Implementación Iterativa</h3>
           <ul class="domain-list">
-            <li>Tiempo a decisión y latencia operativa</li>
-            <li>Costo por interacción y eficiencia económica</li>
-            <li>Tasa de handoffs y escalamiento inteligente</li>
+            <li class="domain-li-13">Crawl-Walk-Run: asistente → copiloto → agente autónomo</li>
+            <li class="domain-li-14">Pilotos con protocolos de seguridad y criterios de salida</li>
+            <li class="domain-li-15">Feedback loops cerrados para calibración continua</li>
+          </ul>
+        </div>
+        <div class="domain-card">
+          <h3 class="domain-title domain-title-6">Escalamiento Responsable</h3>
+          <ul class="domain-list">
+            <li class="domain-li-16">Transferencia de conocimiento y documentación técnica</li>
+            <li class="domain-li-17">Capacitación organizacional y change management</li>
+            <li class="domain-li-18">Monitoreo post-despliegue y optimización continua</li>
           </ul>
         </div>
       </div>
     </section>
 
     <section id="contacto" class="connect">
-      <h2>Contacto</h2>
-      <p class="connect-text">
-        Este sitio es una presentación educativa e informativa de la iniciativa Aigralys. Para referencias profesionales, trayectoria completa y materiales adicionales, puede consultarse el perfil público en LinkedIn.
+      <h2 class="connect-title">Contacto</h2>
+      <p class="connect-text connect-text-main">
+        Este sitio documenta el enfoque de Aigralys en sistemas de IA agéntica. Para referencias profesionales, trayectoria y proyectos, consultar perfil en LinkedIn.
       </p>
       <div class="footer-profile">
         <img src="./assets/gonzalo.jpg" alt="Gonzalo Abadía" class="profile-thumb">
         <a class="linkedin-button" href="https://www.linkedin.com/in/gonzalo-abadia" target="_blank" rel="noopener">
-          <span>Perfil Profesional en LinkedIn</span>
+          <span class="linkedin-text">Perfil Profesional en LinkedIn</span>
         </a>
       </div>
     </section>
 
     <footer>
-      <p>Aigralys — Iniciativa de investigación en IA agéntica por Gonzalo Abadía</p>
+      <p class="footer-text">Aigralys — Sistemas de IA Agéntica por Gonzalo Abadía</p>
     </footer>
   </div>
 
   <script>
     let currentLang = 'es';
     
+    const translations = {
+      es: {
+        navLinks: ['IA Agéntica', 'Agroindustria', 'Dominios', 'Práctica', 'Contacto'],
+        heroBadge: 'Agentic AI · Digital Ecosystems',
+        heroTitle: 'IA Agéntica para Ecosistemas Digitales Complejos',
+        heroSubtitle: 'Aigralys documenta prácticas de diseño, implementación y gobernanza de sistemas agénticos de IA aplicados a transformación operativa en industrias de alta complejidad, con especialización en agroindustria.',
+        recogLabels: ['Años en IT', 'Agéntica', 'Focus'],
+        sectionTitle1: 'Qué es IA Agéntica',
+        sectionSubtitle1: 'Sistemas de IA capaces de tomar decisiones autónomas, ejecutar acciones y coordinar con otros agentes para lograr objetivos complejos en entornos operativos reales. No son chatbots: son agentes que actúan.',
+        domainTitles1: ['Autonomía Supervisada', 'Orquestación Multi-agente', 'Integración con Ecosistemas'],
+        domainLists1: [
+          ['Agentes que toman decisiones operativas dentro de límites definidos', 'Escalamiento inteligente a humanos cuando se requiere expertise', 'Aprendizaje continuo desde feedback y resultados medidos'],
+          ['Coordinación entre agentes especializados por función', 'Protocolos de handoff y colas de trabajo distribuidas', 'Resiliencia operativa ante fallas individuales'],
+          ['Conexión con ERPs, CRMs, sistemas legacy y telemetría IoT', 'Decisiones en tiempo real sobre datos distribuidos', 'Trazabilidad completa de acciones y razonamiento']
+        ],
+        sectionTitle2: 'IA Agéntica en Agroindustria',
+        focusIntro: 'La agroindustria es uno de los contextos más exigentes para sistemas agénticos: decisiones en tiempo real con datos climáticos, edáficos, de mercado, logística y cumplimiento normativo. Desde campo hasta despacho, los agentes orquestan complejidad operativa crítica.',
+        appTitles: ['Planificación Operativa', 'Trazabilidad End-to-End', 'Optimización Logística', 'Gestión de Riesgos', 'Copilotos Operativos', 'Integración Legacy'],
+        appTexts: [
+          'Agentes que orquestan decisiones de siembra, riego y cosecha integrando clima, suelo, mercados y recursos en tiempo real.',
+          'Monitoreo de insumos, lotes, transporte y almacenamiento con alertas automáticas ante desviaciones y cumplimiento normativo.',
+          'Coordinación multi-agente para cosecha, transporte y acopio con optimización dinámica de rutas y asignación de recursos.',
+          'Evaluación continua de riesgos climáticos, fitosanitarios y de mercado con simulación de escenarios y respuestas automáticas.',
+          'Asistentes agénticos para equipos de campo, finanzas y compras con acceso contextual y ejecución de tareas rutinarias.',
+          'Wrappers agénticos para conectar sistemas existentes (ERPs, sensores IoT) sin refundaciones costosas.'
+        ],
+        sectionTitle3: 'Dominios Técnicos',
+        sectionSubtitle2: 'Áreas de práctica en arquitectura, implementación y gobernanza de sistemas agénticos.',
+        insightTags: ['Arquitectura', 'Métricas', 'Gobernanza'],
+        insightTitles: ['Patrones de Orquestación', 'KPIs Agénticos', 'Seguridad y Control'],
+        insightTexts: [
+          'Diseño de arquitecturas mono y multi-agente. Colas de trabajo, límites de responsabilidad y protocolos de handoff para resiliencia operativa.',
+          'Tiempo a decisión, costo por interacción, tasa de handoffs. Instrumentación desde día uno para observabilidad y mejora iterativa.',
+          'Sandboxing, límites de autonomía, auditoría continua. Balance entre velocidad de innovación y controles operativos.'
+        ],
+        sectionTitle4: 'Marco de Práctica',
+        sectionSubtitle3: 'Enfoque por etapas desde exploración hasta producción sostenible.',
+        domainTitles2: ['Exploración Controlada', 'Implementación Iterativa', 'Escalamiento Responsable'],
+        domainLists2: [
+          ['Definición de alcance responsable y criterios de evaluación', 'Instrumentación desde el inicio para trazabilidad', 'Identificación de límites de autonomía apropiados'],
+          ['Crawl-Walk-Run: asistente → copiloto → agente autónomo', 'Pilotos con protocolos de seguridad y criterios de salida', 'Feedback loops cerrados para calibración continua'],
+          ['Transferencia de conocimiento y documentación técnica', 'Capacitación organizacional y change management', 'Monitoreo post-despliegue y optimización continua']
+        ],
+        connectTitle: 'Contacto',
+        connectText: 'Este sitio documenta el enfoque de Aigralys en sistemas de IA agéntica. Para referencias profesionales, trayectoria y proyectos, consultar perfil en LinkedIn.',
+        linkedinText: 'Perfil Profesional en LinkedIn',
+        footerText: 'Aigralys — Sistemas de IA Agéntica por Gonzalo Abadía'
+      },
+      en: {
+        navLinks: ['Agentic AI', 'Agribusiness', 'Domains', 'Practice', 'Contact'],
+        heroBadge: 'Agentic AI · Digital Ecosystems',
+        heroTitle: 'Agentic AI for Complex Digital Ecosystems',
+        heroSubtitle: 'Aigralys documents practices in design, implementation, and governance of agentic AI systems applied to operational transformation in high-complexity industries, with specialization in agribusiness.',
+        recogLabels: ['Years in IT', 'Agentic', 'Focus'],
+        sectionTitle1: 'What is Agentic AI',
+        sectionSubtitle1: 'AI systems capable of making autonomous decisions, executing actions, and coordinating with other agents to achieve complex objectives in real operational environments. Not chatbots: they are agents that act.',
+        domainTitles1: ['Supervised Autonomy', 'Multi-agent Orchestration', 'Ecosystem Integration'],
+        domainLists1: [
+          ['Agents making operational decisions within defined boundaries', 'Intelligent escalation to humans when expertise is required', 'Continuous learning from feedback and measured results'],
+          ['Coordination between function-specialized agents', 'Handoff protocols and distributed work queues', 'Operational resilience against individual failures'],
+          ['Connection with ERPs, CRMs, legacy systems, and IoT telemetry', 'Real-time decisions on distributed data', 'Complete traceability of actions and reasoning']
+        ],
+        sectionTitle2: 'Agentic AI in Agribusiness',
+        focusIntro: 'Agribusiness is one of the most demanding contexts for agentic systems: real-time decisions with climate, soil, market, logistics, and regulatory compliance data. From field to dispatch, agents orchestrate critical operational complexity.',
+        appTitles: ['Operational Planning', 'End-to-End Traceability', 'Logistics Optimization', 'Risk Management', 'Operational Copilots', 'Legacy Integration'],
+        appTexts: [
+          'Agents orchestrating planting, irrigation, and harvest decisions by integrating climate, soil, markets, and resources in real time.',
+          'Monitoring of inputs, batches, transport, and storage with automatic alerts on deviations and regulatory compliance.',
+          'Multi-agent coordination for harvest, transport, and storage with dynamic route optimization and resource allocation.',
+          'Continuous evaluation of climate, phytosanitary, and market risks with scenario simulation and automatic responses.',
+          'Agentic assistants for field, finance, and procurement teams with contextual access and routine task execution.',
+          'Agentic wrappers to connect existing systems (ERPs, IoT sensors) without costly overhauls.'
+        ],
+        sectionTitle3: 'Technical Domains',
+        sectionSubtitle2: 'Practice areas in architecture, implementation, and governance of agentic systems.',
+        insightTags: ['Architecture', 'Metrics', 'Governance'],
+        insightTitles: ['Orchestration Patterns', 'Agentic KPIs', 'Security & Control'],
+        insightTexts: [
+          'Design of mono and multi-agent architectures. Work queues, ownership boundaries, and handoff protocols for operational resilience.',
+          'Time-to-decision, cost per interaction, handoff rate. Day-one instrumentation for observability and iterative improvement.',
+          'Sandboxing, autonomy limits, continuous auditing. Balance between innovation speed and operational controls.'
+        ],
+        sectionTitle4: 'Practice Framework',
+        sectionSubtitle3: 'Staged approach from exploration to sustainable production.',
+        domainTitles2: ['Controlled Exploration', 'Iterative Implementation', 'Responsible Scaling'],
+        domainLists2: [
+          ['Definition of responsible scope and evaluation criteria', 'Day-one instrumentation for traceability', 'Identification of appropriate autonomy boundaries'],
+          ['Crawl-Walk-Run: assistant → copilot → autonomous agent', 'Pilots with safety protocols and exit criteria', 'Closed feedback loops for continuous calibration'],
+          ['Knowledge transfer and technical documentation', 'Organizational training and change management', 'Post-deployment monitoring and continuous optimization']
+        ],
+        connectTitle: 'Contact',
+        connectText: 'This site documents Aigralys\' approach to agentic AI systems. For professional references, background, and projects, see LinkedIn profile.',
+        linkedinText: 'Professional Profile on LinkedIn',
+        footerText: 'Aigralys — Agentic AI Systems by Gonzalo Abadía'
+      }
+    };
+    
     function toggleLanguage() {
       currentLang = currentLang === 'es' ? 'en' : 'es';
       const btn = document.querySelector('.lang-switch');
       btn.textContent = currentLang === 'es' ? 'EN' : 'ES';
       document.documentElement.lang = currentLang;
+      
+      const t = translations[currentLang];
+      
+      // Navigation
+      document.querySelectorAll('.nav-text').forEach((el, i) => {
+        el.textContent = t.navLinks[i];
+      });
+      
+      // Hero
+      document.querySelector('.hero-badge-text').textContent = t.heroBadge;
+      document.querySelector('h1').innerHTML = `<span class="highlight">${currentLang === 'es' ? 'IA Agéntica' : 'Agentic AI'}</span> ${currentLang === 'es' ? 'para Ecosistemas Digitales Complejos' : 'for Complex Digital Ecosystems'}`;
+      document.querySelector('.hero-subtitle-text').textContent = t.heroSubtitle;
+      document.querySelectorAll('.recognition-label').forEach((el, i) => {
+        el.textContent = t.recogLabels[i];
+      });
+      
+      // Section 1
+      document.querySelector('.section-title-1').textContent = t.sectionTitle1;
+      document.querySelector('.section-subtitle-1').textContent = t.sectionSubtitle1;
+      document.querySelectorAll('.domain-title')[0].textContent = t.domainTitles1[0];
+      document.querySelectorAll('.domain-title')[1].textContent = t.domainTitles1[1];
+      document.querySelectorAll('.domain-title')[2].textContent = t.domainTitles1[2];
+      
+      for(let i = 0; i < 3; i++) {
+        const list = document.querySelectorAll('.domain-card')[i].querySelectorAll('li');
+        list.forEach((li, j) => {
+          li.textContent = t.domainLists1[i][j];
+        });
+      }
+      
+      // Agro section
+      document.querySelector('.section-title-2').textContent = t.sectionTitle2;
+      document.querySelector('.focus-intro-text').textContent = t.focusIntro;
+      document.querySelectorAll('.app-card h3').forEach((el, i) => {
+        el.textContent = t.appTitles[i];
+      });
+      document.querySelectorAll('.app-card p').forEach((el, i) => {
+        el.textContent = t.appTexts[i];
+      });
+      
+      // Domains section
+      document.querySelector('.section-title-3').textContent = t.sectionTitle3;
+      document.querySelector('.section-subtitle-2').textContent = t.sectionSubtitle2;
+      document.querySelectorAll('.insight-tag').forEach((el, i) => {
+        el.textContent = t.insightTags[i];
+      });
+      document.querySelectorAll('.insight-title').forEach((el, i) => {
+        el.textContent = t.insightTitles[i];
+      });
+      document.querySelectorAll('.insight-text').forEach((el, i) => {
+        el.textContent = t.insightTexts[i];
+      });
+      
+      // Practice section
+      document.querySelector('.section-title-4').textContent = t.sectionTitle4;
+      document.querySelector('.section-subtitle-3').textContent = t.sectionSubtitle3;
+      document.querySelectorAll('.domain-title')[3].textContent = t.domainTitles2[0];
+      document.querySelectorAll('.domain-title')[4].textContent = t.domainTitles2[1];
+      document.querySelectorAll('.domain-title')[5].textContent = t.domainTitles2[2];
+      
+      for(let i = 0; i < 3; i++) {
+        const list = document.querySelectorAll('.domain-card')[i + 3].querySelectorAll('li');
+        list.forEach((li, j) => {
+          li.textContent = t.domainLists2[i][j];
+        });
+      }
+      
+      // Contact
+      document.querySelector('.connect-title').textContent = t.connectTitle;
+      document.querySelector('.connect-text-main').textContent = t.connectText;
+      document.querySelector('.linkedin-text').textContent = t.linkedinText;
+      document.querySelector('.footer-text').textContent = t.footerText;
     }
     
+    // Smooth scroll
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function (e) {
         e.preventDefault();
@@ -869,6 +1054,7 @@
       });
     });
     
+    // Scroll animations
     const observerOptions = {
       threshold: 0.1,
       rootMargin: '0px 0px -100px 0px'
