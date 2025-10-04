@@ -1,0 +1,5 @@
+# Forzar HTTPS
+http://*    https://:splat   301!
+
+# Forzar dominio principal sin www
+https://www.aigralys.ai/*   https://aigralys.ai/:splat   301!
