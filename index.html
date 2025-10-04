@@ -1,672 +1,661 @@
 <!DOCTYPE html>
-
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aigralys - Agentic AI Research by Gonzalo Abadía</title>
-  <meta name="description" content="Aigralys: Investigación y educación en sistemas agénticos de IA para ecosistemas digitales complejos. Por Gonzalo Abadía.">
+  <meta name="description" content="Aigralys: Investigación y educación en sistemas agénticos de IA para ecosistemas digitales complejos.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * {
+    *, *::before, *::after {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
-```
-:root {
-  --grafito: #1C1C1E;
-  --grafito-light: #2d2d3a;
-  --off-white: #F8F9FA;
-  --teal: #00B3A4;
-  --teal-dark: #009688;
-  --cyan: #00CFFF;
-  --oliva: #7DA453;
-  --naranja: #FF7043;
-  --border: rgba(0, 179, 164, 0.15);
-  --glow: rgba(0, 179, 164, 0.3);
-}
-
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--grafito);
-  color: var(--off-white);
-  line-height: 1.6;
-  overflow-x: hidden;
-  position: relative;
-}
-
-/* Futuristic animated background */
-.bg-animation {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  opacity: 0.4;
-  background: 
-    radial-gradient(circle at 20% 50%, rgba(0, 179, 164, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(125, 164, 83, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 40% 20%, rgba(0, 207, 255, 0.05) 0%, transparent 40%);
-}
-
-.grid-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  background-image: 
-    linear-gradient(rgba(0, 179, 164, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 179, 164, 0.03) 1px, transparent 1px);
-  background-size: 50px 50px;
-  pointer-events: none;
-}
-
-.floating-shapes {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.shape {
-  position: absolute;
-  border: 1px solid var(--border);
-  animation: float 20s infinite ease-in-out;
-}
-
-.shape-1 {
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  top: 10%;
-  right: 10%;
-  animation-delay: 0s;
-}
-
-.shape-2 {
-  width: 150px;
-  height: 150px;
-  transform: rotate(45deg);
-  bottom: 20%;
-  left: 15%;
-  animation-delay: 5s;
-}
-
-.shape-3 {
-  width: 100px;
-  height: 100px;
-  border-radius: 20px;
-  top: 60%;
-  right: 20%;
-  animation-delay: 10s;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  25% { transform: translateY(-20px) rotate(5deg); }
-  50% { transform: translateY(-40px) rotate(-5deg); }
-  75% { transform: translateY(-20px) rotate(5deg); }
-}
-
-.content {
-  position: relative;
-  z-index: 10;
-}
-
-/* Navigation */
-nav {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  background: rgba(28, 28, 30, 0.95);
-  backdrop-filter: blur(20px);
-  z-index: 1000;
-  border-bottom: 1px solid var(--border);
-}
-
-.nav-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 1.2rem 3rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.brand-logo {
-  height: 45px;
-  width: auto;
-}
-
-.brand-text {
-  font-size: 1.5rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, var(--teal) 0%, var(--cyan) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -0.5px;
-}
-
-.nav-links {
-  display: flex;
-  gap: 2.5rem;
-  list-style: none;
-  align-items: center;
-}
-
-.nav-links a {
-  color: rgba(248, 249, 250, 0.8);
-  text-decoration: none;
-  transition: all 0.3s;
-  font-size: 0.95rem;
-  font-weight: 500;
-  position: relative;
-}
-
-.nav-links a::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: var(--teal);
-  transition: width 0.3s;
-}
-
-.nav-links a:hover {
-  color: var(--teal);
-}
-
-.nav-links a:hover::after {
-  width: 100%;
-}
-
-.lang-switch {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--off-white);
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: all 0.3s;
-}
-
-.lang-switch:hover {
-  border-color: var(--teal);
-  background: rgba(0, 179, 164, 0.1);
-  box-shadow: 0 0 20px var(--glow);
-}
-
-/* Hero Section */
-.hero {
-  padding: 12rem 3rem 8rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.hero-logo {
-  margin: 0 auto 3rem;
-  display: block;
-  width: 200px;
-  height: auto;
-  filter: drop-shadow(0 0 30px var(--glow));
-}
-
-.hero-badge {
-  display: inline-block;
-  padding: 0.5rem 1.5rem;
-  background: rgba(0, 179, 164, 0.1);
-  border: 1px solid var(--border);
-  border-radius: 30px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--cyan);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 2rem;
-}
-
-.hero h1 {
-  font-size: 3.5rem;
-  line-height: 1.2;
-  margin-bottom: 2rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, var(--off-white) 0%, var(--teal) 60%, var(--cyan) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -2px;
-}
-
-.hero-subtitle {
-  font-size: 1.25rem;
-  color: rgba(248, 249, 250, 0.7);
-  margin-bottom: 3rem;
-  line-height: 1.8;
-  font-weight: 300;
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.recognition-bar {
-  display: flex;
-  gap: 4rem;
-  margin: 0 auto;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.recognition-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.recognition-number {
-  font-size: 2.8rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, var(--teal) 0%, var(--cyan) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.recognition-label {
-  font-size: 0.85rem;
-  color: rgba(248, 249, 250, 0.6);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 600;
-}
-
-/* Sections */
-section {
-  padding: 6rem 3rem;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-section.tight {
-  padding: 5rem 3rem;
-}
-
-.section-header {
-  text-align: center;
-  margin-bottom: 5rem;
-}
-
-.section-title {
-  font-size: 3rem;
-  font-weight: 800;
-  margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, var(--off-white) 0%, var(--teal) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.section-subtitle {
-  font-size: 1.2rem;
-  color: rgba(248, 249, 250, 0.7);
-  max-width: 900px;
-  margin: 0 auto;
-  font-weight: 300;
-  line-height: 1.8;
-}
-
-/* Domain Cards */
-.domains-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  gap: 2.5rem;
-}
-
-.domain-card {
-  background: linear-gradient(135deg, rgba(0, 179, 164, 0.05) 0%, rgba(28, 28, 30, 0.8) 100%);
-  padding: 3rem;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  transition: all 0.4s;
-  position: relative;
-  overflow: hidden;
-}
-
-.domain-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, var(--teal) 0%, var(--cyan) 50%, var(--oliva) 100%);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.4s;
-}
-
-.domain-card:hover::before {
-  transform: scaleX(1);
-}
-
-.domain-card:hover {
-  transform: translateY(-8px);
-  border-color: var(--teal);
-  box-shadow: 0 20px 60px rgba(0, 179, 164, 0.2);
-}
-
-.domain-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  color: var(--teal);
-}
-
-.domain-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.domain-list li {
-  padding-left: 1.8rem;
-  position: relative;
-  color: rgba(248, 249, 250, 0.8);
-  font-size: 0.95rem;
-  line-height: 1.6;
-}
-
-.domain-list li::before {
-  content: '▸';
-  position: absolute;
-  left: 0;
-  color: var(--oliva);
-  font-weight: bold;
-}
-
-/* Focus Areas */
-.focus-areas {
-  background: linear-gradient(135deg, rgba(125, 164, 83, 0.08) 0%, rgba(0, 179, 164, 0.05) 100%);
-  padding: 6rem 3rem;
-  margin: 4rem 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-
-.focus-container {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.focus-intro {
-  font-size: 1.2rem;
-  line-height: 1.9;
-  color: rgba(248, 249, 250, 0.8);
-  margin-bottom: 4rem;
-  text-align: center;
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.applications-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 2rem;
-}
-
-.app-card {
-  background: rgba(28, 28, 30, 0.6);
-  padding: 2.5rem;
-  border-radius: 16px;
-  border: 1px solid rgba(125, 164, 83, 0.2);
-  border-left: 4px solid var(--oliva);
-  transition: all 0.3s;
-}
-
-.app-card:hover {
-  transform: translateX(8px);
-  border-left-color: var(--teal);
-  background: rgba(28, 28, 30, 0.8);
-  box-shadow: 0 10px 40px rgba(125, 164, 83, 0.2);
-}
-
-.app-card h3 {
-  color: var(--oliva);
-  margin-bottom: 1rem;
-  font-size: 1.3rem;
-  font-weight: 600;
-}
-
-.app-card p {
-  color: rgba(248, 249, 250, 0.75);
-  font-size: 0.95rem;
-  line-height: 1.7;
-}
-
-/* Insights */
-.insights-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 2.5rem;
-}
-
-.insight-card {
-  background: rgba(255, 255, 255, 0.02);
-  padding: 2.5rem;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  transition: all 0.4s;
-  position: relative;
-}
-
-.insight-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 16px;
-  background: linear-gradient(135deg, var(--teal) 0%, var(--cyan) 100%);
-  opacity: 0;
-  transition: opacity 0.4s;
-  z-index: -1;
-}
-
-.insight-card:hover::after {
-  opacity: 0.05;
-}
-
-.insight-card:hover {
-  transform: translateY(-6px);
-  border-color: var(--cyan);
-  box-shadow: 0 15px 50px rgba(0, 207, 255, 0.2);
-}
-
-.insight-tag {
-  display: inline-block;
-  padding: 0.4rem 1rem;
-  background: rgba(0, 179, 164, 0.15);
-  color: var(--cyan);
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 1.5rem;
-}
-
-.insight-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  color: var(--teal);
-  line-height: 1.4;
-}
-
-.insight-text {
-  color: rgba(248, 249, 250, 0.75);
-  line-height: 1.7;
-  font-size: 0.95rem;
-}
-
-/* Connect Section */
-.connect {
-  text-align: center;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 6rem 3rem;
-}
-
-.connect h2 {
-  font-size: 2.8rem;
-  font-weight: 800;
-  margin-bottom: 2rem;
-  background: linear-gradient(135deg, var(--off-white) 0%, var(--teal) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.connect-text {
-  font-size: 1.15rem;
-  color: rgba(248, 249, 250, 0.7);
-  margin-bottom: 3rem;
-  line-height: 1.8;
-}
-
-.footer-profile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-}
-
-.profile-thumb {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  border: 3px solid var(--teal);
-  object-fit: cover;
-  box-shadow: 0 8px 30px rgba(0, 179, 164, 0.3);
-}
-
-.linkedin-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.2rem 3rem;
-  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
-  color: var(--grafito);
-  text-decoration: none;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 1.05rem;
-  transition: all 0.3s;
-  border: 2px solid var(--teal);
-}
-
-.linkedin-button:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 15px 50px var(--glow);
-}
-
-/* Footer */
-footer {
-  text-align: center;
-  padding: 4rem 3rem;
-  border-top: 1px solid var(--border);
-  color: rgba(248, 249, 250, 0.4);
-  font-size: 0.9rem;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .nav-links {
-    display: none;
-  }
-
-  .hero h1 {
-    font-size: 2.8rem;
-  }
-
-  .section-title {
-    font-size: 2.4rem;
-  }
-
-  .domains-grid,
-  .applications-grid,
-  .insights-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .nav-container {
-    padding: 1rem 1.5rem;
-  }
-
-  .hero {
-    padding: 10rem 1.5rem 6rem;
-  }
-
-  .hero-logo {
-    width: 150px;
-  }
-
-  .hero h1 {
-    font-size: 2.2rem;
-    letter-spacing: -1px;
-  }
-
-  .hero-subtitle {
-    font-size: 1.1rem;
-  }
-
-  .recognition-bar {
-    gap: 2.5rem;
-  }
-
-  .recognition-number {
-    font-size: 2.2rem;
-  }
-
-  section {
-    padding: 4rem 1.5rem;
-  }
-
-  .section-title {
-    font-size: 2rem;
-  }
-}
-
-html {
-  scroll-behavior: smooth;
-}
-```
-
+    :root {
+      --grafito: #1C1C1E;
+      --grafito-light: #2d2d3a;
+      --off-white: #F8F9FA;
+      --teal: #00B3A4;
+      --teal-dark: #009688;
+      --cyan: #00CFFF;
+      --oliva: #7DA453;
+      --border: rgba(0, 179, 164, 0.15);
+      --glow: rgba(0, 179, 164, 0.3);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--grafito);
+      color: var(--off-white);
+      line-height: 1.6;
+      overflow-x: hidden;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      opacity: 0.4;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(0, 179, 164, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(125, 164, 83, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(0, 207, 255, 0.05) 0%, transparent 40%);
+      pointer-events: none;
+    }
+
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 179, 164, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 179, 164, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+    }
+
+    .floating-shapes {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .shape {
+      position: absolute;
+      border: 1px solid var(--border);
+      animation: float 20s infinite ease-in-out;
+    }
+
+    .shape-1 {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      top: 10%;
+      right: 10%;
+      animation-delay: 0s;
+    }
+
+    .shape-2 {
+      width: 150px;
+      height: 150px;
+      transform: rotate(45deg);
+      bottom: 20%;
+      left: 15%;
+      animation-delay: 5s;
+    }
+
+    .shape-3 {
+      width: 100px;
+      height: 100px;
+      border-radius: 20px;
+      top: 60%;
+      right: 20%;
+      animation-delay: 10s;
+    }
+
+    @keyframes float {
+      0%, 100% { 
+        transform: translateY(0px) rotate(0deg); 
+      }
+      25% { 
+        transform: translateY(-20px) rotate(5deg); 
+      }
+      50% { 
+        transform: translateY(-40px) rotate(-5deg); 
+      }
+      75% { 
+        transform: translateY(-20px) rotate(5deg); 
+      }
+    }
+
+    .content {
+      position: relative;
+      z-index: 10;
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: rgba(28, 28, 30, 0.95);
+      backdrop-filter: blur(20px);
+      z-index: 1000;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.2rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand-logo {
+      height: 45px;
+      width: auto;
+    }
+
+    .brand-text {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--teal) 0%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      list-style: none;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: rgba(248, 249, 250, 0.8);
+      text-decoration: none;
+      transition: all 0.3s;
+      font-size: 0.95rem;
+      font-weight: 500;
+      position: relative;
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--teal);
+      transition: width 0.3s;
+    }
+
+    .nav-links a:hover {
+      color: var(--teal);
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .lang-switch {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--off-white);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+
+    .lang-switch:hover {
+      border-color: var(--teal);
+      background: rgba(0, 179, 164, 0.1);
+      box-shadow: 0 0 20px var(--glow);
+    }
+
+    .hero {
+      padding: 12rem 3rem 8rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .hero-logo {
+      margin: 0 auto 3rem;
+      display: block;
+      width: 200px;
+      height: auto;
+      filter: drop-shadow(0 0 30px var(--glow));
+    }
+
+    .hero-badge {
+      display: inline-block;
+      padding: 0.5rem 1.5rem;
+      background: rgba(0, 179, 164, 0.1);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 2rem;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      line-height: 1.2;
+      margin-bottom: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--off-white) 0%, var(--teal) 60%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -2px;
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: rgba(248, 249, 250, 0.7);
+      margin-bottom: 3rem;
+      line-height: 1.8;
+      font-weight: 300;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .recognition-bar {
+      display: flex;
+      gap: 4rem;
+      margin: 0 auto;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .recognition-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .recognition-number {
+      font-size: 2.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--teal) 0%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .recognition-label {
+      font-size: 0.85rem;
+      color: rgba(248, 249, 250, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    section {
+      padding: 6rem 3rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    section.tight {
+      padding: 5rem 3rem;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 5rem;
+    }
+
+    .section-title {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, var(--off-white) 0%, var(--teal) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-subtitle {
+      font-size: 1.2rem;
+      color: rgba(248, 249, 250, 0.7);
+      max-width: 900px;
+      margin: 0 auto;
+      font-weight: 300;
+      line-height: 1.8;
+    }
+
+    .domains-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2.5rem;
+    }
+
+    .domain-card {
+      background: linear-gradient(135deg, rgba(0, 179, 164, 0.05) 0%, rgba(28, 28, 30, 0.8) 100%);
+      padding: 3rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      transition: all 0.4s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .domain-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--teal) 0%, var(--cyan) 50%, var(--oliva) 100%);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s;
+    }
+
+    .domain-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .domain-card:hover {
+      transform: translateY(-8px);
+      border-color: var(--teal);
+      box-shadow: 0 20px 60px rgba(0, 179, 164, 0.2);
+    }
+
+    .domain-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: var(--teal);
+    }
+
+    .domain-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .domain-list li {
+      padding-left: 1.8rem;
+      position: relative;
+      color: rgba(248, 249, 250, 0.8);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .domain-list li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--oliva);
+      font-weight: bold;
+    }
+
+    .focus-areas {
+      background: linear-gradient(135deg, rgba(125, 164, 83, 0.08) 0%, rgba(0, 179, 164, 0.05) 100%);
+      padding: 6rem 3rem;
+      margin: 4rem 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .focus-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .focus-intro {
+      font-size: 1.2rem;
+      line-height: 1.9;
+      color: rgba(248, 249, 250, 0.8);
+      margin-bottom: 4rem;
+      text-align: center;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .applications-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .app-card {
+      background: rgba(28, 28, 30, 0.6);
+      padding: 2.5rem;
+      border-radius: 16px;
+      border: 1px solid rgba(125, 164, 83, 0.2);
+      border-left: 4px solid var(--oliva);
+      transition: all 0.3s;
+    }
+
+    .app-card:hover {
+      transform: translateX(8px);
+      border-left-color: var(--teal);
+      background: rgba(28, 28, 30, 0.8);
+      box-shadow: 0 10px 40px rgba(125, 164, 83, 0.2);
+    }
+
+    .app-card h3 {
+      color: var(--oliva);
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .app-card p {
+      color: rgba(248, 249, 250, 0.75);
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2.5rem;
+    }
+
+    .insight-card {
+      background: rgba(255, 255, 255, 0.02);
+      padding: 2.5rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      transition: all 0.4s;
+      position: relative;
+    }
+
+    .insight-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--teal) 0%, var(--cyan) 100%);
+      opacity: 0;
+      transition: opacity 0.4s;
+      z-index: -1;
+    }
+
+    .insight-card:hover::after {
+      opacity: 0.05;
+    }
+
+    .insight-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--cyan);
+      box-shadow: 0 15px 50px rgba(0, 207, 255, 0.2);
+    }
+
+    .insight-tag {
+      display: inline-block;
+      padding: 0.4rem 1rem;
+      background: rgba(0, 179, 164, 0.15);
+      color: var(--cyan);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1.5rem;
+    }
+
+    .insight-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--teal);
+      line-height: 1.4;
+    }
+
+    .insight-text {
+      color: rgba(248, 249, 250, 0.75);
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    .connect {
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 6rem 3rem;
+    }
+
+    .connect h2 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, var(--off-white) 0%, var(--teal) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .connect-text {
+      font-size: 1.15rem;
+      color: rgba(248, 249, 250, 0.7);
+      margin-bottom: 3rem;
+      line-height: 1.8;
+    }
+
+    .footer-profile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .profile-thumb {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 3px solid var(--teal);
+      object-fit: cover;
+      box-shadow: 0 8px 30px rgba(0, 179, 164, 0.3);
+    }
+
+    .linkedin-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.2rem 3rem;
+      background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+      color: var(--grafito);
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      transition: all 0.3s;
+      border: 2px solid var(--teal);
+    }
+
+    .linkedin-button:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 15px 50px var(--glow);
+    }
+
+    footer {
+      text-align: center;
+      padding: 4rem 3rem;
+      border-top: 1px solid var(--border);
+      color: rgba(248, 249, 250, 0.4);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 1024px) {
+      .nav-links {
+        display: none;
+      }
+      .hero h1 {
+        font-size: 2.8rem;
+      }
+      .section-title {
+        font-size: 2.4rem;
+      }
+      .domains-grid,
+      .applications-grid,
+      .insights-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .nav-container {
+        padding: 1rem 1.5rem;
+      }
+      .hero {
+        padding: 10rem 1.5rem 6rem;
+      }
+      .hero-logo {
+        width: 150px;
+      }
+      .hero h1 {
+        font-size: 2.2rem;
+        letter-spacing: -1px;
+      }
+      .hero-subtitle {
+        font-size: 1.1rem;
+      }
+      .recognition-bar {
+        gap: 2.5rem;
+      }
+      .recognition-number {
+        font-size: 2.2rem;
+      }
+      section {
+        padding: 4rem 1.5rem;
+      }
+      .section-title {
+        font-size: 2rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <!-- Animated Background -->
   <div class="bg-animation"></div>
   <div class="grid-overlay"></div>
   <div class="floating-shapes">
@@ -675,10 +664,7 @@ html {
     <div class="shape shape-3"></div>
   </div>
 
-  <!-- Content -->
-
   <div class="content">
-    <!-- Navigation -->
     <nav>
       <div class="nav-container">
         <div class="brand">
@@ -686,204 +672,178 @@ html {
           <span class="brand-text">Aigralys</span>
         </div>
         <ul class="nav-links">
-          <li><a href="#proposito" data-es="Propósito" data-en="Purpose">Propósito</a></li>
-          <li><a href="#marco" data-es="Marco" data-en="Framework">Marco</a></li>
-          <li><a href="#lineas" data-es="Líneas" data-en="Lines">Líneas</a></li>
-          <li><a href="#materiales" data-es="Materiales" data-en="Materials">Materiales</a></li>
-          <li><a href="#contacto" data-es="Contacto" data-en="Contact">Contacto</a></li>
+          <li><a href="#proposito">Propósito</a></li>
+          <li><a href="#marco">Marco</a></li>
+          <li><a href="#lineas">Líneas</a></li>
+          <li><a href="#materiales">Materiales</a></li>
+          <li><a href="#contacto">Contacto</a></li>
         </ul>
         <button class="lang-switch" onclick="toggleLanguage()">EN</button>
       </div>
     </nav>
 
-```
-<!-- Hero Section -->
-<section class="hero">
-  <img src="./assets/logo.png" alt="Aigralys" class="hero-logo">
-  <div class="hero-badge" data-es="Iniciativa de Investigación & Desarrollo" data-en="Research & Development Initiative">
-    Iniciativa de Investigación & Desarrollo
-  </div>
-  <h1 data-es="Investigación en IA Agéntica para Ecosistemas Complejos" data-en="Agentic AI Research for Complex Ecosystems">
-    Investigación en IA Agéntica para Ecosistemas Complejos
-  </h1>
-  <p class="hero-subtitle" data-es="Aigralys documenta y sistematiza prácticas responsables en diseño, implementación y gobernanza de sistemas agénticos aplicados a transformación operativa en industrias de alta complejidad." data-en="Aigralys documents and systematizes responsible practices in design, implementation and governance of agentic systems applied to operational transformation in high-complexity industries.">
-    Aigralys documenta y sistematiza prácticas responsables en diseño, implementación y gobernanza de sistemas agénticos aplicados a transformación operativa en industrias de alta complejidad.
-  </p>
-  
-  <div class="recognition-bar">
-    <div class="recognition-item">
-      <div class="recognition-number">20+</div>
-      <div class="recognition-label" data-es="Años en IT" data-en="Years in IT">Años en IT</div>
-    </div>
-    <div class="recognition-item">
-      <div class="recognition-number">AI</div>
-      <div class="recognition-label" data-es="Agéntica" data-en="Agentic">Agéntica</div>
-    </div>
-    <div class="recognition-item">
-      <div class="recognition-number">7</div>
-      <div class="recognition-label" data-es="Dominios" data-en="Domains">Dominios</div>
-    </div>
-  </div>
-</section>
-
-<!-- Purpose Section -->
-<section id="proposito" class="expertise tight">
-  <div class="section-header">
-    <h2 class="section-title" data-es="Propósito" data-en="Purpose">Propósito</h2>
-    <p class="section-subtitle" data-es="Explorar y documentar prácticas responsables de IA agéntica: cómo se diseñan, integran y evalúan agentes que conviven con sistemas existentes y personas, priorizando trazabilidad, gobernanza y aprendizaje continuo." data-en="Explore and document responsible practices in agentic AI: how to design, integrate and evaluate agents that coexist with existing systems and people, prioritizing traceability, governance and continuous learning.">
-      Explorar y documentar prácticas responsables de IA agéntica: cómo se diseñan, integran y evalúan agentes que conviven con sistemas existentes y personas, priorizando trazabilidad, gobernanza y aprendizaje continuo.
-    </p>
-  </div>
-  <div class="domains-grid">
-    <div class="domain-card">
-      <h3 class="domain-title" data-es="Fundamentos y Arquitecturas" data-en="Foundations & Architectures">Fundamentos y Arquitecturas</h3>
-      <ul class="domain-list">
-        <li data-es="Modelos base y trade-offs técnico-económicos" data-en="Base models and cost-performance trade-offs">Modelos base y trade-offs técnico-económicos</li>
-        <li data-es="Diseño mono-agente y multi-agente para orquestación" data-en="Mono-agent and multi-agent orchestration design">Diseño mono-agente y multi-agente para orquestación</li>
-        <li data-es="Interfaces lingüísticas y capacidades multimodales" data-en="Language interfaces and multimodal capabilities">Interfaces lingüísticas y capacidades multimodales</li>
-      </ul>
-    </div>
-    <div class="domain-card">
-      <h3 class="domain-title" data-es="Conexión con Ecosistemas" data-en="Connecting Ecosystems">Conexión con Ecosistemas</h3>
-      <ul class="domain-list">
-        <li data-es="Integración con ERPs/CRMs, operaciones de campo e IoT" data-en="Integration with ERPs/CRMs, field ops and IoT">Integración con ERPs/CRMs, operaciones de campo e IoT</li>
-        <li data-es="Gestión de complejidad: datos, latencia, fiabilidad" data-en="Managing complexity: data, latency, reliability">Gestión de complejidad: datos, latencia, fiabilidad</li>
-        <li data-es="Ajuste fino, empatía y diseño centrado en el usuario" data-en="Fine-tuning, empathy and human-centered design">Ajuste fino, empatía y diseño centrado en el usuario</li>
-      </ul>
-    </div>
-    <div class="domain-card">
-      <h3 class="domain-title" data-es="Gobernanza y Evaluación" data-en="Governance & Evaluation">Gobernanza y Evaluación</h3>
-      <ul class="domain-list">
-        <li data-es="Privacidad, auditoría y trazabilidad" data-en="Privacy, audit and traceability">Privacidad, auditoría y trazabilidad</li>
-        <li data-es="Sandboxing, A/B testing, límites de autonomía" data-en="Sandboxing, A/B testing, autonomy boundaries">Sandboxing, A/B testing, límites de autonomía</li>
-        <li data-es="KPIs: tiempo a decisión, costo por interacción, handoff rate" data-en="KPIs: time-to-decision, cost per interaction, handoff rate">KPIs: tiempo a decisión, costo por interacción, handoff rate</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<!-- Framework Section -->
-<section id="marco" class="focus-areas">
-  <div class="focus-container">
-    <div class="section-header">
-      <h2 class="section-title" data-es="Marco de Trabajo" data-en="Working Framework">Marco de Trabajo</h2>
-      <p class="focus-intro" data-es="Un enfoque por etapas que respeta los ritmos organizacionales y prioriza aprendizaje verificable." data-en="A staged approach that respects organizational rhythms and prioritizes verifiable learning.">
-        Un enfoque por etapas que respeta los ritmos organizacionales y prioriza aprendizaje verificable.
+    <section class="hero">
+      <img src="./assets/logo.png" alt="Aigralys" class="hero-logo">
+      <div class="hero-badge">Iniciativa de Investigación & Desarrollo</div>
+      <h1>Investigación en IA Agéntica para Ecosistemas Complejos</h1>
+      <p class="hero-subtitle">
+        Aigralys documenta y sistematiza prácticas responsables en diseño, implementación y gobernanza de sistemas agénticos aplicados a transformación operativa en industrias de alta complejidad.
       </p>
-    </div>
-    <div class="applications-grid">
-      <div class="app-card">
-        <h3 data-es="Exploración Guiada" data-en="Guided Exploration">Exploración Guiada</h3>
-        <p data-es="Definición de preguntas críticas, alcance responsable y criterios de evaluación claros desde el inicio." data-en="Define critical questions, responsible scope and clear evaluation criteria from the start.">
-          Definición de preguntas críticas, alcance responsable y criterios de evaluación claros desde el inicio.
+      <div class="recognition-bar">
+        <div class="recognition-item">
+          <div class="recognition-number">20+</div>
+          <div class="recognition-label">Años en IT</div>
+        </div>
+        <div class="recognition-item">
+          <div class="recognition-number">AI</div>
+          <div class="recognition-label">Agéntica</div>
+        </div>
+        <div class="recognition-item">
+          <div class="recognition-number">7</div>
+          <div class="recognition-label">Dominios</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="proposito" class="tight">
+      <div class="section-header">
+        <h2 class="section-title">Propósito</h2>
+        <p class="section-subtitle">
+          Explorar y documentar prácticas responsables de IA agéntica: cómo se diseñan, integran y evalúan agentes que conviven con sistemas existentes y personas, priorizando trazabilidad, gobernanza y aprendizaje continuo.
         </p>
       </div>
-      <div class="app-card">
-        <h3 data-es="Prototipos con Trazabilidad" data-en="Traceable Prototyping">Prototipos con Trazabilidad</h3>
-        <p data-es="Instrumentación desde el inicio para observabilidad, registro detallado y reproducibilidad completa." data-en="Instrumentation from day one for observability, detailed logging and full reproducibility.">
-          Instrumentación desde el inicio para observabilidad, registro detallado y reproducibilidad completa.
+      <div class="domains-grid">
+        <div class="domain-card">
+          <h3 class="domain-title">Fundamentos y Arquitecturas</h3>
+          <ul class="domain-list">
+            <li>Modelos base y trade-offs técnico-económicos</li>
+            <li>Diseño mono-agente y multi-agente para orquestación</li>
+            <li>Interfaces lingüísticas y capacidades multimodales</li>
+          </ul>
+        </div>
+        <div class="domain-card">
+          <h3 class="domain-title">Conexión con Ecosistemas</h3>
+          <ul class="domain-list">
+            <li>Integración con ERPs/CRMs, operaciones de campo e IoT</li>
+            <li>Gestión de complejidad: datos, latencia, fiabilidad</li>
+            <li>Ajuste fino, empatía y diseño centrado en el usuario</li>
+          </ul>
+        </div>
+        <div class="domain-card">
+          <h3 class="domain-title">Gobernanza y Evaluación</h3>
+          <ul class="domain-list">
+            <li>Privacidad, auditoría y trazabilidad</li>
+            <li>Sandboxing, A/B testing, límites de autonomía</li>
+            <li>KPIs: tiempo a decisión, costo por interacción, handoff rate</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="marco" class="focus-areas">
+      <div class="focus-container">
+        <div class="section-header">
+          <h2 class="section-title">Marco de Trabajo</h2>
+          <p class="focus-intro">
+            Un enfoque por etapas que respeta los ritmos organizacionales y prioriza aprendizaje verificable.
+          </p>
+        </div>
+        <div class="applications-grid">
+          <div class="app-card">
+            <h3>Exploración Guiada</h3>
+            <p>Definición de preguntas críticas, alcance responsable y criterios de evaluación claros desde el inicio.</p>
+          </div>
+          <div class="app-card">
+            <h3>Prototipos con Trazabilidad</h3>
+            <p>Instrumentación desde el inicio para observabilidad, registro detallado y reproducibilidad completa.</p>
+          </div>
+          <div class="app-card">
+            <h3>Pilotos con Control</h3>
+            <p>Límites de autonomía definidos, protocolos de seguridad y criterios de salida transparentes.</p>
+          </div>
+          <div class="app-card">
+            <h3>Transferencia y Documentación</h3>
+            <p>Materiales de aprendizaje estructurados, lecciones documentadas y rutas de mejora continua.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="lineas">
+      <div class="section-header">
+        <h2 class="section-title">Líneas de Investigación</h2>
+        <p class="section-subtitle">
+          Temas en curso vinculados a agentes, integración y métricas en producción.
         </p>
       </div>
-      <div class="app-card">
-        <h3 data-es="Pilotos con Control" data-en="Controlled Pilots">Pilotos con Control</h3>
-        <p data-es="Límites de autonomía definidos, protocolos de seguridad y criterios de salida transparentes." data-en="Defined autonomy boundaries, safety protocols and transparent exit criteria.">
-          Límites de autonomía definidos, protocolos de seguridad y criterios de salida transparentes.
+      <div class="insights-grid">
+        <div class="insight-card">
+          <div class="insight-tag">Arquitectura</div>
+          <h3 class="insight-title">Patrones de Orquestación Multi-agente</h3>
+          <p class="insight-text">
+            Colas de trabajo, límites de responsabilidad y protocolos de handoff como base de resiliencia operativa.
+          </p>
+        </div>
+        <div class="insight-card">
+          <div class="insight-tag">Métricas</div>
+          <h3 class="insight-title">KPIs que Importan</h3>
+          <p class="insight-text">
+            Tiempo a decisión, costo por interacción y tasa de handoffs para seguimiento de impacto real.
+          </p>
+        </div>
+        <div class="insight-card">
+          <div class="insight-tag">Integración</div>
+          <h3 class="insight-title">Legacy como Activo</h3>
+          <p class="insight-text">
+            Capas de interoperabilidad para preservar inversiones existentes y habilitar nuevos agentes.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="materiales" class="tight">
+      <div class="section-header">
+        <h2 class="section-title">Materiales de Referencia</h2>
+        <p class="section-subtitle">
+          Selección de notas, marcos y guías en desarrollo continuo. Formato educativo e informativo.
         </p>
       </div>
-      <div class="app-card">
-        <h3 data-es="Transferencia y Documentación" data-en="Transfer and Documentation">Transferencia y Documentación</h3>
-        <p data-es="Materiales de aprendizaje estructurados, lecciones documentadas y rutas de mejora continua." data-en="Structured learning materials, documented lessons and continuous improvement paths.">
-          Materiales de aprendizaje estructurados, lecciones documentadas y rutas de mejora continua.
-        </p>
+      <div class="domains-grid">
+        <div class="domain-card">
+          <h3 class="domain-title">Guía de Madurez Agéntica</h3>
+          <ul class="domain-list">
+            <li>De asistentes a agentes autónomos supervisados</li>
+            <li>Hitos medibles por etapa de evolución</li>
+            <li>Riesgos comunes y estrategias de mitigación</li>
+          </ul>
+        </div>
+        <div class="domain-card">
+          <h3 class="domain-title">Diseño de KPIs Agénticos</h3>
+          <ul class="domain-list">
+            <li>Tiempo a decisión y latencia operativa</li>
+            <li>Costo por interacción y eficiencia económica</li>
+            <li>Tasa de handoffs y escalamiento inteligente</li>
+          </ul>
+        </div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<!-- Research Lines Section -->
-<section id="lineas" class="insights">
-  <div class="section-header">
-    <h2 class="section-title" data-es="Líneas de Investigación" data-en="Research Lines">Líneas de Investigación</h2>
-    <p class="section-subtitle" data-es="Temas en curso vinculados a agentes, integración y métricas en producción." data-en="Ongoing topics related to agents, integration and metrics in production.">
-      Temas en curso vinculados a agentes, integración y métricas en producción.
-    </p>
-  </div>
-  <div class="insights-grid">
-    <div class="insight-card">
-      <div class="insight-tag" data-es="Arquitectura" data-en="Architecture">Arquitectura</div>
-      <h3 class="insight-title" data-es="Patrones de Orquestación Multi-agente" data-en="Multi-agent Orchestration Patterns">Patrones de Orquestación Multi-agente</h3>
-      <p class="insight-text" data-es="Colas de trabajo, límites de responsabilidad y protocolos de handoff como base de resiliencia operativa." data-en="Work queues, ownership boundaries and handoff protocols as the basis for operational resilience.">
-        Colas de trabajo, límites de responsabilidad y protocolos de handoff como base de resiliencia operativa.
+    <section id="contacto" class="connect">
+      <h2>Contacto</h2>
+      <p class="connect-text">
+        Este sitio es una presentación educativa e informativa de la iniciativa Aigralys. Para referencias profesionales, trayectoria completa y materiales adicionales, puede consultarse el perfil público en LinkedIn.
       </p>
-    </div>
-    <div class="insight-card">
-      <div class="insight-tag" data-es="Métricas" data-en="Metrics">Métricas</div>
-      <h3 class="insight-title" data-es="KPIs que Importan" data-en="KPIs that Matter">KPIs que Importan</h3>
-      <p class="insight-text" data-es="Tiempo a decisión, costo por interacción y tasa de handoffs para seguimiento de impacto real." data-en="Time-to-decision, cost per interaction and handoff rate to track real impact.">
-        Tiempo a decisión, costo por interacción y tasa de handoffs para seguimiento de impacto real.
-      </p>
-    </div>
-    <div class="insight-card">
-      <div class="insight-tag" data-es="Integración" data-en="Integration">Integración</div>
-      <h3 class="insight-title" data-es="Legacy como Activo" data-en="Legacy as an Asset">Legacy como Activo</h3>
-      <p class="insight-text" data-es="Capas de interoperabilidad para preservar inversiones existentes y habilitar nuevos agentes." data-en="Interoperability layers to preserve existing investments and enable new agents.">
-        Capas de interoperabilidad para preservar inversiones existentes y habilitar nuevos agentes.
-      </p>
-    </div>
-  </div>
-</section>
+      <div class="footer-profile">
+        <img src="./assets/gonzalo.jpg" alt="Gonzalo Abadía" class="profile-thumb">
+        <a class="linkedin-button" href="https://www.linkedin.com/in/gonzalo-abadia" target="_blank" rel="noopener">
+          <span>Perfil Profesional en LinkedIn</span>
+        </a>
+      </div>
+    </section>
 
-<!-- Materials Section -->
-<section id="materiales" class="expertise tight">
-  <div class="section-header">
-    <h2 class="section-title" data-es="Materiales de Referencia" data-en="Reference Materials">Materiales de Referencia</h2>
-    <p class="section-subtitle" data-es="Selección de notas, marcos y guías en desarrollo continuo. Formato educativo e informativo." data-en="Selected notes, frameworks and guides in continuous development. Educational and informational format.">
-      Selección de notas, marcos y guías en desarrollo continuo. Formato educativo e informativo.
-    </p>
-  </div>
-  <div class="domains-grid">
-    <div class="domain-card">
-      <h3 class="domain-title" data-es="Guía de Madurez Agéntica" data-en="Agentic Maturity Guide">Guía de Madurez Agéntica</h3>
-      <ul class="domain-list">
-        <li data-es="De asistentes a agentes autónomos supervisados" data-en="From assistants to supervised autonomous agents">De asistentes a agentes autónomos supervisados</li>
-        <li data-es="Hitos medibles por etapa de evolución" data-en="Measurable milestones per evolution stage">Hitos medibles por etapa de evolución</li>
-        <li data-es="Riesgos comunes y estrategias de mitigación" data-en="Common risks and mitigation strategies">Riesgos comunes y estrategias de mitigación</li>
-      </ul>
-    </div>
-    <div class="domain-card">
-      <h3 class="domain-title" data-es="Diseño de KPIs Agénticos" data-en="Designing Agentic KPIs">Diseño de KPIs Agénticos</h3>
-      <ul class="domain-list">
-        <li data-es="Tiempo a decisión y latencia operativa" data-en="Time-to-decision and operational latency">Tiempo a decisión y latencia operativa</li>
-        <li data-es="Costo por interacción y eficiencia económica" data-en="Cost per interaction and economic efficiency">Costo por interacción y eficiencia económica</li>
-        <li data-es="Tasa de handoffs y escalamiento inteligente" data-en="Handoff rate and intelligent escalation">Tasa de handoffs y escalamiento inteligente</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<!-- Contact Section -->
-<section id="contacto" class="connect">
-  <h2 data-es="Contacto" data-en="Contact">Contacto</h2>
-  <p class="connect-text" data-es="Este sitio es una presentación educativa e informativa de la iniciativa Aigralys. Para referencias profesionales, trayectoria completa y materiales adicionales, puede consultarse el perfil público en LinkedIn." data-en="This site is an educational and informational presentation of the Aigralys initiative. For professional references, complete background and additional materials, the public LinkedIn profile is available.">
-    Este sitio es una presentación educativa e informativa de la iniciativa Aigralys. Para referencias profesionales, trayectoria completa y materiales adicionales, puede consultarse el perfil público en LinkedIn.
-  </p>
-
-  <div class="footer-profile">
-    <img src="./assets/gonzalo.jpg" alt="Gonzalo Abadía" class="profile-thumb">
-    <a class="linkedin-button" href="https://www.linkedin.com/in/gonzalo-abadia" target="_blank" rel="noopener">
-      <span data-es="Perfil Profesional en LinkedIn" data-en="Professional Profile on LinkedIn">Perfil Profesional en LinkedIn</span>
-    </a>
-  </div>
-</section>
-
-<!-- Footer -->
-<footer>
-  <p data-es="Aigralys — Iniciativa de investigación en IA agéntica por Gonzalo Abadía" data-en="Aigralys — Agentic AI research initiative by Gonzalo Abadía">
-    Aigralys — Iniciativa de investigación en IA agéntica por Gonzalo Abadía
-  </p>
-</footer>
-```
-
+    <footer>
+      <p>Aigralys — Iniciativa de investigación en IA agéntica por Gonzalo Abadía</p>
+    </footer>
   </div>
 
   <script>
@@ -893,25 +853,9 @@ html {
       currentLang = currentLang === 'es' ? 'en' : 'es';
       const btn = document.querySelector('.lang-switch');
       btn.textContent = currentLang === 'es' ? 'EN' : 'ES';
-      
-      document.querySelectorAll('[data-es]').forEach(el => {
-        const text = el.getAttribute(`data-${currentLang}`);
-        if (text) {
-          if (el.children.length === 0) {
-            el.textContent = text;
-          } else {
-            const textNodes = Array.from(el.childNodes).filter(node => node.nodeType === Node.TEXT_NODE);
-            if (textNodes.length > 0) {
-              textNodes[0].textContent = text;
-            }
-          }
-        }
-      });
-      
       document.documentElement.lang = currentLang;
     }
     
-    // Smooth scroll
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function (e) {
         e.preventDefault();
@@ -925,7 +869,6 @@ html {
       });
     });
     
-    // Fade-in animations on scroll
     const observerOptions = {
       threshold: 0.1,
       rootMargin: '0px 0px -100px 0px'
@@ -947,53 +890,5 @@ html {
       observer.observe(card);
     });
   </script>
-
 </body>
 </html>
-
-<!-- 
-================================================================================
-AIGRALYS - ESTRUCTURA DE ARCHIVOS PARA DEPLOYMENT
-================================================================================
-
-📁 Estructura necesaria:
-/
-├── index.html (este archivo completo)
-└── assets/
-    ├── logo.png (logo de Aigralys)
-    └── gonzalo.jpg (foto de perfil de Gonzalo Abadía)
-
-🚀 Pasos para subir al hosting:
-
-1. Crear carpeta "assets" en el directorio raíz
-2. Guardar el logo de Aigralys como "assets/logo.png"
-3. Guardar la foto de Gonzalo como "assets/gonzalo.jpg"
-4. Guardar este código completo como "index.html"
-5. Subir todos los archivos manteniendo la estructura
-
-📋 Características del sitio:
-
-✅ Todo el CSS está inline (no necesitas archivo separado)
-✅ Todo el JavaScript está inline (no necesitas archivo separado)
-✅ Background futurista animado con gradientes y grid overlay
-✅ Formas geométricas flotantes animadas
-✅ Hover effects con glow y transformaciones suaves
-✅ Sistema bilingüe español/inglés funcional
-✅ Navegación smooth scroll
-✅ Animaciones de fade-in al hacer scroll
-✅ Diseño responsive para móviles
-✅ Paleta de colores: Grafito + Teal + Cyan + Oliva
-✅ Tipografía Inter desde Google Fonts
-✅ Logo visible en navegación y hero central
-✅ Sin emojis
-✅ Tono educativo/investigación (no comercial)
-✅ LinkedIn solo en sección de contacto
-
-🌐 Hosting recomendado (gratuito):
-- Netlify Drop: netlify.com/drop
-- Vercel: vercel.com
-- GitHub Pages: pages.github.com
-- Cloudflare Pages: pages.cloudflare.com
-
-================================================================================
--->
