@@ -4,10 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Aigralys - Agentic AI for Complex Digital Ecosystems</title>
-  <meta name="description" content="Aigralys: Sistemas de IA agéntica para ecosistemas digitales complejos. Especialización en agroindustria y operaciones de alta complejidad.">
-  <meta name="theme-color" content="#1C1C1E">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <meta name="description" content="Aigralys: Sistemas de IA Agéntica para ecosistemas digitales complejos. Especialización en agroindustria y operaciones de alta complejidad.">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
@@ -15,9 +12,15 @@
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 
     :root{
-      --grafito:#1C1C1E; --grafito-light:#2d2d3a; --off-white:#F8F9FA;
-      --teal:#00B3A4; --teal-dark:#009688; --cyan:#00CFFF; --oliva:#7DA453;
-      --border:rgba(0,179,164,.15); --glow:rgba(0,179,164,.30);
+      --grafito:#1C1C1E;
+      --grafito-light:#2d2d3a;
+      --off-white:#F8F9FA;
+      --teal:#00B3A4;
+      --teal-dark:#009688;
+      --cyan:#00CFFF;
+      --oliva:#7DA453;
+      --border:rgba(0,179,164,.15);
+      --glow:rgba(0,179,164,.3);
     }
 
     html{scroll-behavior:smooth}
@@ -168,7 +171,7 @@
     <nav>
       <div class="nav-container">
         <div class="brand">
-          <img src="./assets/logo.png" alt="Aigralys" class="brand-logo" loading="lazy">
+          <img src="./assets/logo.png" alt="Aigralys" class="brand-logo">
           <span class="brand-text">Aigralys</span>
         </div>
         <ul class="nav-links">
@@ -180,7 +183,7 @@
           <li><a href="#contacto" class="nav-text">Contacto</a></li>
         </ul>
         <div style="display:flex;align-items:center;gap:.75rem">
-          <a href="https://instagram.com/aigralys.ai" target="_blank" style="color:var(--cyan);font-weight:650" aria-label="Instagram @aigralys.ai"></a>
+          <a href="https://instagram.com/aigralys.ai" target="_blank" style="color:var(--cyan);font-weight:650"></a>
           <button class="lang-switch" onclick="toggleLanguage()">EN</button>
         </div>
       </div>
@@ -188,7 +191,7 @@
 
     <!-- HERO -->
     <section class="hero">
-      <img src="./assets/logo.png" alt="Aigralys" class="hero-logo" loading="lazy">
+      <img src="./assets/logo.png" alt="Aigralys" class="hero-logo">
       <div class="hero-badge hero-badge-text">Agentic AI · Digital Ecosystems</div>
       <h1><span class="highlight">IA Agéntica</span> para Ecosistemas Digitales Complejos</h1>
       <p class="hero-subtitle hero-subtitle-text">
@@ -425,7 +428,7 @@
         Este sitio documenta el enfoque de Aigralys en sistemas de IA agéntica. Para referencias profesionales, trayectoria y proyectos, consultar perfil en LinkedIn.
       </p>
       <div class="footer-profile">
-        <img src="./assets/gonzalo.jpg" alt="Gonzalo Abadía" class="profile-thumb" loading="lazy">
+        <img src="./assets/gonzalo.jpg" alt="Gonzalo Abadía" class="profile-thumb">
 
         <div class="social-actions">
           <!-- LinkedIn -->
@@ -453,11 +456,6 @@
   </div>
 
   <script>
-    // Redirección www -> raíz (opcional, ayuda SEO/consistencia)
-    if (window.location.hostname === "www.aigralys.ai") {
-      window.location.replace("https://aigralys.ai" + window.location.pathname + window.location.search + window.location.hash);
-    }
-
     let currentLang='es';
     const t = {
       es:{
@@ -471,7 +469,7 @@
         connect:'Contacto',
         connectText:'Este sitio documenta el enfoque de Aigralys en sistemas de IA agéntica. Para referencias profesionales, trayectoria y proyectos, consultar perfil en LinkedIn.',
         linkedin:'Perfil Profesional en LinkedIn',
-        footer:'Aigralys — Copyright 2025'
+        footer:'Aigralys — opyright 2025'
       },
       en:{
         nav:['Agentic AI','Agribusiness','Technologies','Domains','Practice','Contact'],
