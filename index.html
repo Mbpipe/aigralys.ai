@@ -38,10 +38,35 @@
   <!-- Header -->
   <header class="main-header" role="banner">
   <nav class="main-nav" aria-label="Primary">
-    <a class="brand" href="index.html" aria-label="Aigralys Home">
-      <img src="assets/logo.png" alt="Aigralys" width="28" height="28">
+    <div class="logo">
+      <img src="assets/logo.png" alt="Aigralys.ai Logo" width="28" height="28" />
       <span>Aigralys</span>
-    </a>
+    </div>
+
+    <!-- Botón hamburguesa -->
+    <button class="menu-toggle"
+            aria-label="Open menu"
+            aria-controls="primary-nav"
+            aria-expanded="false">
+      <span class="menu-bar"></span>
+      <span class="menu-bar"></span>
+      <span class="menu-bar"></span>
+    </button>
+
+    <!-- Navegación única: desktop y mobile -->
+    <ul id="primary-nav" class="nav-links">
+      <li><a href="index.html" data-i18n="nav.home">Inicio</a></li>
+      <li><a href="index.html#about" data-i18n="nav.about">Nosotros</a></li>
+      <li><a href="index.html#solutions" data-i18n="nav.solutions">Soluciones</a></li>
+      <li><a href="consultoria.html" data-i18n="nav.consulting">Consultoría</a></li>
+      <li><a href="workshops.html" data-i18n="nav.workshops">Workshops</a></li>
+      <li><a href="index.html#contact" data-i18n="nav.contact">Contacto</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- Backdrop para el overlay -->
+<div id="nav-backdrop" class="nav-backdrop" hidden></div>
 
     <!-- Language toggle (tu mismo markup, sin cambios de clases) -->
     <div id="lang-toggle" class="lang-toggle" role="group" aria-label="Language">

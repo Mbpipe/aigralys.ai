@@ -168,48 +168,37 @@ const translations = {
   'workshops.cta.button':      { es: 'Solicitar información', en: 'Request information' }
 };
 
-// =====================================
-// Mobile Menu Toggle (Robust)
-// =====================================
-(function () {
-  function initMenu() {
-    const btn = document.querySelector('.menu-toggle');
-    const nav = document.getElementById('primary-nav');
-    if (!btn || !nav) return;
+// ===== Canonical Mobile Overlay Nav (toggle) =====
+document.addEventListener('DOMContentLoaded', () => {
+  const btn   = document.querySelector('.menu-toggle');
+  const nav   = document.getElementById('primary-nav');
+  const shade = document.getElementById('nav-backdrop');
 
-    const closeMenu = () => {
-      btn.setAttribute('aria-expanded', 'false');
-      nav.classList.remove('open');
-      document.body.classList.remove('no-scroll');
-    };
+  if (!btn || !nav || !shade) return;
 
-    // Evita duplicar handlers si recargás este módulo
-    btn._bound && btn.removeEventListener('click', btn._bound);
-    const onClick = () => {
-      const expanded = btn.getAttribute('aria-expanded') === 'true';
-      btn.setAttribute('aria-expanded', String(!expanded));
-      nav.classList.toggle('open');
-      document.body.classList.toggle('no-scroll');
-    };
-    btn.addEventListener('click', onClick);
-    btn._bound = onClick;
+  const openMenu = () => {
+    btn.setAttribute('aria-expanded', 'true');
+    nav.classList.add('open');
+    document.body.classList.add('is-menu-open');
+    shade.hidden = false;
+  };
 
-    nav.querySelectorAll('a').forEach(a => {
-      a.addEventListener('click', closeMenu);
-    });
-    window.addEventListener('resize', () => {
-      if (window.innerWidth > 992) closeMenu();
-    });
+  const closeMenu = () => {
+    btn.setAttribute('aria-expanded', 'false');
+    nav.classList.remove('open');
+    document.body.classList.remove('is-menu-open');
+    shade.hidden = true;
+  };
 
-    console.debug('[Aigralys] Mobile menu ready');
-  }
+  const toggleMenu = () => (
+    nav.classList.contains('open') ? closeMenu() : openMenu()
+  );
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMenu, { once: true });
-  } else {
-    initMenu();
-  }
-})();
+  btn.addEventListener('click', toggleMenu);
+  shade.addEventListener('click', closeMenu);
+  nav.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+  window.addEventListener('resize', () => { if (window.innerWidth > 992) closeMenu(); }, { passive: true });
+});
 
 // ==============================
 // Mobile Drawer (robusto/limpio)
