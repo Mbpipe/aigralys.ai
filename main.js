@@ -167,3 +167,26 @@ const translations = {
   'workshops.cta.subtitle':    { es: 'Consultá disponibilidad de workshops públicos o solicitá una sesión in-company', en: 'Check availability of public workshops or request an in-company session' },
   'workshops.cta.button':      { es: 'Solicitar información', en: 'Request information' }
 };
+
+// Mobile menu toggle
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.querySelector('.menu-toggle');
+  const nav = document.getElementById('primary-nav');
+  if (!btn || !nav) return;
+
+  const closeMenu = () => {
+    btn.setAttribute('aria-expanded', 'false');
+    nav.classList.remove('open');
+    document.body.classList.remove('no-scroll');
+  };
+
+  btn.addEventListener('click', () => {
+    const expanded = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!expanded));
+    nav.classList.toggle('open');
+    document.body.classList.toggle('no-scroll');
+  });
+
+  nav.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+  window.addEventListener('resize', () => { if (window.innerWidth > 992) closeMenu(); });
+});
