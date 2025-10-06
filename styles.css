@@ -128,3 +128,104 @@ section{max-width:1200px;margin:0 auto;padding:80px 24px}
   .main-header{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
   #primary-nav>.nav-links{padding-bottom:calc(24px + env(safe-area-inset-bottom))}
 }
+
+/* ====== Anti overflow global (evita scroll lateral) ====== */
+html, body { width: 100%; overflow-x: hidden; }
+img, svg, video { max-width: 100%; height: auto; display: block; }
+
+/* ====== Header ====== */
+:root { --header-h: 64px; } /* 56px en móviles abajo */
+@media (max-width:600px){ :root { --header-h: 56px; } }
+
+.main-header{
+  position: sticky; top: 0; z-index: 1100;
+  background: rgba(28,28,30,.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(254,207,74,.1);
+}
+
+.main-nav{
+  max-width: min(1200px, 100vw);
+  margin: 0 auto; padding: 12px 16px;
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px;
+  align-items: center;
+}
+
+.brand{ display:flex; align-items:center; gap:10px; color: var(--accent-gold); font-weight:700; }
+.brand img{ border-radius: 6px; }
+
+.menu-toggle{
+  display:none; background:transparent; border:0; padding:8px; cursor:pointer;
+}
+.menu-toggle .menu-bar{
+  display:block; width:22px; height:2px; margin:5px 0;
+  background: var(--neutral-light); border-radius:2px;
+  transition: transform .25s ease, opacity .25s ease;
+}
+
+.nav-links{
+  list-style:none; display:flex; gap:28px; justify-self:center;
+  margin:0; padding:0;
+}
+.nav-links a{
+  color: var(--neutral-light); font-weight:500; font-size:.95rem; position:relative; white-space:nowrap;
+}
+.nav-links a::after{
+  content:""; position:absolute; left:0; bottom:-4px; height:2px; width:0;
+  background: var(--accent-gold); transition: width .25s ease;
+}
+.nav-links a:hover::after, .nav-links a.active::after{ width:100%; }
+.nav-links a.active{ color: var(--accent-gold); }
+
+/* ====== Toggle idioma: pegar a la derecha en desktop, bajo en mobile ====== */
+#lang-toggle{ display:flex; align-items:center; gap:6px; justify-self:end; }
+#lang-toggle button{ background:none; border:0; color:var(--neutral-mid); font-weight:600; cursor:pointer; padding:4px 8px; }
+#lang-toggle button.active-lang{ color:var(--accent-gold); text-decoration:underline; }
+#lang-toggle span{ color:var(--neutral-mid); }
+
+/* ====== Mobile overlay nav ====== */
+@media (max-width: 992px){
+  .menu-toggle{ display:inline-block; justify-self:start; }
+
+  /* En mobile el menú normal se oculta (fila de desktop) */
+  .nav-links{
+    position: fixed;
+    top: var(--header-h); left:0; right:0;
+    height: calc(100dvh - var(--header-h));        /* ocupa el alto visible */
+    background: rgba(28,28,30,.98);
+    backdrop-filter: blur(8px);
+    display: flex; flex-direction: column; gap: 0;
+    padding: 10px 16px 24px;
+    border-top: 1px solid rgba(254,207,74,.12);
+    transform: translateY(-110%);                  /* oculto por defecto */
+    transition: transform .28s ease;
+    z-index: 1200;
+    overflow-y: auto;                               /* scroll propio */
+    max-width: 100vw;                               /* evita desborde */
+  }
+  /* al abrir (JS agrega 'open' al nav contenedor) */
+  .main-nav.open .nav-links{ transform: translateY(0); }
+
+  .nav-links li{ border-bottom: 1px solid rgba(254,207,74,.08); }
+  .nav-links a{ display:block; padding:14px 6px; font-size:1.05rem; }
+
+  /* mover el switch de idioma bajo la lista para que no tape nada */
+  #lang-toggle{
+    position: fixed; left:0; right:0; bottom:0;
+    padding: 10px 12px; justify-content:center;
+    background: rgba(28,28,30,.98);
+    z-index: 1201;
+  }
+
+  /* animación del icono (cuando body está bloqueado) */
+  body.no-scroll .menu-toggle .menu-bar:nth-child(1){ transform: translateY(7px) rotate(45deg); }
+  body.no-scroll .menu-toggle .menu-bar:nth-child(2){ opacity: 0; }
+  body.no-scroll .menu-toggle .menu-bar:nth-child(3){ transform: translateY(-7px) rotate(-45deg); }
+}
+
+/* ====== Safe areas iOS ====== */
+@supports (padding: max(0px)) {
+  .main-nav{ padding-left:max(16px, env(safe-area-inset-left)); padding-right:max(16px, env(safe-area-inset-right)); }
+  .nav-links{ padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+  #lang-toggle{ padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+}
