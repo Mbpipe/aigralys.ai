@@ -169,27 +169,44 @@ const translations = {
 };
 
 // =====================================
-// Mobile Menu Toggle (Improved Version)
+// Mobile Menu Toggle (Robust)
 // =====================================
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.querySelector('.menu-toggle');
-  const nav = document.getElementById('primary-nav');
-  if (!btn || !nav) return;
+(function () {
+  function initMenu() {
+    const btn = document.querySelector('.menu-toggle');
+    const nav = document.getElementById('primary-nav');
+    if (!btn || !nav) return;
 
-  const closeMenu = () => {
-    btn.setAttribute('aria-expanded', 'false');
-    nav.classList.remove('open');
-    document.body.classList.remove('no-scroll');
-  };
+    const closeMenu = () => {
+      btn.setAttribute('aria-expanded', 'false');
+      nav.classList.remove('open');
+      document.body.classList.remove('no-scroll');
+    };
 
-  btn.addEventListener('click', () => {
-    const expanded = btn.getAttribute('aria-expanded') === 'true';
-    btn.setAttribute('aria-expanded', String(!expanded));
-    nav.classList.toggle('open');
-    document.body.classList.toggle('no-scroll');
-  });
+    // Evita duplicar handlers si recargás este módulo
+    btn._bound && btn.removeEventListener('click', btn._bound);
+    const onClick = () => {
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!expanded));
+      nav.classList.toggle('open');
+      document.body.classList.toggle('no-scroll');
+    };
+    btn.addEventListener('click', onClick);
+    btn._bound = onClick;
 
-  // Cierra el menú al tocar un link o cambiar tamaño de pantalla
-  nav.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
-  window.addEventListener('resize', () => { if (window.innerWidth > 992) closeMenu(); });
-});
+    nav.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', closeMenu);
+    });
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 992) closeMenu();
+    });
+
+    console.debug('[Aigralys] Mobile menu ready');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMenu, { once: true });
+  } else {
+    initMenu();
+  }
+})();
