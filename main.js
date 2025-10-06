@@ -210,3 +210,48 @@ const translations = {
     initMenu();
   }
 })();
+
+// ==============================
+// Mobile Drawer (robusto/limpio)
+// ==============================
+(() => {
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  function initNav() {
+    const btn = $('.js-menu-toggle');
+    const nav = $('.js-nav');
+    const overlay = $('.js-overlay');
+    if (!btn || !nav || !overlay) return;
+
+    const openNav = () => {
+      btn.setAttribute('aria-expanded', 'true');
+      nav.classList.add('open');
+      overlay.hidden = false;
+      document.documentElement.classList.add('is-nav-open');
+      document.body.classList.add('is-nav-open');
+    };
+    const closeNav = () => {
+      btn.setAttribute('aria-expanded', 'false');
+      nav.classList.remove('open');
+      document.documentElement.classList.remove('is-nav-open');
+      document.body.classList.remove('is-nav-open');
+      // Espera la animación para ocultar overlay (evita flashes)
+      setTimeout(() => { overlay.hidden = true; }, 250);
+    };
+    const toggleNav = () => (nav.classList.contains('open') ? closeNav() : openNav());
+
+    // Bind
+    btn.addEventListener('click', toggleNav);
+    overlay.addEventListener('click', closeNav);
+    $$('#primary-nav a').forEach(a => a.addEventListener('click', closeNav));
+    window.addEventListener('resize', () => { if (window.innerWidth > 992) closeNav(); });
+    window.addEventListener('keydown', e => { if (e.key === 'Escape') closeNav(); });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNav, { once: true });
+  } else {
+    initNav();
+  }
+})();
