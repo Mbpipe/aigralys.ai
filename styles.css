@@ -345,3 +345,40 @@ section{ max-width: 1200px; margin: 0 auto; padding: 80px 24px; }
     padding-bottom: calc(24px + env(safe-area-inset-bottom));
   }
 }
+
+/* ====== Aigralys – Fixes post-overlay ====== */
+
+/* 1) Mobile: ocultar la fila horizontal del header (evita “doble menú”) */
+@media (max-width: 992px){
+  .main-nav > .nav-links{ display: none !important; } /* solo overlay */
+}
+
+/* 2) Mobile overlay: altura real + scroll completo (no corta secciones) */
+@media (max-width: 992px){
+  #primary-nav .nav-links{
+    height: calc(100dvh - var(--header-h));  /* viewport seguro en móviles */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+}
+
+/* 3) Desktop: reservar espacio para el selector de idioma y centrar nav */
+@media (min-width: 993px){
+  /* deja “aire” a la derecha para #lang-toggle y evita solaparlo */
+  .main-header{ padding-right: 140px; } /* ajustable 120–160px */
+  .main-nav{ gap: 24px; }
+  /* empuja la fila de enlaces al centro entre logo (izq) y padding (der) */
+  .main-nav > .nav-links{
+    margin-inline: auto;                /* centra visualmente la fila */
+  }
+  /* opcional: botón activo subraya un poco más fino en desktop */
+  .nav-links a::after{ height: 2px; }
+}
+
+/* 4) Z-indexs coherentes entre header, overlay e idioma */
+.main-header{ z-index: 1100; }
+#lang-toggle{ z-index: 900; }         /* debajo del overlay */
+@media (max-width: 992px){
+  #primary-nav .nav-links{ z-index: 1300; }  /* overlay por encima de todo */
+}
