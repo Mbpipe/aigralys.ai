@@ -2,211 +2,232 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Aigralys.ai - Agentes de IA para ecosistemas digitales complejos" />
-  <title>Aigralys.ai - AI Agents for Complex Ecosystems</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aigralys.ai — Agentes de IA para ecosistemas digitales complejos</title>
+  <meta name="description" content="Diseñamos e implementamos sistemas Agentic AI que transforman industrias globales. De piloto a producción en 8–12 semanas." />
+
+  <!-- Canonical + Hreflang -->
+  <link rel="canonical" href="https://aigralys.ai/" />
+  <link rel="alternate" href="https://aigralys.ai/" hreflang="es" />
+  <link rel="alternate" href="https://aigralys.ai/en/" hreflang="en" />
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://aigralys.ai/" />
+  <meta property="og:title" content="Aigralys.ai — AI Agents for Complex Digital Ecosystems" />
+  <meta property="og:description" content="We design and implement Agentic AI systems that transform global industries." />
+  <meta property="og:image" content="https://aigralys.ai/assets/og-image.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Aigralys.ai — AI Agents for Complex Digital Ecosystems" />
+  <meta name="twitter:description" content="Agentic AI for real business outcomes." />
+  <meta name="twitter:image" content="https://aigralys.ai/assets/og-image.jpg" />
 
   <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css?v=20251005a" />
 </head>
 <body>
-    <!-- Language Toggle -->
-    <div id="lang-toggle">
-        <button data-lang-toggle="es" aria-label="Español">ES</button>
-        <span>|</span>
-        <button data-lang-toggle="en" aria-label="English">EN</button>
-    </div>
 
-```
-<!-- Header Navigation -->
-<header class="main-header">
-    <nav class="main-nav">
-        <div class="logo">
-            <img src="assets/logo.png" alt="Aigralys.ai Logo" width="40" height="40">
-            <span>Aigralys.ai</span>
-        </div>
-        <ul class="nav-links">
-            <li><a href="#hero" data-i18n="nav.home">Inicio</a></li>
-            <li><a href="#about" data-i18n="nav.about">Nosotros</a></li>
-            <li><a href="#solutions" data-i18n="nav.solutions">Soluciones</a></li>
-            <li><a href="consultoria.html" data-i18n="nav.consulting">Consultoría</a></li>
-            <li><a href="workshops.html" data-i18n="nav.workshops">Workshops</a></li>
-            <li><a href="#contact" data-i18n="nav.contact">Contacto</a></li>
-        </ul>
+  <!-- Language Toggle -->
+  <div id="lang-toggle" aria-label="Language toggle">
+    <button data-lang-toggle="es" aria-label="Español">ES</button><span>|</span>
+    <button data-lang-toggle="en" aria-label="English">EN</button>
+  </div>
+
+  <!-- Header -->
+  <header class="main-header">
+    <nav class="main-nav" aria-label="Main navigation">
+      <div class="logo">
+        <a href="/" aria-label="Aigralys.ai Home">
+          <img src="assets/logo.png" alt="Aigralys.ai logo" width="40" height="40" />
+        </a>
+        <span>Aigralys.ai</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#home" class="active" data-i18n="nav.home">Inicio</a></li>
+        <li><a href="#about" data-i18n="nav.about">Nosotros</a></li>
+        <li><a href="#solutions" data-i18n="nav.solutions">Soluciones</a></li>
+        <li><a href="consultoria.html" data-i18n="nav.consulting">Consultoría</a></li>
+        <li><a href="workshops.html" data-i18n="nav.workshops">Workshops</a></li>
+        <li><a href="#contact" data-i18n="nav.contact">Contacto</a></li>
+      </ul>
     </nav>
-</header>
+  </header>
 
-<!-- Hero Section -->
-<section id="hero" class="hero">
+  <!-- Hero -->
+  <section id="home" class="hero">
     <h1 data-i18n="hero.title">Agentes de IA para ecosistemas digitales complejos</h1>
-    <p data-i18n="hero.subtitle">Diseñamos e implementamos sistemas Agentic AI que transforman industrias globales</p>
+    <p class="section-subtitle" data-i18n="hero.subtitle">Diseñamos e implementamos sistemas Agentic AI que transforman industrias globales</p>
     <div class="cta-group">
-        <a href="#solutions" class="button primary" data-i18n="hero.ctaPrimary">Explorar soluciones</a>
-        <a href="#contact" class="button secondary" data-i18n="hero.ctaSecondary">Conectar con nosotros</a>
+      <a href="#solutions" class="button primary" data-i18n="hero.ctaPrimary">Explorar soluciones</a>
+      <a href="#contact" class="button secondary" data-i18n="hero.ctaSecondary">Conectar con nosotros</a>
     </div>
-</section>
+  </section>
 
-<!-- About Section -->
-<section id="about" class="about">
+  <!-- About -->
+  <section id="about">
     <h2 data-i18n="about.title">Quiénes somos</h2>
     <div class="about-content">
-        <p data-i18n="about.intro">Aigralys.ai es una startup global especializada en el diseño e implementación de sistemas de Agentes de IA para ecosistemas digitales complejos. Transformamos desafíos industriales en oportunidades mediante inteligencia artificial agentica.</p>
-        <div class="about-pillars">
-            <div class="pillar">
-                <h3 data-i18n="about.pillar1.title">Innovación</h3>
-                <p data-i18n="about.pillar1.desc">Desarrollamos soluciones cutting-edge que anticipan las necesidades del futuro digital</p>
-            </div>
-            <div class="pillar">
-                <h3 data-i18n="about.pillar2.title">Adaptabilidad</h3>
-                <p data-i18n="about.pillar2.desc">Sistemas agnósticos que se integran perfectamente en cualquier infraestructura existente</p>
-            </div>
-            <div class="pillar">
-                <h3 data-i18n="about.pillar3.title">Impacto Global</h3>
-                <p data-i18n="about.pillar3.desc">Presencia internacional con soluciones escalables para múltiples industrias</p>
-            </div>
-        </div>
-    </div>
-</section>
+      <p data-i18n="about.intro">
+        Aigralys.ai es una startup global especializada en el diseño e implementación de sistemas de Agentes de IA para ecosistemas digitales complejos. Transformamos desafíos industriales en oportunidades mediante inteligencia artificial agéntica.
+      </p>
 
-<!-- Solutions Section -->
-<section id="solutions" class="solutions">
+      <div class="about-pillars">
+        <div class="pillar">
+          <h3 data-i18n="about.pillar1.title">Innovación</h3>
+          <p data-i18n="about.pillar1.desc">Desarrollamos soluciones cutting-edge que anticipan las necesidades del futuro digital</p>
+        </div>
+        <div class="pillar">
+          <h3 data-i18n="about.pillar2.title">Adaptabilidad</h3>
+          <p data-i18n="about.pillar2.desc">Sistemas agnósticos que se integran perfectamente en cualquier infraestructura existente</p>
+        </div>
+        <div class="pillar">
+          <h3 data-i18n="about.pillar3.title">Impacto Global</h3>
+          <p data-i18n="about.pillar3.desc">Presencia internacional con soluciones escalables para múltiples industrias</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Solutions / Scenarios -->
+  <section id="solutions">
     <h2 data-i18n="solutions.title">Soluciones Agentic AI</h2>
     <p class="section-subtitle" data-i18n="solutions.subtitle">Sistemas inteligentes que operan de forma autónoma en entornos complejos</p>
-    
-    <div class="gallery">
-        <div class="solution-card">
-            <img src="Scenario1.jpg" alt="Network Operations Center con agentes IA" loading="lazy">
-            <h3 data-i18n="solutions.scenario1.title">Operaciones de Red</h3>
-            <p data-i18n="solutions.scenario1.desc">Agentes autónomos monitoreando y optimizando infraestructuras de red en tiempo real</p>
-        </div>
-        <div class="solution-card">
-            <img src="Scenario2.jpg" alt="Smart Agriculture con IoT y agentes IA" loading="lazy">
-            <h3 data-i18n="solutions.scenario2.title">Agricultura Inteligente</h3>
-            <p data-i18n="solutions.scenario2.desc">Sistemas IoT con agentes que gestionan irrigación, nutrición y rendimiento de cultivos</p>
-        </div>
-        <div class="solution-card">
-            <img src="Scenario3.jpg" alt="Energy Control Center con agentes IA" loading="lazy">
-            <h3 data-i18n="solutions.scenario3.title">Gestión Energética</h3>
-            <p data-i18n="solutions.scenario3.desc">Agentes inteligentes optimizando distribución y consumo energético en tiempo real</p>
-        </div>
-        <div class="solution-card">
-            <img src="Scenario4.jpg" alt="Retail Space con agentes IA" loading="lazy">
-            <h3 data-i18n="solutions.scenario4.title">Retail Inteligente</h3>
-            <p data-i18n="solutions.scenario4.desc">Optimización de inventarios y experiencia del cliente mediante agentes autónomos</p>
-        </div>
-    </div>
-</section>
 
-<!-- Industries Section -->
-<section id="industries" class="industries">
+    <div class="gallery">
+      <!-- Scenario 1 -->
+      <article class="solution-card">
+        <img src="assets/Scenario1.png" alt="AI Ops: agentes correlando alarmas y ejecutando acciones de red" width="640" height="400" loading="lazy" />
+        <h3 data-i18n="solutions.scenario1.title">Operaciones de Red</h3>
+        <p data-i18n="solutions.scenario1.desc">Agentes autónomos monitoreando y optimizando infraestructuras de red en tiempo real</p>
+      </article>
+
+      <!-- Scenario 2 -->
+      <article class="solution-card">
+        <img src="assets/Scenario2.png" alt="Smart Agriculture: agentes IoT optimizando riego y nutrición" width="640" height="400" loading="lazy" />
+        <h3 data-i18n="solutions.scenario2.title">Agricultura Inteligente</h3>
+        <p data-i18n="solutions.scenario2.desc">Sistemas IoT con agentes que gestionan irrigación, nutrición y rendimiento de cultivos</p>
+      </article>
+
+      <!-- Scenario 3 -->
+      <article class="solution-card">
+        <img src="assets/Scenario3.png" alt="Energy Management: agentes balanceando generación y demanda" width="640" height="400" loading="lazy" />
+        <h3 data-i18n="solutions.scenario3.title">Gestión Energética</h3>
+        <p data-i18n="solutions.scenario3.desc">Agentes inteligentes optimizando distribución y consumo energético en tiempo real</p>
+      </article>
+
+      <!-- Scenario 4 -->
+      <article class="solution-card">
+        <img src="assets/Scenario4.png" alt="Smart Retail: agentes optimizando inventario y experiencia de cliente" width="640" height="400" loading="lazy" />
+        <h3 data-i18n="solutions.scenario4.title">Retail Inteligente</h3>
+        <p data-i18n="solutions.scenario4.desc">Optimización de inventarios y experiencia del cliente mediante agentes autónomos</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- Industries -->
+  <section id="industries">
     <h2 data-i18n="industries.title">Industrias que transformamos</h2>
     <div class="industry-grid">
-        <div class="industry-item">
-            <h3 data-i18n="industries.telecom.title">Telecomunicaciones</h3>
-            <p data-i18n="industries.telecom.desc">Optimización de redes, prevención de fallos, gestión predictiva</p>
-        </div>
-        <div class="industry-item">
-            <h3 data-i18n="industries.agriculture.title">Agricultura</h3>
-            <p data-i18n="industries.agriculture.desc">Agricultura de precisión, gestión hídrica, monitoreo de cultivos</p>
-        </div>
-        <div class="industry-item">
-            <h3 data-i18n="industries.energy.title">Energía</h3>
-            <p data-i18n="industries.energy.desc">Smart grids, optimización de consumo, integración de renovables</p>
-        </div>
-        <div class="industry-item">
-            <h3 data-i18n="industries.retail.title">Retail</h3>
-            <p data-i18n="industries.retail.desc">Gestión de inventario, personalización, logística inteligente</p>
-        </div>
-        <div class="industry-item">
-            <h3 data-i18n="industries.manufacturing.title">Manufactura</h3>
-            <p data-i18n="industries.manufacturing.desc">Mantenimiento predictivo, control de calidad, eficiencia operativa</p>
-        </div>
-        <div class="industry-item">
-            <h3 data-i18n="industries.logistics.title">Logística</h3>
-            <p data-i18n="industries.logistics.desc">Optimización de rutas, gestión de flotas, trazabilidad completa</p>
-        </div>
+      <div class="industry-item">
+        <h3 data-i18n="industries.telecom.title">Telecomunicaciones</h3>
+        <p data-i18n="industries.telecom.desc">Optimización de redes, prevención de fallos, gestión predictiva</p>
+      </div>
+      <div class="industry-item">
+        <h3 data-i18n="industries.agriculture.title">Agricultura</h3>
+        <p data-i18n="industries.agriculture.desc">Agricultura de precisión, gestión hídrica, monitoreo de cultivos</p>
+      </div>
+      <div class="industry-item">
+        <h3 data-i18n="industries.energy.title">Energía</h3>
+        <p data-i18n="industries.energy.desc">Smart grids, optimización de consumo, integración de renovables</p>
+      </div>
+      <div class="industry-item">
+        <h3 data-i18n="industries.retail.title">Retail</h3>
+        <p data-i18n="industries.retail.desc">Gestión de inventario, personalización, logística inteligente</p>
+      </div>
     </div>
-</section>
+  </section>
 
-<!-- Technology Section -->
-<section id="technology" class="technology">
+  <!-- Technology -->
+  <section class="technology" id="technology">
     <h2 data-i18n="technology.title">Tecnología Agentic AI</h2>
     <div class="tech-content">
-        <div class="tech-description">
-            <h3 data-i18n="technology.what.title">¿Qué son los Agentes de IA?</h3>
-            <p data-i18n="technology.what.desc">Los agentes de IA son sistemas autónomos capaces de percibir su entorno, tomar decisiones y ejecutar acciones para alcanzar objetivos específicos. A diferencia de los sistemas tradicionales, operan con autonomía, aprenden continuamente y se adaptan a condiciones cambiantes.</p>
+      <div class="tech-description">
+        <h3 data-i18n="technology.what.title">¿Qué son los Agentes de IA?</h3>
+        <p data-i18n="technology.what.desc">
+          Los agentes de IA son sistemas autónomos capaces de percibir su entorno, tomar decisiones y ejecutar acciones para alcanzar objetivos específicos. A diferencia de los sistemas tradicionales, operan con autonomía, aprenden continuamente y se adaptan a condiciones cambiantes.
+        </p>
+      </div>
+      <div class="tech-features">
+        <div class="feature">
+          <h4 data-i18n="technology.feature1.title">Autonomía</h4>
+          <p data-i18n="technology.feature1.desc">Operación independiente sin intervención humana constante</p>
         </div>
-        <div class="tech-features">
-            <div class="feature">
-                <h4 data-i18n="technology.feature1.title">Autonomía</h4>
-                <p data-i18n="technology.feature1.desc">Operación independiente sin intervención humana constante</p>
-            </div>
-            <div class="feature">
-                <h4 data-i18n="technology.feature2.title">Reactividad</h4>
-                <p data-i18n="technology.feature2.desc">Respuesta inmediata a cambios en el entorno operativo</p>
-            </div>
-            <div class="feature">
-                <h4 data-i18n="technology.feature3.title">Proactividad</h4>
-                <p data-i18n="technology.feature3.desc">Anticipación de necesidades y problemas antes de que ocurran</p>
-            </div>
-            <div class="feature">
-                <h4 data-i18n="technology.feature4.title">Colaboración</h4>
-                <p data-i18n="technology.feature4.desc">Interacción y coordinación entre múltiples agentes</p>
-            </div>
+        <div class="feature">
+          <h4 data-i18n="technology.feature2.title">Reactividad</h4>
+          <p data-i18n="technology.feature2.desc">Respuesta inmediata a cambios en el entorno operativo</p>
         </div>
+        <div class="feature">
+          <h4 data-i18n="technology.feature3.title">Proactividad</h4>
+          <p data-i18n="technology.feature3.desc">Anticipación de necesidades y problemas antes de que ocurran</p>
+        </div>
+        <div class="feature">
+          <h4 data-i18n="technology.feature4.title">Colaboración</h4>
+          <p data-i18n="technology.feature4.desc">Interacción y coordinación entre múltiples agentes</p>
+        </div>
+      </div>
     </div>
-</section>
+  </section>
 
-<!-- Contact Section -->
-<section id="contact" class="contact">
+  <!-- Contact -->
+  <section id="contact" class="contact">
     <h2 data-i18n="contact.title">Conectemos</h2>
-    <p data-i18n="contact.subtitle">¿Listo para transformar tu ecosistema digital con Agentes de IA?</p>
+    <p class="section-subtitle" data-i18n="contact.subtitle">¿Listo para transformar tu ecosistema digital con Agentes de IA?</p>
+
     <div class="contact-form">
-        <form>
-            <input type="text" placeholder="Nombre" data-i18n="contact.form.name" required>
-            <input type="email" placeholder="Email" data-i18n="contact.form.email" required>
-            <input type="text" placeholder="Empresa" data-i18n="contact.form.company">
-            <textarea placeholder="Mensaje" data-i18n="contact.form.message" rows="5" required></textarea>
-            <button type="submit" class="button primary" data-i18n="contact.form.submit">Enviar mensaje</button>
-        </form>
-    </div>
-    <div class="contact-info">
+      <form action="https://formspree.io/f/your-id" method="POST">
+        <input type="text" name="name" data-i18n="contact.form.name" placeholder="Nombre" required />
+        <input type="email" name="email" data-i18n="contact.form.email" placeholder="Email" required />
+        <input type="text" name="company" data-i18n="contact.form.company" placeholder="Empresa" />
+        <textarea name="message" rows="5" data-i18n="contact.form.message" placeholder="Mensaje"></textarea>
+        <button type="submit" class="button" data-i18n="contact.form.submit">Enviar mensaje</button>
+      </form>
+      <div class="contact-info">
         <p data-i18n="contact.email">Email: contact@aigralys.ai</p>
         <p data-i18n="contact.location">Global presence | Remote first</p>
+      </div>
     </div>
-</section>
+  </section>
 
-<!-- Footer -->
-<footer class="main-footer">
+  <!-- Footer -->
+  <footer class="main-footer">
     <div class="footer-content">
-        <div class="footer-section">
-            <h4>Aigralys.ai</h4>
-            <p data-i18n="footer.tagline">Agentes de IA para el futuro digital</p>
-        </div>
-        <div class="footer-section">
-            <h4 data-i18n="footer.services.title">Servicios</h4>
-            <ul>
-                <li><a href="consultoria.html" data-i18n="footer.services.consulting">Consultoría</a></li>
-                <li><a href="workshops.html" data-i18n="footer.services.workshops">Workshops</a></li>
-                <li><a href="#solutions" data-i18n="footer.services.solutions">Soluciones</a></li>
-            </ul>
-        </div>
-        <div class="footer-section">
-            <h4 data-i18n="footer.company.title">Compañía</h4>
-            <ul>
-                <li><a href="#about" data-i18n="footer.company.about">Nosotros</a></li>
-                <li><a href="#contact" data-i18n="footer.company.contact">Contacto</a></li>
-            </ul>
-        </div>
+      <div class="footer-section">
+        <h4>Aigralys.ai</h4>
+        <p data-i18n="footer.tagline">Agentes de IA para el futuro digital</p>
+      </div>
+      <div class="footer-section">
+        <h4 data-i18n="footer.services.title">Servicios</h4>
+        <ul>
+          <li><a href="consultoria.html" data-i18n="footer.services.consulting">Consultoría</a></li>
+          <li><a href="workshops.html" data-i18n="footer.services.workshops">Workshops</a></li>
+          <li><a href="#solutions" data-i18n="footer.services.solutions">Soluciones</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4 data-i18n="footer.company.title">Compañía</h4>
+        <ul>
+          <li><a href="#about" data-i18n="footer.company.about">Nosotros</a></li>
+          <li><a href="#contact" data-i18n="footer.company.contact">Contacto</a></li>
+        </ul>
+      </div>
     </div>
     <div class="footer-bottom">
-        <p data-i18n="footer.copyright">© 2025 Aigralys.ai. Todos los derechos reservados.</p>
+      <p data-i18n="footer.copyright">© 2025 Aigralys.ai. Todos los derechos reservados.</p>
     </div>
-</footer>
+  </footer>
 
-<script src="main.js"></script>
-```
-
+  <script src="/main.js?v=20251005a"></script>
 </body>
 </html>
