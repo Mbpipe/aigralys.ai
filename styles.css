@@ -497,11 +497,16 @@ section {
 }
 
 .hero-logo {
-  width: 180px;
+  width: 90px; /* antes 180px */
   height: auto;
-  filter: drop-shadow(0 0 12px rgba(254, 207, 74, 0.25));
-  animation: glowPulse 3.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 10px rgba(254, 207, 74, 0.2));
+  animation: glowPulse 4s ease-in-out infinite;
   transition: transform 0.4s ease;
+  opacity: 0.95;
+}
+
+.hero h1 {
+  margin-top: -10px; /* acerca el título al logo */
 }
 
 .hero-logo:hover {
