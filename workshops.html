@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Workshops Agentic AI - Aigralys.ai">
+    <title>Workshops - Aigralys.ai</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Language Toggle -->
+    <div id="lang-toggle">
+        <button data-lang-toggle="es" aria-label="Español">ES</button>
+        <span>|</span>
+        <button data-lang-toggle="en" aria-label="English">EN</button>
+    </div>
+
+```
+<!-- Header Navigation -->
+<header class="main-header">
+    <nav class="main-nav">
+        <div class="logo">
+            <img src="logo.png" alt="Aigralys.ai Logo" width="40" height="40">
+            <span>Aigralys.ai</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html" data-i18n="nav.home">Inicio</a></li>
+            <li><a href="index.html#about" data-i18n="nav.about">Nosotros</a></li>
+            <li><a href="index.html#solutions" data-i18n="nav.solutions">Soluciones</a></li>
+            <li><a href="consultoria.html" data-i18n="nav.consulting">Consultoría</a></li>
+            <li><a href="workshops.html" class="active" data-i18n="nav.workshops">Workshops</a></li>
+            <li><a href="index.html#contact" data-i18n="nav.contact">Contacto</a></li>
+        </ul>
+    </nav>
+</header>
+
+<!-- Hero Section -->
+<section class="hero workshops-hero">
+    <h1 data-i18n="workshops.hero.title">Workshops Agentic AI</h1>
+    <p data-i18n="workshops.hero.subtitle">Formación práctica e intensiva en diseño e implementación de sistemas de Agentes de IA</p>
+</section>
+
+<!-- Overview Section -->
+<section class="workshops-overview">
+    <h2 data-i18n="workshops.overview.title">Aprende haciendo</h2>
+    <p data-i18n="workshops.overview.intro">Nuestros workshops combinan teoría cutting-edge con ejercicios prácticos hands-on. Diseñados para equipos técnicos, product managers y líderes de transformación digital que quieren dominar la tecnología de Agentes de IA.</p>
+    <div class="overview-benefits">
+        <div class="benefit-item">
+            <h3 data-i18n="workshops.benefit1.title">Formato Intensivo</h3>
+            <p data-i18n="workshops.benefit1.desc">Sesiones de 2-3 días con balance óptimo entre conceptos y práctica</p>
+        </div>
+        <div class="benefit-item">
+            <h3 data-i18n="workshops.benefit2.title">Casos Reales</h3>
+            <p data-i18n="workshops.benefit2.desc">Trabajamos con datos y escenarios de tu industria específica</p>
+        </div>
+        <div class="benefit-item">
+            <h3 data-i18n="workshops.benefit3.title">Hands-On Labs</h3>
+            <p data-i18n="workshops.benefit3.desc">Implementación práctica de agentes funcionales durante el workshop</p>
+        </div>
+        <div class="benefit-item">
+            <h3 data-i18n="workshops.benefit4.title">Expertos Senior</h3>
+            <p data-i18n="workshops.benefit4.desc">Instructores con experiencia real en proyectos de Agentic AI</p>
+        </div>
+    </div>
+</section>
+
+<!-- Workshops Catalog -->
+<section class="workshops-catalog">
+    <h2 data-i18n="workshops.catalog.title">Catálogo de workshops</h2>
+    
+    <div class="workshop-card featured">
+        <div class="workshop-header">
+            <h3 data-i18n="workshops.ws1.title">Fundamentos de Agentic AI</h3>
+            <span class="workshop-level" data-i18n="workshops.ws1.level">Nivel: Introductorio</span>
+        </div>
+        <p class="workshop-duration" data-i18n="workshops.ws1.duration">Duración: 2 días</p>
+        <p class="workshop-description" data-i18n="workshops.ws1.desc">Introducción comprehensiva a sistemas de agentes: arquitecturas, frameworks, protocolos de comunicación y casos de uso por industria.</p>
+        <div class="workshop-content">
+            <h4 data-i18n="workshops.ws1.topics.title">Módulos:</h4>
+            <ul>
+                <li data-i18n="workshops.ws1.topic1">Conceptos fundamentales: agentes reactivos, deliberativos e híbridos</li>
+                <li data-i18n="workshops.ws1.topic2">Arquitecturas de agentes: BDI, PEAS, subsumption</li>
+                <li data-i18n="workshops.ws1.topic3">Comunicación inter-agente: protocolos, ontologías, FIPA-ACL</li>
+                <li data-i18n="workshops.ws1.topic4">Frameworks y herramientas: LangChain, AutoGen, CrewAI</li>
+                <li data-i18n="workshops.ws1.topic5">Casos de uso por industria: retail, energía, logística</li>
+                <li data-i18n="workshops.ws1.topic6">Lab: Implementar un agente reactivo simple</li>
+            </ul>
+        </div>
+        <div class="workshop-audience">
+            <h4 data-i18n="workshops.ws1.audience.title">Para quién:</h4>
+            <p data-i18n="workshops.ws1.audience.desc">Desarrolladores, arquitectos de software, product managers y technical leaders sin experiencia previa en agentes</p>
+        </div>
+    </div>
+
+    <div class="workshop-card">
+        <div class="workshop-header">
+            <h3 data-i18n="workshops.ws2.title">Diseño de Sistemas Multi-Agente</h3>
+            <span class="workshop-level" data-i18n="workshops.ws2.level">Nivel: Intermedio</span>
+        </div>
+        <p class="workshop-duration" data-i18n="workshops.ws2.duration">Duración: 3 días</p>
+        <p class="workshop-description" data-i18n="workshops.ws2.desc">Diseño e implementación de sistemas complejos donde múltiples agentes especializados colaboran para resolver problemas empresariales.</p>
+        <div class="workshop-content">
+            <h4 data-i18n="workshops.ws2.topics.title">Módulos:</h4>
+            <ul>
+                <li data-i18n="workshops.ws2.topic1">Patrones de coordinación: contratos, negociación, subastas</li>
+                <li data-i18n="workshops.ws2.topic2">Arquitecturas distribuidas y federadas</li>
+                <li data-i18n="workshops.ws2.topic3">Gestión de conocimiento compartido y bases de datos vectoriales</li>
+                <li data-i18n="workshops.ws2.topic4">Orquestación vs coreografía de agentes</li>
+                <li data-i18n="workshops.ws2.topic5">Resiliencia, failover y handling de errores</li>
+                <li data-i18n="workshops.ws2.topic6">Lab: Sistema multi-agente para optimización logística</li>
+            </ul>
+        </div>
+        <div class="workshop-audience">
+            <h4 data-i18n="workshops.ws2.audience.title">Para quién:</h4>
+            <p data-i18n="workshops.ws2.audience.desc">Arquitectos de soluciones, senior developers y technical leads con conocimientos básicos de AI/ML</p>
+        </div>
+    </div>
+
+    <div class="workshop-card">
+        <div class="workshop-header">
+            <h3 data-i18n="workshops.ws3.title">Agentes Autónomos en Producción</h3>
+            <span class="workshop-level" data-i18n="workshops.ws3.level">Nivel: Avanzado</span>
+        </div>
+        <p class="workshop-duration" data-i18n="workshops.ws3.duration">Duración: 3 días</p>
+        <p class="workshop-description" data-i18n="workshops.ws3.desc">Despliegue, monitoreo y operación de sistemas de agentes en ambientes productivos de alta disponibilidad.</p>
+        <div class="workshop-content">
+            <h4 data-i18n="workshops.ws3.topics.title">Módulos:</h4>
+            <ul>
+                <li data-i18n="workshops.ws3.topic1">DevOps para sistemas agentic: CI/CD, versionado de comportamientos</li>
+                <li data-i18n="workshops.ws3.topic2">Observabilidad: tracing de decisiones, logging estructurado</li>
+                <li data-i18n="workshops.ws3.topic3">Performance tuning y optimización de latencias</li>
+                <li data-i18n="workshops.ws3.topic4">Seguridad: autenticación, autorización, sandboxing</li>
+                <li data-i18n="workshops.ws3.topic5">Escalabilidad horizontal y vertical</li>
+                <li data-i18n="workshops.ws3.topic6">Lab: Deploy de sistema multi-agente en Kubernetes</li>
+            </ul>
+        </div>
+        <div class="workshop-audience">
+            <h4 data-i18n="workshops.ws3.audience.title">Para quién:</h4>
+            <p data-i18n="workshops.ws3.audience.desc">DevOps engineers, SREs, platform engineers y architects responsables de infraestructura AI</p>
+        </div>
+    </div>
+
+    <div class="workshop-card">
+        <div class="workshop-header">
+            <h3 data-i18n="workshops.ws4.title">Agentes de IA para IoT e Industria 4.0</h3>
+            <span class="workshop-level" data-i18n="workshops.ws4.level">Nivel: Especializado</span>
+        </div>
+        <p class="workshop-duration" data-i18n="workshops.ws4.duration">Duración: 2 días</p>
+        <p class="workshop-description" data-i18n="workshops.ws4.desc">Integración de agentes con ecosistemas IoT, SCADA y sistemas de control industrial para manufactura y utilities.</p>
+        <div class="workshop-content">
+            <h4 data-i18n="workshops.ws4.topics.title">Módulos:</h4>
+            <ul>
+                <li data-i18n="workshops.ws4.topic1">Protocolos industriales: MQTT, OPC-UA, Modbus</li>
+                <li data-i18n="workshops.ws4.topic2">Edge computing y procesamiento distribuido</li>
+                <li data-i18n="workshops.ws4.topic3">Agentes para mantenimiento predictivo</li>
+                <li data-i18n="workshops.ws4.topic4">Integración con sistemas SCADA y DCS</li>
+                <li data-i18n="workshops.ws4.topic5">Gestión de constraints de tiempo real</li>
+                <li data-i18n="workshops.ws4.topic6">Lab: Agente de monitoreo y control para línea de producción</li>
+            </ul>
+        </div>
+        <div class="workshop-audience">
+            <h4 data-i18n="workshops.ws4.audience.title">Para quién:</h4>
+            <p data-i18n="workshops.ws4.audience.desc">Engineers de automatización, especialistas OT/IT, responsables de Industria 4.0</p>
+        </div>
+    </div>
+
+    <div class="workshop-card">
+        <div class="workshop-header">
+            <h3 data-i18n="workshops.ws5.title">Ética y Gobernanza de Agentes Autónomos</h3>
+            <span class="workshop-level" data-i18n="workshops.ws5.level">Nivel: Ejecutivo</span>
+        </div>
+        <p class="workshop-duration" data-i18n="workshops.ws5.duration">Duración: 1 día</p>
+        <p class="workshop-description" data-i18n="workshops.ws5.desc">Frameworks de gobernanza, compliance regulatorio y consideraciones éticas para sistemas de agentes en producción.</p>
+        <div class="workshop-content">
+            <h4 data-i18n="workshops.ws5.topics.title">Módulos:</h4>
+            <ul>
+                <li data-i18n="workshops.ws5.topic1">Transparencia y explicabilidad de decisiones</li>
+                <li data-i18n="workshops.ws5.topic2">Compliance con AI Act, GDPR y regulaciones sectoriales</li>
+                <li data-i18n="workshops.ws5.topic3">Gestión de riesgos y accountability</li>
+                <li data-i18n="workshops.ws5.topic4">Auditoría de sistemas autónomos</li>
+                <li data-i18n="workshops.ws5.topic5">Frameworks de IA responsable</li>
+                <li data-i18n="workshops.ws5.topic6">Workshop: Diseño de política de gobernanza de AI para tu organización</li>
+            </ul>
+        </div>
+        <div class="workshop-audience">
+            <h4 data-i18n="workshops.ws5.audience.title">Para quién:</h4>
+            <p data-i18n="workshops.ws5.audience.desc">CTOs, Chief AI Officers, compliance officers, legal teams y executive leadership</p>
+        </div>
+    </div>
+
+    <div class="workshop-card">
+        <div class="workshop-header">
+            <h3 data-i18n="workshops.ws6.title">Workshop Personalizado</h3>
+            <span class="workshop-level" data-i18n="workshops.ws6.level">Nivel: A medida</span>
+        </div>
+        <p class="workshop-duration" data-i18n="workshops.ws6.duration">Duración: Flexible</p>
+        <p class="workshop-description" data-i18n="workshops.ws6.desc">Diseñamos workshops específicos para los desafíos y contexto de tu organización, integrando tus casos de uso reales.</p>
+        <div class="workshop-content">
+            <h4 data-i18n="workshops.ws6.approach.title">Nuestro enfoque:</h4>
+            <ul>
+                <li data-i18n="workshops.ws6.approach1">Discovery session para entender objetivos y nivel técnico del equipo</li>
+                <li data-i18n="workshops.ws6.approach2">Diseño curricular personalizado</li>
+                <li data-i18n="workshops.ws6.approach3">Integración de datasets y sistemas de tu organización</li>
+                <li data-i18n="workshops.ws6.approach4">Labs prácticos con tus casos de uso específicos</li>
+                <li data-i18n="workshops.ws6.approach5">Seguimiento post-workshop y mentoría</li>
+            </ul>
+        </div>
+        <div class="workshop-audience">
+            <h4 data-i18n="workshops.ws6.audience.title">Para quién:</h4>
+            <p data-i18n="workshops.ws6.audience.desc">Organizaciones con necesidades específicas de formación en Agentic AI</p>
+        </div>
+    </div>
+</section>
+
+<!-- Formats Section -->
+<section class="workshop-formats">
+    <h2 data-i18n="workshops.formats.title">Formatos disponibles</h2>
+    <div class="formats-grid">
+        <div class="format-card">
+            <h3 data-i18n="workshops.format1.title">In-Company</h3>
+            <p data-i18n="workshops.format1.desc">Workshop en tus instalaciones para equipos de 8-20 personas. Mayor confidencialidad y personalización.</p>
+        </div>
+        <div class="format-card">
+            <h3 data-i18n="workshops.format2.title">Público Presencial</h3>
+            <p data-i18n="workshops.format2.desc">Sesiones abiertas en ciudades principales. Networking con profesionales de otras organizaciones.</p>
+        </div>
+        <div class="format-card">
+            <h3 data-i18n="workshops.format3.title">Virtual Interactivo</h3>
+            <p data-i18n="workshops.format3.desc">Formato remoto con labs en cloud. Alcance global sin desplazamientos.</p>
+        </div>
+        <div class="format-card">
+            <h3 data-i18n="workshops.format4.title">Híbrido</h3>
+            <p data-i18n="workshops.format4.desc">Combinación de sesiones presenciales y virtuales. Flexibilidad máxima para equipos distribuidos.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="testimonials">
+    <h2 data-i18n="workshops.testimonials.title">Lo que dicen nuestros participantes</h2>
+    <div class="testimonials-grid">
+        <div class="testimonial-card">
+            <p class="testimonial-text" data-i18n="workshops.testimonial1.text">"El workshop de Sistemas Multi-Agente transformó nuestra forma de abordar la automatización. Implementamos nuestro primer sistema productivo 3 semanas después."</p>
+            <p class="testimonial-author" data-i18n="workshops.testimonial1.author">— María González, Lead Architect, TechCorp</p>
+        </div>
+        <div class="testimonial-card">
+            <p class="testimonial-text" data-i18n="workshops.testimonial2.text">"Excelente balance entre teoría y práctica. Los labs hands-on con nuestros propios datos fueron el diferencial clave."</p>
+            <p class="testimonial-author" data-i18n="workshops.testimonial2.author">— James Patterson, CTO, RetailChain</p>
+        </div>
+        <div class="testimonial-card">
+            <p class="testimonial-text" data-i18n="workshops.testimonial3.text">"Los instructores tienen experiencia real en proyectos complejos. Cada pregunta fue respondida con casos concretos y soluciones prácticas."</p>
+            <p class="testimonial-author" data-i18n="workshops.testimonial3.author">— Sofia Rodríguez, Senior Developer, EnergyGrid</p>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <h2 data-i18n="workshops.cta.title">Acelera tu transformación con Agentic AI</h2>
+    <p data-i18n="workshops.cta.subtitle">Consulta disponibilidad de workshops públicos o solicita una sesión in-company</p>
+    <a href="index.html#contact" class="button primary large" data-i18n="workshops.cta.button">Solicitar información</a>
+</section>
+
+<!-- Footer -->
+<footer class="main-footer">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h4>Aigralys.ai</h4>
+            <p data-i18n="footer.tagline">Agentes de IA para el futuro digital</p>
+        </div>
+        <div class="footer-section">
+            <h4 data-i18n="footer.services.title">Servicios</h4>
+            <ul>
+                <li><a href="consultoria.html" data-i18n="footer.services.consulting">Consultoría</a></li>
+                <li><a href="workshops.html" data-i18n="footer.services.workshops">Workshops</a></li>
+                <li><a href="index.html#solutions" data-i18n="footer.services.solutions">Soluciones</a></li>
+            </ul>
+        </div>
+        <div class="footer-section">
+            <h4 data-i18n="footer.company.title">Compañía</h4>
+            <ul>
+                <li><a href="index.html#about" data-i18n="footer.company.about">Nosotros</a></li>
+                <li><a href="index.html#contact" data-i18n="footer.company.contact">Contacto</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p data-i18n="footer.copyright">© 2025 Aigralys.ai. Todos los derechos reservados.</p>
+    </div>
+</footer>
+
+<script src="main.js"></script>
+```
+
+</body>
+</html>
