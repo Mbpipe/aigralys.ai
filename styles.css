@@ -588,3 +588,96 @@ body.no-scroll { overflow: hidden; }
                  padding-right: max(16px, env(safe-area-inset-right)); }
   .nav-links { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
 }
+
+/* =========================
+   Header height variable
+========================= */
+:root { --header-h: 64px; }
+@media (max-width: 600px) { :root { --header-h: 56px; } }
+
+/* ===== Ajuste del panel del menú móvil para que arranque justo debajo del header */
+@media (max-width: 992px) {
+  .nav-links {
+    position: fixed;
+    inset: var(--header-h) 0 0 0; /* <= usa variable de alto de header */
+    background: rgba(28,28,30,0.98);
+    backdrop-filter: blur(8px);
+    flex-direction: column;
+    gap: 0;
+    padding: 12px 16px 24px;
+    transform: translateY(-110%);
+    transition: transform .28s ease;
+    border-top: 1px solid rgba(254,207,74,.12);
+    z-index: 999;
+  }
+  .nav-links.open { transform: translateY(0); }
+  .nav-links li { border-bottom: 1px solid rgba(254,207,74,.08); }
+  .nav-links a { display: block; padding: 14px 6px; font-size: 1rem; }
+}
+
+/* =========================
+   Hero – logo y tipografía
+========================= */
+
+/* Espaciado base del hero (un poco menos alto para mobile) */
+.hero { padding: 96px 20px 64px; }
+@media (max-width: 992px) { .hero { padding: 84px 18px 56px; } }
+@media (max-width: 600px) { .hero { padding: 76px 16px 48px; } }
+
+/* Logo centrado: escalado fluido + breakpoints para desktop grande */
+.hero-logo {
+  /* escala fluida: min 90px, preferencia por 10vw, máx 140px (desktop estándar) */
+  width: clamp(90px, 10vw, 140px);
+  height: auto;
+  filter: drop-shadow(0 0 10px rgba(254, 207, 74, 0.20));
+  animation: glowPulse 4s ease-in-out infinite;
+  transition: transform 0.4s ease;
+  opacity: 0.95;
+  margin-bottom: 12px;
+}
+
+/* desktop amplio: subimos el límite máximo */
+@media (min-width: 1200px) {
+  .hero-logo { width: 170px; }       /* antes 140px */
+}
+@media (min-width: 1440px) {
+  .hero-logo { width: 200px; }       /* se ve protagonista sin tapar el H1 */
+}
+@media (min-width: 1800px) {
+  .hero-logo { width: 230px; }       /* 4K o pantallas grandes */
+}
+
+/* Tipografía del hero con clamp para que no “explote” en mobile */
+.hero h1 {
+  font-size: clamp(1.6rem, 4.8vw, 3rem);
+  line-height: 1.15;
+  margin-top: 6px;     /* acercamos al logo */
+  text-align: center;
+}
+.hero p {
+  font-size: clamp(0.95rem, 2.6vw, 1.25rem);
+  text-align: center;
+}
+
+/* CTA más compactos en móviles */
+.cta-group { gap: 12px; }
+.cta-group .button { padding: 12px 20px; font-size: 0.95rem; }
+
+/* ===== Menú hamburguesa visible en móviles/tablet */
+.menu-toggle { display: none; }
+@media (max-width: 992px) { .menu-toggle { display: inline-flex; } }
+
+/* ===== Safe-area iOS (notch) */
+@supports (padding: max(0px)) {
+  .main-header {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+  .nav-links {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+}
+
+.no-scroll {
+  overflow: hidden;
+}

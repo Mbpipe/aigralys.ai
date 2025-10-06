@@ -168,7 +168,9 @@ const translations = {
   'workshops.cta.button':      { es: 'Solicitar información', en: 'Request information' }
 };
 
-// Mobile menu toggle
+// =====================================
+// Mobile Menu Toggle (Improved Version)
+// =====================================
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.querySelector('.menu-toggle');
   const nav = document.getElementById('primary-nav');
@@ -187,6 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.toggle('no-scroll');
   });
 
+  // Cierra el menú al tocar un link o cambiar tamaño de pantalla
   nav.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
   window.addEventListener('resize', () => { if (window.innerWidth > 992) closeMenu(); });
 });
