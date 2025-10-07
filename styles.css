@@ -229,3 +229,80 @@ img, svg, video { max-width: 100%; height: auto; display: block; }
   .nav-links{ padding-bottom: max(24px, env(safe-area-inset-bottom)); }
   #lang-toggle{ padding-bottom: max(10px, env(safe-area-inset-bottom)); }
 }
+
+/* ===== Layout del header en desktop ===== */
+.main-nav{
+  max-width:1200px; margin:0 auto; padding:16px 24px;
+  display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center;
+}
+.nav-actions{ display:flex; align-items:center; gap:12px; }
+
+/* Desktop: los links se muestran en línea y SIN overlay */
+@media (min-width: 993px){
+  #primary-nav{
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    background: transparent !important;
+    border: 0 !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    display: flex !important;
+    gap: 32px;
+  }
+  .menu-toggle{ display:none !important; }
+  .nav-backdrop{ display:none !important; }
+}
+
+/* Mobile overlay “debajo del header” (tu JS añade .open al UL) */
+:root{ --header-h: 64px; }
+@media (max-width: 600px){ :root{ --header-h: 56px; } }
+
+@media (max-width: 992px){
+  /* el UL actúa como panel */
+  #primary-nav{
+    position: fixed;
+    inset: var(--header-h) 0 0 0;   /* ocupa todo el ancho seguro */
+    background: rgba(28,28,30,.98);
+    backdrop-filter: blur(8px);
+    display: flex; flex-direction: column;
+    gap: 0;
+    padding: 12px 16px 24px;
+    transform: translateY(-110%);
+    transition: transform .28s ease;
+    border-top: 1px solid rgba(254,207,74,.12);
+    z-index: 1200;
+    overflow-y: auto;
+  }
+  #primary-nav.open{ transform: translateY(0); }
+
+  /* enlaces del panel */
+  #primary-nav li{ border-bottom:1px solid rgba(254,207,74,.08); }
+  #primary-nav a{ display:block; padding:14px 6px; font-size:1.05rem; }
+
+  /* acciones: idioma + hamburguesa visibles */
+  .menu-toggle{ display:inline-flex; background:transparent; border:0; padding:10px; cursor:pointer; }
+  .menu-bar{ width:22px; height:2px; margin:5px 0; background:var(--neutral-light); border-radius:2px; }
+
+  /* animación del ícono cuando body está bloqueado por el JS */
+  body.no-scroll .menu-toggle .menu-bar:nth-child(1){ transform: translateY(7px) rotate(45deg); }
+  body.no-scroll .menu-toggle .menu-bar:nth-child(2){ opacity: 0; }
+  body.no-scroll .menu-toggle .menu-bar:nth-child(3){ transform: translateY(-7px) rotate(-45deg); }
+
+  /* cluster derecho horizontal; idioma no tapa contenido */
+  .nav-actions{ gap:8px; }
+  #lang-toggle{ position: static; background: transparent; box-shadow: none; padding: 0; }
+  #lang-toggle button{ padding:4px 6px; font-size:.95rem; }
+}
+
+/* Backdrop (lo muestra/oculta tu JS) */
+.nav-backdrop{
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  z-index: 1100; display: none;
+}
+body.no-scroll #nav-backdrop{ display:block; }
+
+/* Evita scroll lateral en móviles */
+html, body{ max-width: 100%; overflow-x: hidden; }

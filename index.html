@@ -30,43 +30,43 @@
 </head>
 <body>
 
-  <!-- ===== Header (único) ===== -->
   <header class="main-header" role="banner">
-    <nav class="main-nav" aria-label="Primary">
-      <!-- Marca -->
-      <a href="index.html" class="brand" aria-label="Aigralys Home">
-        <img src="assets/logo.png" alt="Aigralys logo" width="28" height="28" />
-        <span>Aigralys</span>
-      </a>
+  <nav class="main-nav" aria-label="Primary">
+    <div class="logo">
+      <img src="assets/logo.png" alt="Aigralys.ai Logo" width="28" height="28">
+      <span>Aigralys</span>
+    </div>
 
-      <!-- Botón hamburguesa -->
-      <button class="menu-toggle"
-              aria-label="Abrir menú"
-              aria-controls="primary-nav"
-              aria-expanded="false">
-        <span class="menu-bar"></span>
-        <span class="menu-bar"></span>
-        <span class="menu-bar"></span>
-      </button>
+    <!-- nav links: el mismo UL para desktop y mobile -->
+    <ul id="primary-nav" class="nav-links">
+      <li><a href="index.html" data-i18n="nav.home">Inicio</a></li>
+      <li><a href="index.html#about" data-i18n="nav.about">Nosotros</a></li>
+      <li><a href="index.html#solutions" data-i18n="nav.solutions">Soluciones</a></li>
+      <li><a href="consultoria.html" data-i18n="nav.consulting">Consultoría</a></li>
+      <li><a href="workshops.html" data-i18n="nav.workshops">Workshops</a></li>
+      <li><a href="index.html#contact" data-i18n="nav.contact">Contacto</a></li>
+    </ul>
 
-      <!-- Menú (desktop + overlay mobile) -->
-      <ul id="primary-nav" class="nav-links" role="menubar">
-        <li role="none"><a role="menuitem" href="index.html" data-i18n="nav.home">Inicio</a></li>
-        <li role="none"><a role="menuitem" href="#about" data-i18n="nav.about">Nosotros</a></li>
-        <li role="none"><a role="menuitem" href="#solutions" data-i18n="nav.solutions">Soluciones</a></li>
-        <li role="none"><a role="menuitem" href="consultoria.html" data-i18n="nav.consulting">Consultoría</a></li>
-        <li role="none"><a role="menuitem" href="workshops.html" data-i18n="nav.workshops">Workshops</a></li>
-        <li role="none"><a role="menuitem" href="#contact" data-i18n="nav.contact">Contacto</a></li>
-      </ul>
-
-      <!-- Toggle de idioma (a la derecha en desktop; al pie del panel en mobile vía CSS) -->
-      <div id="lang-toggle" class="lang-toggle" role="group" aria-label="Language">
+    <!-- cluster derecho: idioma + hamburguesa -->
+    <div class="nav-actions">
+      <div id="lang-toggle" class="lang-toggle" role="group" aria-label="Language Toggle">
         <button data-lang-toggle="es" aria-pressed="true">ES</button>
         <span>|</span>
         <button data-lang-toggle="en" aria-pressed="false">EN</button>
       </div>
-    </nav>
-  </header>
+
+      <button class="menu-toggle" aria-label="Abrir menú" aria-controls="primary-nav" aria-expanded="false">
+        <span class="menu-bar"></span>
+        <span class="menu-bar"></span>
+        <span class="menu-bar"></span>
+      </button>
+    </div>
+  </nav>
+</header>
+
+<!-- backdrop del overlay -->
+<div id="nav-backdrop" class="nav-backdrop" hidden></div>
+
 
   <!-- ===== Hero ===== -->
   <section class="hero">
