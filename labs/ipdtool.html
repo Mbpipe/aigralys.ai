@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Medidor Óptico Facial</title>
+
   <!-- Tailwind (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -12,10 +13,9 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- OpenCV.js (para detección robusta de tarjeta) -->
-  <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+  <!-- OpenCV.js (detección de tarjeta) -->
+  <script src="https://docs.opencv.org/4.x/opencv.js"></script>
 
-  <!-- Estilos mínimos extra -->
   <style>
     html,body { background: #eef2ff; }
     .hidden-canvas { display:none; }
@@ -24,10 +24,10 @@
 <body>
   <div id="root"></div>
 
-  <script type="text/babel">
+  <script type="text/babel" data-presets="env,react">
     const {useState,useRef,useEffect} = React;
 
-    // ---- ÍCONOS LIGEROS (placeholder, sin dependencias) ----
+    // ---- ÍCONOS LIGEROS (sin dependencias) ----
     const IconWrap = ({children, className=""}) =>
       <span className={"inline-flex items-center justify-center " + className} style={{width: '1.25rem', height: '1.25rem'}}>{children}</span>;
     const Camera = (p)=> <IconWrap {...p}>📷</IconWrap>;
@@ -55,9 +55,6 @@
       { label: "Ref 8", value: 29.90 }
     ];
 
-    // ---- Utilidad ----
-    const dist = (a,b)=> Math.hypot(a.x-b.x, a.y-b.y);
-
     // ---- Detección de tarjeta con OpenCV (cuadrilátero rotado) ----
     const detectCardWithOpenCV = (canvas) => {
       try {
@@ -65,17 +62,20 @@
         const src = cv.imread(canvas);
         const ratio = CR80_WIDTH / CR80_HEIGHT; // 1.586
 
-        let gray = new cv.Mat(), blur = new cv.Mat(), edges = new cv.Mat();
+        let gray = new cv.Mat();
+        let blur = new cv.Mat();
+        let edges = new cv.Mat();
+
         cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
         cv.GaussianBlur(gray, blur, new cv.Size(5,5), 0);
 
-        // Umbrales Canny aproximados por luminancia media (robusto)
+        // Canny con umbrales en función de luminancia
         let sum = 0; const data = blur.data; for (let i=0;i<data.length;i++) sum += data[i];
         const mean = sum / data.length;
         const lower = Math.max(0, 0.66*mean), upper = Math.min(255, 1.33*mean);
         cv.Canny(blur, edges, lower, upper);
 
-        // Cerrar cortes
+        // Cierre pequeño para unir bordes
         const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3,3));
         cv.dilate(edges, edges, kernel);
 
@@ -99,13 +99,25 @@
             const w = rect.size.width, h = rect.size.height;
             const longSide = Math.max(w,h), shortSide = Math.min(w,h);
             const ar = longSide / shortSide;
+
             if (Math.abs(ar - ratio) <= ratio * 0.15) {
+              // score: grande y no extremadamente inclinado
               const angle = rect.angle; // [-90,0)
               const score = (area/(src.rows*src.cols))*0.8 + (1 - Math.min(Math.abs(angle)/90,1))*0.2;
 
               if (score > bestScore) {
-                const pts = cv.RotatedRect.points(rect);
-                const corners = pts.map(p=>({x:p.x,y:p.y}));
+                // OpenCV.js: usar boxPoints(rect, dstMat)
+                const box = new cv.Mat();
+                cv.boxPoints(rect, box); // 4x1 CV_32FC2
+                const f = box.data32F;
+                const corners = [
+                  {x:f[0], y:f[1]},
+                  {x:f[2], y:f[3]},
+                  {x:f[4], y:f[5]},
+                  {x:f[6], y:f[7]}
+                ];
+                box.delete();
+
                 best = {
                   found: true,
                   corners,
@@ -154,12 +166,32 @@
       const [processingStep, setProcessingStep] = useState("");
       const [faceMeshReady, setFaceMeshReady] = useState(false);
       const [loadingModels, setLoadingModels] = useState(true);
+      const [cvReady, setCvReady] = useState(false);
 
       const canvasRef = useRef(null);
       const fileInputRef = useRef(null);
       const videoRef = useRef(null);
       const [cameraActive, setCameraActive] = useState(false);
       const faceMeshRef = useRef(null);
+
+      // ---- Esperar OpenCV ----
+      useEffect(() => {
+        let timer = null;
+        const check = () => {
+          if (window.cv && typeof cv.Mat !== "undefined") {
+            setCvReady(true);
+            return true;
+          }
+          return false;
+        };
+        if (!check()) {
+          if (window.cv && cv.onRuntimeInitialized) {
+            cv.onRuntimeInitialized = () => setCvReady(true);
+          }
+          timer = setInterval(() => { if (check()) clearInterval(timer); }, 200);
+        }
+        return () => { if (timer) clearInterval(timer); };
+      }, []);
 
       // ---- MediaPipe FaceMesh ----
       useEffect(() => {
@@ -200,7 +232,7 @@
                 cameraUtilsScript.async = true;
                 cameraUtilsScript.onload = () => initializeFaceMesh();
                 cameraUtilsScript.onerror = () => {
-                  console.log("MediaPipe not available, using fallback method");
+                  console.log("MediaPipe not available, using fallback");
                   setFaceMeshReady(false);
                   setLoadingModels(false);
                   setProcessingStep("");
@@ -208,7 +240,7 @@
                 document.body.appendChild(cameraUtilsScript);
               };
               script.onerror = () => {
-                console.log("MediaPipe not available, using fallback method");
+                console.log("MediaPipe not available, using fallback");
                 setFaceMeshReady(false);
                 setLoadingModels(false);
                 setProcessingStep("");
@@ -281,13 +313,11 @@
         }
       };
 
-      // ---- Detección de tarjeta (OpenCV) ----
+      // ---- Detección de tarjeta ----
       const detectCardReal = (ctx, width, height) => {
         setProcessingStep("Detectando tarjeta CR80…");
-        // Preferir OpenCV
         const res = detectCardWithOpenCV(ctx.canvas);
         if (res.found) return res;
-        // Fallback básico (sin detección): forzar error más adelante
         return { found:false };
       };
 
@@ -340,7 +370,7 @@
         return detectFaceWithFallback(width, height);
       };
 
-      // ---- Detección de armazón (simple, como tu lógica) ----
+      // ---- Detección de armazón (básica) ----
       const detectFrameReal = (ctx, landmarks, width, height) => {
         setProcessingStep("Detectando armazón…");
         const imageData = ctx.getImageData(0,0,width,height);
@@ -478,13 +508,13 @@
           a.fillStyle="#fff"; a.strokeStyle="#000"; a.lineWidth=3; a.font="bold 14px Arial";
           const aRightMid = (rightPupil.x + frame.centerX)/2;
           a.strokeText(`A: ${measurements.A_right_mm}mm`, aRightMid-30, rightPupil.y+50);
-          a.fillText(`A: ${measurements.A_right_mm}mm`, aRightMid-30, rightPupil.y+50);
+          a.fillText(`A: ${measurements.A_right_mm}mm`, aRightPupil.y);
 
           a.strokeStyle="#0088ff"; a.lineWidth=3;
           a.beginPath(); a.moveTo(leftPupil.x, leftPupil.y+30); a.lineTo(frame.centerX, leftPupil.y+30); a.stroke();
           const aLeftMid = (leftPupil.x + frame.centerX)/2;
           a.strokeText(`A: ${measurements.A_left_mm}mm`, aLeftMid-30, leftPupil.y+50);
-          a.fillText(`A: ${measurements.A_left_mm}mm`, aLeftMid-30, leftPupil.y+50);
+          a.fillText(`A: ${measurements.A_left_mm}mm`, leftPupil.y+50);
 
           a.strokeStyle="#ffff00"; a.lineWidth=3;
           a.beginPath(); a.moveTo(rightPupil.x+35, rightPupil.y); a.lineTo(rightPupil.x+35, frame.rightLens.bottom); a.stroke();
@@ -520,14 +550,14 @@
           const card = detectCardReal(ctx, canvas.width, canvas.height);
           if (!card.found) throw new Error("No se pudo detectar la tarjeta CR80. Asegúrese de que esté visible, completa y bien iluminada en la foto.");
 
-          // 2) Escala (usar lado MÁS LARGO real)
+          // 2) Escala (usar lado MÁS LARGO real = 85.60mm)
           const pxPerMm = card.longSidePx / CR80_WIDTH;
 
           // 3) Face landmarks
           await new Promise(r=>setTimeout(r,500));
           const landmarks = await detectFaceReal(img, canvas.width, canvas.height);
 
-          // 4) Validar que tarjeta esté cerca del rostro (evitar falsos positivos lejos)
+          // 4) Validar distancia tarjeta/rostro (evitar tarjeta muy lejos)
           const fx = (landmarks.leftPupil.x + landmarks.rightPupil.x)/2;
           const fy = (landmarks.leftPupil.y + landmarks.rightPupil.y)/2;
           const eyeSpan = Math.abs(landmarks.rightPupil.x - landmarks.leftPupil.x);
@@ -554,7 +584,7 @@
           };
           if (measurements.DI_mm < 50 || measurements.DI_mm > 75) {
             quality.flags.push("unusual_ipd_value");
-            quality.notes += "IPD fuera del rango típico (50-75mm). Verifique la coplanaridad tarjeta/rostro. ";
+            quality.notes += "IPD fuera del rango típico (50-75mm). Verifique coplanaridad tarjeta/rostro. ";
           }
           if (!frame.found) {
             quality.flags.push("no_frame_detected");
@@ -630,6 +660,12 @@
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {!cvReady && (
+                    <div className="flex items-center gap-2 text-sm text-yellow-700 bg-yellow-50 px-4 py-2 rounded-lg">
+                      <Loader className="w-4 h-4" />
+                      <span>Cargando OpenCV…</span>
+                    </div>
+                  )}
                   {loadingModels ? (
                     <div className="flex items-center gap-2 text-sm text-yellow-600 bg-yellow-50 px-4 py-2 rounded-lg">
                       <Loader className="w-4 h-4" />
@@ -692,9 +728,10 @@
                   )}
 
                   {image && !cameraActive && (
-                    <button onClick={processImage} disabled={processing || loadingModels}
+                    <button onClick={processImage} disabled={processing || loadingModels || !cvReady}
                       className="w-full mt-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-105">
-                      <Ruler className="w-5 h-5" /> {processing ? "Procesando..." : "Analizar IPD"}
+                      <Ruler className="w-5 h-5" />
+                      {processing ? "Procesando..." : (cvReady ? "Analizar IPD" : "Cargando OpenCV…")}
                     </button>
                   )}
 
