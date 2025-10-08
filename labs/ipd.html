@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Medidor Óptico Facial</title>
+
+  <!-- TailwindCSS para los estilos de tu UI -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- MediaPipe Face Mesh + Camera Utils (para landmarks/iris) -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" defer></script>
+
+  <!-- React + ReactDOM UMD y Babel (para poder usar JSX en el navegador sin build) -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- iOS PWA-ish metas (opcional) -->
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen">
+  <div id="root"></div>
+
+  <!-- Tu app en JSX (transpilada por Babel en runtime) -->
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
+
+    // Dimensiones estándar CR80
+    const CR80_WIDTH = 85.60;
+    const CR80_HEIGHT = 53.98;
+
+    const REFERENCE_MEASUREMENTS = [
+      { label: 'Ref 1', value: 60.11 },
+      { label: 'Ref 2', value: 45.72 },
+      { label: 'Ref 3', value: 37.94 },
+      { label: 'Ref 4', value: 47.49 },
+      { label: 'Ref 5', value: 18.37 },
+      { label: 'Ref 6', value: 30.90 },
+      { label: 'Ref 7', value: 26.90 },
+      { label: 'Ref 8', value: 29.90 }
+    ];
+
+    function App(){
+      const [image, setImage] = useState(null);
+      const [processing, setProcessing] = useState(false);
+      const [results, setResults] = useState(null);
+      const [error, setError] = useState(null);
+      const [annotatedImage, setAnnotatedImage] = useState(null);
+      const [processingStep, setProcessingStep] = useState('');
+      const [faceMeshReady, setFaceMeshReady] = useState(false);
+      const [loadingModels, setLoadingModels] = useState(true);
+      const [cameraActive, setCameraActive] = useState(false);
+
+      const canvasRef = useRef(null);
+      const fileInputRef = useRef(null);
+      const videoRef = useRef(null);
+      const faceMeshRef = useRef(null);
+
+      // Carga MediaPipe FaceMesh
+      useEffect(()=>{
+        const load = async ()=>{
+          try{
+            setProcessingStep('Cargando modelos de detección facial…');
+            // Esperar a que los scripts defer estén disponibles
+            const wait = (ms)=>new Promise(r=>setTimeout(r,ms));
+            for (let i=0;i<50;i++){
+              if (typeof window.FaceMesh !== 'undefined') break;
+              await wait(100);
+            }
+            if (typeof window.FaceMesh === 'undefined') throw new Error('MediaPipe no disponible (CDN)');
+
+            const fm = new window.FaceMesh({
+              locateFile: (file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+            });
+            fm.setOptions({
+              maxNumFaces: 1,
+              refineLandmarks: true,
+              minDetectionConfidence: 0.5,
+              minTrackingConfidence: 0.5
+            });
+            faceMeshRef.current = fm;
+            setFaceMeshReady(true);
+          }catch(e){
+            console.warn('MediaPipe no cargó, se usará estimación', e);
+            setFaceMeshReady(false);
+          }finally{
+            setLoadingModels(false);
+            setProcessingStep('');
+          }
+        };
+        load();
+      },[]);
+
+      // -------- Helpers de imagen ----------
+      const applyGaussianBlur = (gray, w, h) => {
+        const k = [1,4,7,4,1, 4,16,26,16,4, 7,26,41,26,7, 4,16,26,16,4, 1,4,7,4,1];
+        const ks=273, size=5, off=2;
+        const out = new Uint8ClampedArray(w*h);
+        for (let y=off;y<h-off;y++) for (let x=off;x<w-off;x++){
+          let sum=0;
+          for (let ky=-off; ky<=off; ky++) for (let kx=-off; kx<=off; kx++){
+            sum += gray[(y+ky)*w+(x+kx)] * k[(ky+off)*size+(kx+off)];
+          }
+          out[y*w+x] = sum/ks;
+        }
+        return out;
+      };
+
+      const applySobel = (gray, w, h) => {
+        const out = new Uint8ClampedArray(w*h);
+        for (let y=1;y<h-1;y++) for (let x=1;x<w-1;x++){
+          const i = y*w+x;
+          const gx = -gray[i-w-1]+gray[i-w+1]-2*gray[i-1]+2*gray[i+1]-gray[i+w-1]+gray[i+w+1];
+          const gy = -gray[i-w-1]-2*gray[i-w]-gray[i-w+1]+gray[i+w-1]+2*gray[i+w]+gray[i+w+1];
+          out[i] = Math.min(255, Math.hypot(gx, gy));
+        }
+        return out;
+      };
+
+      const findCardContourImproved = (edges, gray, width, height) => {
+        const targetAR = CR80_WIDTH/CR80_HEIGHT, tol=0.15;
+        let best=null, bestScore=0;
+        const startY = Math.floor(height*0.3), endY = Math.floor(height*0.8);
+        const stepX=15, stepY=15, minW=80, maxW=Math.min(width*0.4, 500);
+
+        for (let y=startY; y<endY-60; y+=stepY){
+          for (let x=10; x<width-minW; x+=stepX){
+            for (let w=minW; w<maxW && x+w<width-10; w+=stepX){
+              const h = w/targetAR;
+              if (y+h>=height-10) continue;
+              const ratio = w/h;
+              if (Math.abs(ratio-targetAR) > tol*targetAR) continue;
+
+              // perímetro
+              let perimeterEdges=0, perimeterSamples=60;
+              for (let i=0;i<perimeterSamples;i++){
+                const t=i/perimeterSamples; let px,py;
+                if (t<0.25){ px = Math.floor(x + (t*4)*w); py = Math.floor(y); }
+                else if (t<0.5){ px = Math.floor(x+w); py = Math.floor(y + ((t-0.25)*4)*h); }
+                else if (t<0.75){ px = Math.floor(x+w - ((t-0.5)*4)*w); py = Math.floor(y+h); }
+                else { px = Math.floor(x); py = Math.floor(y + h - ((t-0.75)*4)*h); }
+                if (px>=0 && px<width && py>=0 && py<height){
+                  if (edges[py*width+px] > 128) perimeterEdges++;
+                }
+              }
+
+              // esquinas
+              let cornerEdges=0, r=5;
+              const corners=[
+                {x,y},{x:x+w,y},{x:x+w,y:y+h},{x,y:y+h}
+              ];
+              for (const c of corners){
+                for (let dy=-r; dy<=r; dy++) for (let dx=-r; dx<=r; dx++){
+                  const cx=Math.floor(c.x+dx), cy=Math.floor(c.y+dy);
+                  if (cx>=0 && cx<width && cy>=0 && cy<height){
+                    if (edges[cy*width+cx] > 128) cornerEdges++;
+                  }
+                }
+              }
+
+              // uniformidad interna
+              let intens=[]; for (let i=0;i<40;i++){
+                const ix=Math.floor(x + w*0.2 + Math.random()*w*0.6);
+                const iy=Math.floor(y + h*0.2 + Math.random()*h*0.6);
+                intens.push(gray[iy*width+ix]);
+              }
+              const mean=intens.reduce((a,b)=>a+b,0)/intens.length;
+              const variance=intens.reduce((s,v)=>s+(v-mean)*(v-mean),0)/intens.length;
+
+              const perS = perimeterEdges/perimeterSamples;
+              const corS = cornerEdges/(4*r*r*4);
+              const uniS = Math.max(0, 1-(variance/5000));
+              const score = perS*0.5 + corS*0.3 + uniS*0.2;
+
+              if (score>bestScore && score>0.25 && perimeterEdges>15){
+                bestScore=score; best={x,y,width:w,height:h,score};
+              }
+            }
+          }
+        }
+
+        if (best){
+          // estimar skew por continuidad de bordes horizontales
+          let top=0,bottom=0;
+          for (let x=best.x; x<best.x+best.width; x++){
+            const topY=Math.floor(best.y), bottomY=Math.floor(best.y+best.height);
+            if (edges[topY*width+x] > 128) top++;
+            if (edges[bottomY*width+x] > 128) bottom++;
+          }
+          const cont = (top+bottom)/(best.width*2);
+          const skew = cont<0.5 ? (1-cont)*10 : 0;
+          return {
+            found:true,
+            corners:[
+              {x:best.x,y:best.y},
+              {x:best.x+best.width,y:best.y},
+              {x:best.x+best.width,y:best.y+best.height},
+              {x:best.x,y:best.y+best.height}
+            ],
+            width:best.width, height:best.height, skew,
+            confidence: Math.min(0.95, best.score*1.5)
+          };
+        }
+        return {found:false};
+      };
+
+      const detectCardReal = (ctx, width, height) => {
+        setProcessingStep('Detectando tarjeta CR80…');
+        const imgData = ctx.getImageData(0,0,width,height);
+        const data = imgData.data;
+        const gray = new Uint8ClampedArray(width*height);
+        for (let i=0;i<data.length;i+=4){
+          gray[i/4] = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
+        }
+        const blurred = applyGaussianBlur(gray, width, height);
+        const edges = applySobel(blurred, width, height);
+        // binarizar (opcional)
+        for (let i=0;i<edges.length;i++) edges[i] = edges[i] > 40 ? 255 : 0;
+        return findCardContourImproved(edges, gray, width, height);
+      };
+
+      const detectFaceWithMediaPipe = (img)=> new Promise((resolve, reject)=>{
+        const c = document.createElement('canvas');
+        c.width=img.width; c.height=img.height;
+        c.getContext('2d').drawImage(img,0,0);
+        faceMeshRef.current.onResults((res)=>{
+          const lm = res.multiFaceLandmarks?.[0];
+          if (!lm) return reject(new Error('No se detectó rostro en la imagen'));
+          const rI = lm.slice(468,472), lI = lm.slice(473,477);
+          const rp = { x: rI.reduce((s,l)=>s+l.x*img.width,0)/4, y: rI.reduce((s,l)=>s+l.y*img.height,0)/4 };
+          const lp = { x: lI.reduce((s,l)=>s+l.x*img.width,0)/4, y: lI.reduce((s,l)=>s+l.y*img.height,0)/4 };
+          resolve({
+            rightPupil: rp,
+            leftPupil: lp,
+            noseTip: { x: lm[1].x*img.width, y: lm[1].y*img.height },
+            chinBottom: { x: lm[152].x*img.width, y: lm[152].y*img.height },
+            faceCenter: { x: (rp.x+lp.x)/2, y: (rp.y+lp.y)/2 },
+            confidence: 0.95,
+            method: 'MediaPipe'
+          });
+        });
+        faceMeshRef.current.send({ image: c });
+      });
+
+      const detectFaceWithFallback = (width, height) => {
+        const centerX = width/2, centerY = height*0.45;
+        const estimatedIPDpx = width * 0.15;
+        const rightPupil = { x: centerX + estimatedIPDpx/2, y: centerY };
+        const leftPupil  = { x: centerX - estimatedIPDpx/2, y: centerY };
+        return {
+          rightPupil, leftPupil,
+          noseTip: { x:centerX, y:centerY + height*0.08 },
+          chinBottom: { x:centerX, y:centerY + height*0.25 },
+          faceCenter: { x:centerX, y:centerY },
+          confidence: 0.65,
+          method: 'Estimación'
+        };
+      };
+
+      const detectFaceReal = async (img, w, h) => {
+        setProcessingStep('Detectando rostro y pupilas…');
+        if (faceMeshReady && faceMeshRef.current) return await detectFaceWithMediaPipe(img);
+        return detectFaceWithFallback(w,h);
+      };
+
+      const detectFrameReal = (ctx, landmarks, width, height) => {
+        setProcessingStep('Detectando armazón…');
+        const data = ctx.getImageData(0,0,width,height).data;
+        const { rightPupil, leftPupil } = landmarks;
+        const R = Math.abs(rightPupil.x - leftPupil.x) * 0.8;
+        let dark=0, N=200;
+        for (let i=0;i<N;i++){
+          const a = (Math.PI*2*i)/N;
+          const x = Math.floor(rightPupil.x + Math.cos(a)*R);
+          const y = Math.floor(rightPupil.y + Math.sin(a)*R);
+          if (x<0||x>=width||y<0||y>=height) continue;
+          const idx=(y*width+x)*4;
+          const br=(data[idx]+data[idx+1]+data[idx+2])/3;
+          if (br<80) dark++;
+        }
+        const found = dark > N*0.15;
+        if (!found) return {found:false};
+        const frameWidth = Math.abs(rightPupil.x-leftPupil.x)*1.8;
+        const lensWidth = frameWidth*0.42;
+        const lensHeight = lensWidth*0.85;
+        const bridge = frameWidth*0.16;
+        return {
+          found:true,
+          centerX:(rightPupil.x+leftPupil.x)/2,
+          bridge,
+          rightLens: {
+            center:rightPupil, width:lensWidth, height:lensHeight,
+            top:rightPupil.y-lensHeight/2, bottom:rightPupil.y+lensHeight/2
+          },
+          leftLens: {
+            center:leftPupil, width:lensWidth, height:lensHeight,
+            top:leftPupil.y-lensHeight/2, bottom:leftPupil.y+lensHeight/2
+          },
+          confidence:0.75
+        };
+      };
+
+      const calculateMeasurements = (card, lm, frame, pxPerMm) => {
+        setProcessingStep('Calculando mediciones…');
+        const {rightPupil, leftPupil} = lm;
+        const diPx = Math.hypot(rightPupil.x-leftPupil.x, rightPupil.y-leftPupil.y);
+        const DI_mm = diPx / pxPerMm;
+
+        const measurements = {
+          DI_mm: Math.round(DI_mm*10)/10,
+          A_right_mm: null, A_left_mm: null,
+          B_right_mm: null, B_left_mm: null,
+          extras: {
+            bridge_mm:null,
+            lens_right_width_mm:null, lens_left_width_mm:null,
+            lens_right_height_mm:null, lens_left_height_mm:null
+          }
+        };
+
+        if (frame.found){
+          const A_r = Math.abs(rightPupil.x - frame.centerX);
+          const A_l = Math.abs(leftPupil.x  - frame.centerX);
+          measurements.A_right_mm = Math.round((A_r/pxPerMm)*10)/10;
+          measurements.A_left_mm  = Math.round((A_l/pxPerMm)*10)/10;
+
+          const B_r = Math.abs(frame.rightLens.bottom - rightPupil.y);
+          const B_l = Math.abs(frame.leftLens.bottom  - leftPupil.y);
+          measurements.B_right_mm = Math.round((B_r/pxPerMm)*10)/10;
+          measurements.B_left_mm  = Math.round((B_l/pxPerMm)*10)/10;
+
+          measurements.extras.bridge_mm = Math.round((frame.bridge/pxPerMm)*10)/10;
+          measurements.extras.lens_right_width_mm  = Math.round((frame.rightLens.width /pxPerMm)*10)/10;
+          measurements.extras.lens_left_width_mm   = Math.round((frame.leftLens.width  /pxPerMm)*10)/10;
+          measurements.extras.lens_right_height_mm = Math.round((frame.rightLens.height/pxPerMm)*10)/10;
+          measurements.extras.lens_left_height_mm  = Math.round((frame.leftLens.height /pxPerMm)*10)/10;
+        }
+        return measurements;
+      };
+
+      const createAnnotatedImage = (ctx, img, card, lm, frame, measurements) => {
+        setProcessingStep('Generando imagen anotada…');
+        const annotCanvas = document.createElement('canvas');
+        annotCanvas.width = img.width; annotCanvas.height = img.height;
+        const a = annotCanvas.getContext('2d');
+        a.drawImage(img,0,0);
+
+        if (card.found){
+          a.strokeStyle='#00ff00'; a.lineWidth=4; a.beginPath();
+          a.moveTo(card.corners[0].x, card.corners[0].y);
+          for (let i=1;i<card.corners.length;i++) a.lineTo(card.corners[i].x, card.corners[i].y);
+          a.closePath(); a.stroke();
+          a.fillStyle='#00ff00'; a.font='bold 16px Arial'; a.strokeStyle='#000'; a.lineWidth=3;
+          a.strokeText('CR80 Card', card.corners[0].x+10, card.corners[0].y+25);
+          a.fillText('CR80 Card',  card.corners[0].x+10, card.corners[0].y+25);
+        }
+
+        const { rightPupil, leftPupil } = lm;
+        a.fillStyle='#ff0000';
+        a.beginPath(); a.arc(rightPupil.x,rightPupil.y,10,0,Math.PI*2); a.fill();
+        a.beginPath(); a.arc(leftPupil.x,leftPupil.y,10,0,Math.PI*2); a.fill();
+
+        a.strokeStyle='#ff0000'; a.lineWidth=3; a.beginPath();
+        a.moveTo(leftPupil.x,leftPupil.y); a.lineTo(rightPupil.x,rightPupil.y); a.stroke();
+
+        const midX=(leftPupil.x+rightPupil.x)/2, midY=(leftPupil.y+rightPupil.y)/2-20;
+        a.fillStyle='#fff'; a.strokeStyle='#000'; a.lineWidth=4; a.font='bold 18px Arial';
+        const diText = `IPD/DI: ${measurements.DI_mm} mm`;
+        a.strokeText(diText, midX-70, midY);
+        a.fillText(diText,  midX-70, midY);
+
+        a.font='bold 14px Arial'; a.fillStyle='#ffff00'; a.strokeStyle='#000'; a.lineWidth=3;
+        const methodText = `Método: ${lm.method}`;
+        a.strokeText(methodText, midX-60, midY+25);
+        a.fillText(methodText,  midX-60, midY+25);
+
+        if (frame.found){
+          a.strokeStyle='#00ffff'; a.lineWidth=2; a.setLineDash([10,5]);
+          a.beginPath(); a.moveTo(frame.centerX, rightPupil.y-120); a.lineTo(frame.centerX, rightPupil.y+120); a.stroke();
+          a.setLineDash([]);
+
+          a.strokeStyle='#ffffff'; a.lineWidth=2;
+          a.strokeRect(frame.rightLens.center.x-frame.rightLens.width/2, frame.rightLens.top, frame.rightLens.width, frame.rightLens.height);
+          a.strokeRect(frame.leftLens.center.x -frame.leftLens.width/2,  frame.leftLens.top,  frame.leftLens.width,  frame.leftLens.height);
+
+          // A derecha
+          a.strokeStyle='#0088ff'; a.lineWidth=3;
+          a.beginPath(); a.moveTo(rightPupil.x, rightPupil.y+30); a.lineTo(frame.centerX, rightPupil.y+30); a.stroke();
+          a.fillStyle='#fff'; a.strokeStyle='#000'; a.font='bold 14px Arial';
+          const aR=(rightPupil.x+frame.centerX)/2;
+          a.strokeText(`A: ${measurements.A_right_mm}mm`, aR-30, rightPupil.y+50);
+          a.fillText(`A: ${measurements.A_right_mm}mm`,  aR-30, rightPupil.y+50);
+
+          // A izquierda
+          a.strokeStyle='#0088ff'; a.lineWidth=3;
+          a.beginPath(); a.moveTo(leftPupil.x, leftPupil.y+30); a.lineTo(frame.centerX, leftPupil.y+30); a.stroke();
+          const aL=(leftPupil.x+frame.centerX)/2;
+          a.strokeText(`A: ${measurements.A_left_mm}mm`, aL-30, leftPupil.y+50);
+          a.fillText(`A: ${measurements.A_left_mm}mm`,  aL-30, leftPupil.y+50);
+
+          // B derecha
+          a.strokeStyle='#ffff00'; a.lineWidth=3;
+          a.beginPath(); a.moveTo(rightPupil.x+35, rightPupil.y); a.lineTo(rightPupil.x+35, frame.rightLens.bottom); a.stroke();
+          const bR=(rightPupil.y+frame.rightLens.bottom)/2;
+          a.fillStyle='#fff'; a.strokeStyle='#000';
+          a.strokeText(`B: ${measurements.B_right_mm}mm`, rightPupil.x+45, bR);
+          a.fillText(`B: ${measurements.B_right_mm}mm`,  rightPupil.x+45, bR);
+
+          // B izquierda
+          a.strokeStyle='#ffff00'; a.lineWidth=3;
+          a.beginPath(); a.moveTo(leftPupil.x-35, leftPupil.y); a.lineTo(leftPupil.x-35, frame.leftLens.bottom); a.stroke();
+          const bL=(leftPupil.y+frame.leftLens.bottom)/2;
+          a.strokeText(`B: ${measurements.B_left_mm}mm`, leftPupil.x-100, bL);
+          a.fillText(`B: ${measurements.B_left_mm}mm`,  leftPupil.x-100, bL);
+        }
+        return annotCanvas.toDataURL();
+      };
+
+      // --------- Handlers UI ----------
+      const handleImageUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev)=>{
+          setImage(ev.target.result);
+          setResults(null); setError(null); setAnnotatedImage(null);
+        };
+        reader.readAsDataURL(file);
+      };
+
+      const startCamera = async () => {
+        try{
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode:'user', width:1280, height:720 }
+          });
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+          setCameraActive(true);
+        }catch(err){
+          setError('No se pudo acceder a la cámara: ' + err.message);
+        }
+      };
+
+      const stopCamera = () => {
+        const s = videoRef.current?.srcObject;
+        if (s) s.getTracks().forEach(t=>t.stop());
+        setCameraActive(false);
+      };
+
+      const capturePhoto = () => {
+        const v = videoRef.current;
+        if (!v) return;
+        const c = document.createElement('canvas');
+        c.width = v.videoWidth; c.height = v.videoHeight;
+        c.getContext('2d').drawImage(v,0,0);
+        const dataUrl = c.toDataURL('image/jpeg');
+        setImage(dataUrl);
+        stopCamera();
+        setResults(null); setError(null); setAnnotatedImage(null);
+      };
+
+      const processImage = async () => {
+        if (!image) return;
+        setProcessing(true); setError(null); setProcessingStep('Iniciando análisis...');
+        try{
+          const img = new Image(); img.src = image;
+          await new Promise((res,rej)=>{img.onload=res; img.onerror=rej;});
+
+          const canvas = canvasRef.current;
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width; canvas.height = img.height;
+          ctx.drawImage(img,0,0);
+
+          await new Promise(r=>setTimeout(r,300));
+          const card = detectCardReal(ctx, canvas.width, canvas.height);
+          if (!card.found) throw new Error('No se pudo detectar la tarjeta CR80. Asegúrese de que esté visible, completa y bien iluminada en la foto.');
+
+          const pxPerMm = card.width / CR80_WIDTH;
+
+          await new Promise(r=>setTimeout(r,500));
+          const landmarks = await detectFaceReal(img, canvas.width, canvas.height);
+
+          await new Promise(r=>setTimeout(r,400));
+          const frame = detectFrameReal(ctx, landmarks, canvas.width, canvas.height);
+
+          await new Promise(r=>setTimeout(r,300));
+          const measurements = calculateMeasurements(card, landmarks, frame, pxPerMm);
+
+          // Validación/calidad
+          const quality = {
+            confidence_DI: landmarks.confidence,
+            confidence_A: frame.found ? frame.confidence : 0,
+            confidence_B: frame.found ? frame.confidence*0.95 : 0,
+            flags: [], notes:''
+          };
+          if (Math.abs(card.skew)>5) quality.flags.push('excessive_card_skew');
+          if (measurements.DI_mm < 50 || measurements.DI_mm > 75){
+            quality.flags.push('unusual_ipd_value');
+            quality.notes += 'IPD fuera del rango típico (50-75mm). Verifique la calibración de la tarjeta. ';
+          }
+          if (!frame.found){
+            quality.flags.push('no_frame_detected');
+            quality.notes += 'No se detectó armazón. Las medidas A y B no están disponibles. ';
+          } else {
+            const asy = Math.abs(measurements.A_right_mm - measurements.A_left_mm);
+            if (asy > 3){
+              quality.flags.push('high_pd_asymmetry');
+              quality.notes += `Asimetría detectada en medidas A (${asy.toFixed(1)}mm). `;
+            }
+          }
+          if (landmarks.method === 'Estimación'){
+            quality.flags.push('fallback_detection_used');
+            quality.notes += 'Se usó método de estimación. Para mayor precisión, asegure buena iluminación y rostro visible. ';
+          }
+          if (!quality.notes){
+            quality.notes = `Medición exitosa usando ${landmarks.method}. IPD detectado: ${measurements.DI_mm}mm. `;
+            if (frame.found) quality.notes += 'Todas las mediciones calculadas con buena confianza.';
+          }
+
+          setResults({
+            measurements,
+            calibration: {
+              px_per_mm: pxPerMm,
+              card_detected: card.found,
+              card_skew_deg: card.skew,
+              perspective_corrected: Math.abs(card.skew) < 3
+            },
+            quality,
+            detectionMethod: landmarks.method
+          });
+
+          await new Promise(r=>setTimeout(r,400));
+          const annotated = createAnnotatedImage(ctx, img, card, landmarks, frame, measurements, pxPerMm);
+          setAnnotatedImage(annotated);
+          setProcessingStep('¡Completado!');
+        }catch(err){
+          console.error(err);
+          setError(err.message);
+          setProcessingStep('');
+        }finally{
+          setTimeout(()=>{ setProcessing(false); setProcessingStep(''); }, 500);
+        }
+      };
+
+      const downloadResults = () => {
+        if (!results) return;
+        const dataStr = JSON.stringify(results, null, 2);
+        const blob = new Blob([dataStr], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `optical-measurements-${Date.now()}.json`;
+        a.click(); URL.revokeObjectURL(url);
+      };
+
+      const downloadAnnotatedImage = () => {
+        if (!annotatedImage) return;
+        const a = document.createElement('a');
+        a.href = annotatedImage; a.download = `annotated-measurement-${Date.now()}.png`;
+        a.click();
+      };
+
+      // ---------------- UI ----------------
+      return (
+        <div className="max-w-7xl mx-auto p-4">
+          {/* Header */}
+          <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 border-t-4 border-indigo-600">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 text-2xl">👁️</div>
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-800">Medidor Óptico Facial</h1>
+                  <p className="text-gray-600 mt-1">Análisis profesional de IPD para calibración de anteojos</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {loadingModels ? (
+                  <div className="flex items-center gap-2 text-sm text-yellow-600 bg-yellow-50 px-4 py-2 rounded-lg">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600"></div>
+                    <span>Cargando modelos…</span>
+                  </div>
+                ) : faceMeshReady ? (
+                  <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-4 py-2 rounded-lg">
+                    <span className="text-lg">✅</span>
+                    <span>MediaPipe Activo</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-4 py-2 rounded-lg">
+                    <span className="text-lg">⚡</span>
+                    <span>Modo Estimación</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Instructions */}
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-xl p-6 mb-6 text-white">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">ℹ️ Requisitos de la Fotografía</h2>
+            <div className="grid md:grid-cols-2 gap-3 text-sm">
+              <div>✅ Rostro frontal, mirada directa, ojos bien abiertos</div>
+              <div>✅ Tarjeta CR80 visible y completa (tamaño tarjeta de crédito)</div>
+              <div>✅ Tarjeta en el mismo plano del rostro (altura de ojos)</div>
+              <div>✅ Buena iluminación uniforme, sin sombras fuertes</div>
+            </div>
+            <div className="mt-4 bg-white bg-opacity-20 backdrop-blur-lg rounded-lg p-3 text-sm">
+              <p><strong>Nota:</strong> La tarjeta CR80 (85.60 × 53.98 mm) se usa para calibración.</p>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Columna izquierda */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-2xl shadow-xl p-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Captura de Imagen</h2>
+
+                <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={()=>fileInputRef.current?.click()}
+                    disabled={loadingModels}
+                    className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl transition-all hover:scale-105"
+                  >⬆️ Subir Foto</button>
+
+                  <button
+                    onClick={cameraActive ? capturePhoto : startCamera}
+                    disabled={loadingModels}
+                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl transition-all hover:scale-105"
+                  >📷 {cameraActive ? 'Capturar' : 'Cámara'}</button>
+                </div>
+
+                {cameraActive && (
+                  <div className="mt-4">
+                    <video ref={videoRef} className="w-full rounded-xl shadow-lg" autoPlay playsInline muted></video>
+                    <button onClick={stopCamera} className="w-full mt-2 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg text-sm font-medium">Cerrar Cámara</button>
+                  </div>
+                )}
+
+                {image && !cameraActive && (
+                  <button
+                    onClick={processImage}
+                    disabled={processing || loadingModels}
+                    className="w-full mt-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl transition-all hover:scale-105"
+                  >📏 {processing ? 'Procesando…' : 'Analizar IPD'}</button>
+                )}
+
+                {processing && (
+                  <div className="mt-4 bg-indigo-50 rounded-lg p-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
+                      <span className="text-indigo-700 font-medium text-sm">{processingStep}</span>
+                    </div>
+                    <div className="w-full bg-indigo-200 rounded-full h-2">
+                      <div className="bg-indigo-600 h-2 rounded-full animate-pulse" style={{width:'70%'}}></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {image && !cameraActive && (
+                <div className="bg-white rounded-2xl shadow-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Imagen Original</h3>
+                  <img src={image} alt="Original" className="w-full rounded-xl shadow-md"/>
+                </div>
+              )}
+
+              {annotatedImage && (
+                <div className="bg-white rounded-2xl shadow-xl p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800">Imagen Anotada</h3>
+                    <button onClick={downloadAnnotatedImage} className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm">⬇️ Descargar</button>
+                  </div>
+                  <img src={annotatedImage} alt="Annotated" className="w-full rounded-xl shadow-md"/>
+                </div>
+              )}
+            </div>
+
+            {/* Columna derecha */}
+            <div className="space-y-6">
+              {error && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl shadow-lg">
+                  <div className="flex items-center gap-2"><span className="text-red-600">⚠️</span><p className="text-red-800 font-semibold">Error de Procesamiento</p></div>
+                  <p className="text-red-700 mt-2 text-sm">{error}</p>
+                  <p className="text-red-600 mt-2 text-xs">Sugerencias: buena iluminación, rostro visible, tarjeta CR80 completa.</p>
+                </div>
+              )}
+
+              {results && (
+                <>
+                  <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-xl font-semibold">Medición de IPD/DI</h3>
+                      <button onClick={downloadResults} className="bg-white text-indigo-600 hover:bg-indigo-50 py-2 px-4 rounded-lg text-sm font-medium">⬇️ JSON</button>
+                    </div>
+
+                    <div className="bg-white bg-opacity-20 backdrop-blur-lg rounded-xl p-6 mb-4">
+                      <div className="text-center">
+                        <p className="text-sm opacity-90 mb-2">Distancia Interpupilar</p>
+                        <p className="text-5xl font-bold mb-1">{results.measurements.DI_mm}</p>
+                        <p className="text-2xl font-semibold opacity-90">milímetros</p>
+                        <div className="mt-3 pt-3 border-t border-white border-opacity-30">
+                          <p className="text-xs opacity-75">Método de detección</p>
+                          <p className="text-sm font-semibold mt-1">{results.detectionMethod}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {results.measurements.A_right_mm !== null && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-white bg-opacity-20 backdrop-blur-lg rounded-xl p-3">
+                          <p className="text-xs opacity-75 mb-1">A Derecha (PD)</p>
+                          <p className="text-xl font-bold">{results.measurements.A_right_mm} mm</p>
+                        </div>
+                        <div className="bg-white bg-opacity-20 backdrop-blur-lg rounded-xl p-3">
+                          <p className="text-xs opacity-75 mb-1">A Izquierda (PD)</p>
+                          <p className="text-xl font-bold">{results.measurements.A_left_mm} mm</p>
+                        </div>
+                        <div className="bg-white bg-opacity-20 backdrop-blur-lg rounded-xl p-3">
+                          <p className="text-xs opacity-75 mb-1">B Derecha</p>
+                          <p className="text-xl font-bold">{results.measurements.B_right_mm} mm</p>
+                        </div>
+                        <div className="bg-white bg-opacity-20 backdrop-blur-lg rounded-xl p-3">
+                          <p className="text-xs opacity-75 mb-1">B Izquierda</p>
+                          <p className="text-xl font-bold">{results.measurements.B_left_mm} mm</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info de calibración */}
+                  <div className="bg-white rounded-2xl shadow-xl p-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Información de Calibración</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                        <span className="text-gray-700 font-medium">Tarjeta Detectada</span>
+                        <div className="flex items-center gap-2">
+                          {results.calibration.card_detected ? (<><span className="text-green-600">✅</span><span className="font-bold text-green-700">Sí</span></>) : (<><span className="text-red-600">⛔</span><span className="font-bold text-red-700">No</span></>)}
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span className="text-gray-600 text-sm">Escala (px/mm)</span>
+                        <span className="font-mono font-semibold text-gray-800">{results.calibration.px_per_mm.toFixed(3)}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span className="text-gray-600 text-sm">Resolución Efectiva</span>
+                        <span className="font-semibold text-gray-800">{(1/results.calibration.px_per_mm).toFixed(2)} mm/px</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span className="text-gray-600 text-sm">Inclinación Tarjeta</span>
+                        <span className={`font-bold ${Math.abs(results.calibration.card_skew_deg)>5?'text-yellow-600':'text-green-600'}`}>
+                          {results.calibration.card_skew_deg.toFixed(1)}°
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Calidad */}
+                  <div className="bg-white rounded-2xl shadow-xl p-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Calidad de Medición</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700">Confianza IPD/DI</span>
+                          <span className="text-sm font-bold text-indigo-600">{(results.quality.confidence_DI*100).toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                          <div className="bg-gradient-to-r from-green-500 to-emerald-600 h-3 rounded-full" style={{width:`${results.quality.confidence_DI*100}%`}}></div>
+                        </div>
+                      </div>
+
+                      {results.measurements.A_right_mm !== null && (
+                        <>
+                          <div>
+                            <div className="flex justify-between mb-2">
+                              <span className="text-sm font-medium text-gray-700">Confianza A (Naso-Pupilar)</span>
+                              <span className="text-sm font-bold text-blue-600">{(results.quality.confidence_A*100).toFixed(0)}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full" style={{width:`${results.quality.confidence_A*100}%`}}></div>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-2">
+                              <span className="text-sm font-medium text-gray-700">Confianza B (Altura)</span>
+                              <span className="text-sm font-bold text-yellow-600">{(results.quality.confidence_B*100).toFixed(0)}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                              <div className="bg-gradient-to-r from-yellow-500 to-orange-600 h-3 rounded-full" style={{width:`${results.quality.confidence_B*100}%`}}></div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {results.quality.flags.length>0 && (
+                        <div className="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg text-sm text-yellow-800">
+                          <div className="font-semibold mb-2">Advertencias de Calidad</div>
+                          <ul className="space-y-1 ml-7 list-disc">
+                            {results.quality.flags.map((f,i)=>(
+                              <li key={i}>
+                                {f==='excessive_card_skew' && 'Inclinación excesiva de la tarjeta'}
+                                {f==='no_frame_detected' && 'No se detectó armazón en la imagen'}
+                                {f==='unusual_ipd_value' && 'Valor de IPD fuera del rango típico'}
+                                {f==='high_pd_asymmetry' && 'Alta asimetría en medidas naso-pupilares'}
+                                {f==='fallback_detection_used' && 'Se usó método de estimación (menor precisión)'}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {results.quality.notes && (
+                        <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-lg text-sm text-blue-800">
+                          {results.quality.notes}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Referencias */}
+                  <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl shadow-xl p-6 border-2 border-purple-200">
+                    <h3 className="text-lg font-semibold text-purple-900 mb-3">Medidas de Referencia (PDF)</h3>
+                    <p className="text-sm text-purple-700 mb-4">Valores del documento proporcionado para comparación:</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {REFERENCE_MEASUREMENTS.map((ref, idx)=>(
+                        <div key={idx} className="bg-white p-3 rounded-lg shadow-sm text-center border border-purple-200">
+                          <p className="text-xs text-gray-500 mb-1">{ref.label}</p>
+                          <p className="text-sm font-bold text-purple-700">{ref.value} mm</p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-purple-600 mt-3 italic">* Medidas específicas del documento de calibración</p>
+                  </div>
+                </>
+              )}
+
+              {/* Ayuda inicial */}
+              {!results && !error && !image && !loadingModels && (
+                <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+                  <div className="bg-indigo-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">👁️</div>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">Comenzá con una Fotografía</h3>
+                  <p className="text-gray-600 mb-6">Subí una imagen o usá la cámara para medir el IPD</p>
+                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 text-left text-sm text-gray-700">
+                    <ol className="space-y-1 ml-4 list-decimal">
+                      <li>Detectar tarjeta CR80 por bordes + relación de aspecto (1.586)</li>
+                      <li>Calibrar píxeles/mm con ancho 85.60mm</li>
+                      <li>Detectar rostro (MediaPipe) o estimación fallback</li>
+                      <li>Centros pupilares (iris 468-477) → IPD real</li>
+                      <li>Medidas extra A/B si hay armazón</li>
+                    </ol>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Canvas oculto */}
+          <canvas ref={canvasRef} className="hidden"></canvas>
+
+          {/* Footer */}
+          <div className="mt-8 text-center text-sm text-gray-600 pb-4">
+            <p className="font-semibold">Medidor Óptico Facial v2.0 - Medición Real de IPD</p>
+            <p className="mt-1">React + MediaPipe + Procesamiento de Imágenes</p>
+            <p className="mt-2 text-xs text-gray-500">HTTPS requerido para cámara (GitHub Pages lo cumple).</p>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
