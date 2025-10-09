@@ -4,43 +4,34 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>Medidor Óptico Facial — Cámara + Guía CR80</title>
-
-  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- React 18 UMD + Babel -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <!-- OpenCV opcional para ROI -->
-  <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
-
   <style>
     html,body{background:#eef2ff}
-    video.cam{
-      width:100%;
-      height:auto;
-      max-height:62vh;
-      background:#000;
-      border-radius:.75rem;
-      object-fit:cover;
-      transform:scaleX(-1);
+    .cam{
+      width:100%;max-height:62vh;background:#000;border-radius:.75rem;
+      object-fit:cover;transform:scaleX(-1);
     }
-    canvas.overlay{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;}
-    .tag{font-variant-numeric:tabular-nums}
-    .mono{font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+    .overlay{position:absolute;inset:0;pointer-events:none}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+    .hidden-el{display:none}
   </style>
 </head>
 <body>
 <div id="root"></div>
 
 <script type="text/babel">
-const {useState,useEffect,useRef,useMemo} = React;
-const CR80_W=85.60, CR80_AR=85.60/53.98;
+const {useState,useEffect,useRef} = React;
 
 function App(){
-  const [dbg,setDbg]=useState({secure:window.isSecureContext, hasMedia:!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia), state:'idle', msg:''});
+  const [dbg,setDbg]=useState({
+    secure: window.isSecureContext,
+    hasMedia: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+    state:'idle', msg:''
+  });
+
   const [image,setImage]=useState(null);
   const [error,setError]=useState('');
   const [cameraActive,setCameraActive]=useState(false);
@@ -49,142 +40,99 @@ function App(){
   const streamRef=useRef(null);
   const overlayRef=useRef(null);
 
-  const [useGuide,setUseGuide]=useState(false);
-  const [guidePx,setGuidePx]=useState(260);
-  const [edgeMatch,setEdgeMatch]=useState(0);
-  const [ocvMatch,setOcvMatch]=useState(0);
-
-  // Enumerar dispositivos al montar (ayuda a diagnosticar permisos/visibilidad)
+  // siempre enumeramos (ayuda a ver si Safari ve cámaras)
   useEffect(()=>{
     if(!navigator.mediaDevices?.enumerateDevices) return;
     navigator.mediaDevices.enumerateDevices().then(list=>{
       const cams=list.filter(d=>d.kind==='videoinput');
-      setDbg(d=>({...d,cams:cams.map(c=>({id:c.deviceId||'(sin id)',label:c.label||'(sin label)'}))}));
-    }).catch(e=>{
-      setDbg(d=>({...d,msg:'enumerateDevices error: '+e.name}));
-    });
+      setDbg(d=>({...d,cams:cams.map(c=>({id:c.deviceId||'(id)',label:c.label||'(sin label)'}))}));
+    }).catch(e=> setDbg(d=>({...d,msg:'enumerateDevices: '+e.name})));
   },[]);
 
-  // Iniciar cámara con robustez iOS
+  const nextFrame = () => new Promise(r=>requestAnimationFrame(()=>r()));
+
   const startCamera = async () => {
     setError('');
-    setDbg(d=>({...d,state:'requesting',msg:''}));
+    setDbg(d=>({...d,state:'preparing',msg:''}));
 
-    if (!window.isSecureContext){
+    if(!window.isSecureContext){
       setError('La cámara requiere HTTPS / contexto seguro.');
       setDbg(d=>({...d,state:'error',msg:'No secure context'}));
       return;
     }
-    if (!navigator.mediaDevices?.getUserMedia){
-      setError('getUserMedia no está disponible en este navegador.');
-      setDbg(d=>({...d,state:'error',msg:'No mediaDevices.getUserMedia'}));
+    if(!navigator.mediaDevices?.getUserMedia){
+      setError('getUserMedia no está disponible.');
+      setDbg(d=>({...d,state:'error',msg:'No mediaDevices'}));
       return;
     }
-    const v=videoRef.current;
-    if(!v){ setDbg(d=>({...d,state:'error',msg:'<video> no disponible'})); return; }
 
-    // flags exigidos por iOS
+    // 1) Asegurar que el <video> exista en el DOM
+    setCameraActive(true);           // <-- lo muestro/creo ya mismo
+    await nextFrame();               // espera a que React pinte el <video>
+
+    const v = videoRef.current;
+    if(!v){
+      setDbg(d=>({...d,state:'error',msg:'<video> null (DOM no listo)'}));
+      return;
+    }
+
+    // flags iOS
     v.setAttribute('playsinline','true');
     v.setAttribute('autoplay','true');
-    v.muted=true; v.playsInline=true;
+    v.muted = true; v.playsInline = true;
 
     try{
-      // solicitar cámara FRONTAL
+      setDbg(d=>({...d,state:'requesting'}));
       const stream = await navigator.mediaDevices.getUserMedia({
         audio:false,
         video:{facingMode:{ideal:'user'},width:{ideal:1280},height:{ideal:720}}
       });
-      streamRef.current=stream;
-      v.srcObject=stream;
+      streamRef.current = stream;
+      v.srcObject = stream;
 
-      // esperar metadata (dimensiones listas)
+      // esperar metadata para tener dimensiones
       await new Promise(res=>{
-        if (v.readyState>=1 && v.videoWidth) res();
+        if(v.readyState>=1 && v.videoWidth) res();
         else v.addEventListener('loadedmetadata', res, {once:true});
       });
 
-      // play (si se rechaza, mostramos motivo)
-      const p=v.play();
-      if (p && p.catch) {
-        await p.catch(err=>{
-          setDbg(d=>({...d,msg:'video.play() rechazado: '+err.name}));
-        });
-      }
+      // play
+      try{ await v.play(); }
+      catch(err){ setDbg(d=>({...d,msg:'video.play(): '+err.name})); }
 
-      setCameraActive(true);
       setDbg(d=>({...d,state:'ready',msg:d.msg||'ok'}));
     }catch(err){
       setError('No se pudo acceder a la cámara: '+err.name+(err.message?(' — '+err.message):''));
       setDbg(d=>({...d,state:'error',msg:err.name}));
-      // Si estaba denegado permanentemente, ofrece fallback
+      // si falló, dejamos el video visible pero sin stream; podés cerrar
     }
   };
 
-  // iOS: a veces onClick no cuenta como gesto; usamos pointerdown
-  const onCameraButtonPointerDown = () => { startCamera(); };
-
   const stopCamera = () => {
-    const v=videoRef.current;
-    try{ v?.pause(); }catch{}
-    if (v) v.srcObject=null;
-    if (streamRef.current){ streamRef.current.getTracks().forEach(t=>t.stop()); streamRef.current=null; }
-    setCameraActive(false);
-    setDbg(d=>({...d,state:'idle'}));
+    try{
+      const v=videoRef.current;
+      v?.pause(); if(v) v.srcObject=null;
+      if(streamRef.current){ streamRef.current.getTracks().forEach(t=>t.stop()); streamRef.current=null; }
+    }finally{
+      setCameraActive(false);
+      setDbg(d=>({...d,state:'idle'}));
+    }
   };
 
-  // Capturar frame actual
-  const capturePhoto=()=>{
+  const capturePhoto = () => {
     const v=videoRef.current;
     if(!v || !v.videoWidth){ setError('La cámara aún no está lista.'); return; }
     const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight;
-    const x=c.getContext('2d'); x.drawImage(v,0,0,c.width,c.height);
+    c.getContext('2d').drawImage(v,0,0,c.width,c.height);
     setImage(c.toDataURL('image/jpeg',0.92));
   };
 
-  // Subir desde galería
-  const onUpload=e=>{
+  const onUpload = (e) => {
     const f=e.target.files?.[0]; if(!f) return;
     const rd=new FileReader();
-    rd.onload=ev=>{ setImage(ev.target.result); setError(''); };
+    rd.onload = ev => { setImage(ev.target.result); setError(''); };
     rd.readAsDataURL(f);
   };
-
-  /* Overlay simple de guía (con “match” de bordes) */
-  useEffect(()=>{
-    if(!cameraActive || !useGuide) return;
-    let raf=0;
-    const v=videoRef.current, c=overlayRef.current;
-    const ctx=c.getContext('2d',{willReadFrequently:true});
-
-    const loop=()=>{
-      if(!v.videoWidth){ raf=requestAnimationFrame(loop); return; }
-      c.width=v.videoWidth; c.height=v.videoHeight;
-
-      // Fondo gris + ventana
-      const gw=guidePx, gh=Math.round(guidePx/CR80_AR);
-      const gx=Math.round((c.width-gw)/2), gy=Math.round((c.height-gh)/2);
-      ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(0,0,c.width,c.height);
-      ctx.clearRect(gx,gy,gw,gh);
-      ctx.strokeStyle='#a78bfa'; ctx.lineWidth=4; ctx.strokeRect(gx,gy,gw,gh);
-
-      // Match rápido por bordes del rect
-      const img=ctx.getImageData(gx,gy,gw,gh);
-      const t=3; let edge=0, total=0;
-      const isEdge=(r,g,b)=>{ const lum=0.299*r+0.587*g+0.114*b; return (lum<80 || lum>200); };
-      for(let y=0;y<gh;y++){
-        for(let x=0;x<gw;x++){
-          const per=(y<t)||(y>=gh-t)||(x<t)||(x>=gw-t);
-          if(!per) continue;
-          const i=(y*gw+x)*4; if(isEdge(img.data[i],img.data[i+1],img.data[i+2])) edge++; total++;
-        }}
-      const edgeScore = total? edge/total : 0;
-      setEdgeMatch(edgeScore);
-
-      raf=requestAnimationFrame(loop);
-    };
-    raf=requestAnimationFrame(loop);
-    return()=> cancelAnimationFrame(raf);
-  },[cameraActive,useGuide,guidePx]);
 
   const openSystemCameraFallback = () => {
     document.getElementById('sysCamInput')?.click();
@@ -220,10 +168,10 @@ function App(){
               <input type="file" className="hidden" accept="image/*" onChange={onUpload}/>
             </label>
 
-            {!cameraActive ? (
+            {!streamRef.current ? (
               <button
                 type="button"
-                onPointerDown={onCameraButtonPointerDown}
+                onPointerDown={startCamera}
                 className="inline-flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 rounded-xl">
                 📷 Cámara
               </button>
@@ -235,49 +183,29 @@ function App(){
             )}
           </div>
 
-          {/* Fallback: cámara del sistema (abre la app de cámara/galería) */}
-          {!cameraActive && (
-            <div className="mt-3 flex items-center gap-2">
+          {/* Fallback del sistema */}
+          {!streamRef.current && (
+            <div className="mt-3">
               <button type="button" onClick={openSystemCameraFallback}
                 className="text-sm underline text-slate-600">Usar cámara del sistema (fallback)</button>
-              <input id="sysCamInput" type="file" accept="image/*" capture="user" className="hidden"
-                     onChange={onUpload}/>
+              <input id="sysCamInput" type="file" accept="image/*" capture="user" className="hidden" onChange={onUpload}/>
             </div>
           )}
 
-          {cameraActive && (
-            <div className="mt-4 relative">
-              {/* IMPORTANT: camelCase en JSX */}
-              <video ref={videoRef} className="cam" autoPlay playsInline muted></video>
-              {useGuide && <canvas ref={overlayRef} className="overlay"></canvas>}
-
+          {/* El <video> SIEMPRE existe en el DOM.
+              Solo lo oculto cuando no hay stream para evitar el error del ref nulo. */}
+          <div className="mt-4 relative">
+            <video ref={videoRef} className={`cam ${cameraActive?'':'hidden-el'}`} autoPlay playsInline muted></video>
+            {cameraActive && <canvas ref={overlayRef} className="overlay"></canvas>}
+            {streamRef.current && (
               <div className="mt-3 flex flex-wrap items-center gap-3">
-                <label className="inline-flex items-center gap-2">
-                  <input type="checkbox" className="scale-110" checked={useGuide}
-                         onChange={e=> setUseGuide(e.target.checked)}/>
-                  <span>Usar Guía CR80</span>
-                </label>
-
-                {useGuide && (
-                  <>
-                    <div className="flex-1 min-w-[220px]">
-                      <input type="range" min="140" max="420" value={guidePx}
-                             onChange={e=> setGuidePx(parseInt(e.target.value))} className="w-full"/>
-                      <div className="text-xs text-slate-600">
-                        Ancho guía: <span className="tag">{guidePx}px</span> (alto {Math.round(guidePx/CR80_AR)}px) —
-                        Match bordes: <b className="tag">{Math.round(edgeMatch*100)}%</b>
-                      </div>
-                    </div>
-                  </>
-                )}
-
                 <button onClick={capturePhoto}
                         className="ml-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl">
                   📸 Capturar
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {image && (
