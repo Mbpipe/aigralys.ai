@@ -1,451 +1,378 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Medidor Óptico Facial — Guía CR80 + MediaPipe</title>
-
-<!-- Tailwind (solo estilos rápidos) -->
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Medidor Óptico Facial — Guía CR80</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <script src="https://cdn.tailwindcss.com"></script>
-
-<!-- MediaPipe FaceMesh (con iris) -->
-<script async src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-<script async src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-
 <style>
-  body{background:#eef2ff}
-  .cam-wrap{position:relative; border-radius:1rem; overflow:hidden; background:#000}
-  video, canvas.overlay {width:100%; height:auto; display:block; transform:scaleX(-1);}
-  canvas.overlay{position:absolute; left:0; top:0; pointer-events:none;}
+  html,body{background:#eef2ff}
+  .live-wrap{position:relative; width:100%; max-width:700px; margin:0 auto;}
+  video#cam{
+    width:100%; aspect-ratio: 3/4; background:#000; display:block;
+    border-radius:1rem; object-fit:cover; transform:scaleX(-1); /* espejo frontal */
+  }
+  canvas#overlay{position:absolute; inset:0; pointer-events:none; border-radius:1rem;}
+  /* Botón flotante centrado */
   .cap-btn{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    width:72px; height:72px; border-radius:999px; background:#1d4ed8cc;
-    display:flex; align-items:center; justify-content:center; color:#fff;
-    font-size:28px; backdrop-filter: blur(2px); box-shadow:0 8px 24px #0006;
+    width:74px; height:74px; border-radius:9999px;
+    display:flex; align-items:center; justify-content:center;
+    background:#2563eb; color:#fff; border:4px solid #fff7;
+    box-shadow:0 10px 25px rgba(0,0,0,.25);
   }
-  .chip{font-variant-numeric:tabular-nums}
-  .thin{font-weight:600; letter-spacing:.2px}
+  .cap-btn:active{transform:translate(-50%,-50%) scale(.97)}
+  .tag{font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
-<div class="max-w-3xl mx-auto p-4 space-y-4">
-  <header class="bg-white rounded-2xl shadow p-5 border-t-4 border-indigo-500">
-    <h1 class="text-3xl font-bold">Medidor Óptico Facial</h1>
-    <p class="text-slate-600">Guía CR80 + OpenCV ligero (ROI) + MediaPipe FaceMesh</p>
-    <div class="flex gap-2 mt-3 text-sm">
-      <span id="secureChip" class="chip px-2 py-1 rounded bg-slate-100">secure: <b>—</b></span>
-      <span id="mpChip" class="chip px-2 py-1 rounded bg-slate-100">mediapipe: <b>cargando…</b></span>
-      <span id="stateChip" class="chip px-2 py-1 rounded bg-slate-100">estado: <b>idle</b></span>
-    </div>
-  </header>
-
-  <section class="bg-white rounded-2xl shadow p-5 space-y-3">
-    <h2 class="text-xl font-semibold">Captura de Imagen</h2>
-    <div class="flex gap-3">
-      <label class="px-4 py-3 rounded-xl bg-slate-800 text-white cursor-pointer hover:bg-slate-700">
-        🖼️ Subir Foto
-        <input id="fileInput" type="file" accept="image/*" class="hidden">
-      </label>
-      <button id="startBtn" class="px-4 py-3 rounded-xl bg-violet-600 text-white hover:bg-violet-700">📷 Cámara</button>
-      <button id="stopBtn" class="px-4 py-3 rounded-xl bg-rose-600 text-white hover:bg-rose-700 hidden">🔴 Cerrar</button>
-    </div>
-
-    <!-- Cámara + Overlay -->
-    <div id="camWrap" class="cam-wrap mt-3 hidden">
-      <video id="video" playsinline muted></video>
-      <canvas id="overlay" class="overlay"></canvas>
-      <button id="captureBtn" class="cap-btn" title="Capturar">📸</button>
-    </div>
-
-    <!-- Controles de overlay -->
-    <div class="flex flex-wrap items-center gap-3 mt-3">
-      <label class="flex items-center gap-2">
-        <input id="useGuide" type="checkbox" class="scale-110" checked>
-        <span>Usar Guía CR80</span>
-      </label>
-      <label class="flex items-center gap-2">
-        <input id="autoCap" type="checkbox" class="scale-110" checked>
-        <span>Auto-capturar (≥80% + pupilas)</span>
-      </label>
-      <div class="ml-auto text-sm text-slate-600 chip">score: <b id="scorePct">0%</b></div>
-    </div>
-
-    <!-- Ajuste fino -->
-    <div class="mt-2">
-      <label class="text-sm text-slate-700">Ajuste fino escala (±15%) • actual: <span id="fineVal">0%</span></label>
-      <input id="fine" type="range" min="-15" max="15" step="1" value="0" class="w-full">
-      <div class="text-xs text-slate-600 mt-1">
-        Escala efectiva: <span id="pxmm" class="chip">—</span> px/mm • Guía: <span id="guidePx" class="chip">—</span>px (alto <span id="guidePy" class="chip">—</span>px)
+<div class="min-h-screen p-4">
+  <div class="max-w-3xl mx-auto space-y-4">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow p-5 border-t-4 border-indigo-600">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-extrabold">Medidor Óptico Facial</h1>
+          <p class="text-slate-600">Guía CR80 + OpenCV/MediaPipe (auto-proceso)</p>
+        </div>
+        <div class="text-xs space-x-2">
+          <span id="secureTag" class="px-2 py-1 rounded bg-slate-100">secure: …</span>
+          <span id="ocvTag" class="px-2 py-1 rounded bg-slate-100">mediapipe: …</span>
+          <span id="stateTag" class="px-2 py-1 rounded bg-slate-100">estado: …</span>
+        </div>
       </div>
     </div>
 
-    <div id="errBox" class="hidden mt-3 p-3 text-red-800 bg-red-50 rounded-lg border border-red-200 text-sm"></div>
-  </section>
+    <!-- Captura -->
+    <div class="bg-white rounded-2xl shadow p-5">
+      <h2 class="text-xl font-semibold mb-3">Captura de Imagen</h2>
 
-  <!-- Resultado -->
-  <section id="resultBox" class="bg-white rounded-2xl shadow p-5 space-y-3 hidden">
-    <h3 class="text-xl font-semibold">Resultado</h3>
-    <div class="grid grid-cols-2 gap-3">
-      <div class="p-4 rounded bg-indigo-50">
-        <div class="text-xs text-slate-600">IPD</div>
-        <div id="ipd" class="text-3xl font-bold">—</div>
+      <div class="flex gap-3">
+        <label class="flex-1 inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-3 rounded-xl cursor-pointer">
+          🖼️ Subir Foto
+          <input id="fileIn" type="file" accept="image/*" class="hidden">
+        </label>
+        <button id="openBtn" class="flex-1 inline-flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 rounded-xl">📷 Cámara</button>
+        <button id="closeBtn" class="flex-1 inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl">🔴 Cerrar</button>
       </div>
-      <div class="p-4 rounded bg-violet-50">
-        <div class="text-xs text-slate-600">Escala</div>
-        <div id="scale" class="text-xl font-semibold">—</div>
-        <div id="scaleSrc" class="text-xs text-slate-500">Guía + ajuste</div>
+
+      <div class="mt-4 live-wrap">
+        <video id="cam" playsinline autoplay muted></video>
+        <canvas id="overlay"></canvas>
+        <button id="capBtn" class="cap-btn text-2xl">📸</button>
+      </div>
+
+      <div class="mt-3 flex flex-wrap items-center gap-4">
+        <label class="inline-flex items-center gap-2">
+          <input id="useGuide" type="checkbox" class="scale-110" checked>
+          <span>Usar Guía CR80</span>
+        </label>
+        <label class="inline-flex items-center gap-2">
+          <input id="autoCap" type="checkbox" class="scale-110" checked>
+          <span>Auto-capturar</span>
+        </label>
+        <div class="text-sm text-slate-600">score: <b id="scoreTag">0%</b></div>
+      </div>
+
+      <div class="mt-3">
+        <label class="text-sm text-slate-700 block mb-1">Ajuste fino escala (±10%) • actual: <b id="finePct" class="tag">0%</b></label>
+        <input id="fineSlider" type="range" min="-10" max="10" step="1" value="0" class="w-full">
+        <div class="text-xs text-slate-600 mt-1">
+          Escala efectiva: <b id="pxmm" class="tag">—</b> px/mm • Guía: <b id="guidePx" class="tag">—</b>px
+        </div>
       </div>
     </div>
-    <img id="anno" alt="anotada" class="w-full rounded-lg shadow">
-    <div class="flex gap-2">
-      <a id="dlAnno" class="px-3 py-2 rounded bg-blue-600 text-white text-sm" download="annotated.png">Descargar PNG</a>
-      <button id="reprocess" class="px-3 py-2 rounded bg-slate-700 text-white text-sm">Procesar de nuevo</button>
-    </div>
-  </section>
 
-  <footer class="text-center text-xs text-slate-500 py-6">© 2025 — CR80 + MediaPipe (iris)</footer>
+    <!-- Resultado -->
+    <div id="resultBox" class="bg-white rounded-2xl shadow p-5 hidden">
+      <h3 class="text-xl font-semibold mb-3">Resultado</h3>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="p-4 rounded-lg bg-emerald-50">
+          <div class="text-xs text-slate-600">IPD</div>
+          <div id="ipdVal" class="text-3xl font-extrabold">—</div>
+        </div>
+        <div class="p-4 rounded-lg bg-indigo-50">
+          <div class="text-xs text-slate-600">Escala</div>
+          <div id="scaleVal" class="text-xl font-bold">—</div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <img id="annot" alt="anotada" class="w-full rounded-lg shadow">
+      </div>
+    </div>
+
+    <div id="errBox" class="hidden bg-red-50 text-red-800 border border-red-200 rounded-xl p-4"></div>
+
+    <div class="text-center text-xs text-slate-500 py-4">© 2025 — CR80 + OpenCV + MediaPipe</div>
+  </div>
 </div>
+
+<!-- MediaPipe -->
+<script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <script>
 (function(){
-  // --- Constantes
   const CR80_W = 85.60, CR80_H = 53.98, CR80_AR = CR80_W/CR80_H;
-  const MIN_SCORE = 0.80;                // umbral de match
-  const HOLD_MS = 500;                   // sostener score para auto-captura
-  const PUPIL_R = 4, LINE_W = 2;         // marcadores finos
+  const HOLD_MS = 1200;           // tiempo de sostenido para auto-captura
+  const FINE_RANGE = 0.10;        // ±10% ajuste fino
 
-  // --- Elementos
-  const secureChip = document.getElementById('secureChip');
-  const mpChip     = document.getElementById('mpChip');
-  const stateChip  = document.getElementById('stateChip');
+  // UI
+  const secureTag = document.getElementById('secureTag');
+  const ocvTag    = document.getElementById('ocvTag');
+  const stateTag  = document.getElementById('stateTag');
+  const errBox    = document.getElementById('errBox');
 
-  const fileInput  = document.getElementById('fileInput');
-  const startBtn   = document.getElementById('startBtn');
-  const stopBtn    = document.getElementById('stopBtn');
+  const fileIn = document.getElementById('fileIn');
+  const openBtn= document.getElementById('openBtn');
+  const closeBtn= document.getElementById('closeBtn');
+  const cam   = document.getElementById('cam');
+  const overlay = document.getElementById('overlay');
+  const ctx   = overlay.getContext('2d', { willReadFrequently:true });
 
-  const camWrap    = document.getElementById('camWrap');
-  const video      = document.getElementById('video');
-  const overlay    = document.getElementById('overlay');
-  const octx       = overlay.getContext('2d', { willReadFrequently:true });
-  const captureBtn = document.getElementById('captureBtn');
+  const capBtn = document.getElementById('capBtn');
 
-  const useGuideEl = document.getElementById('useGuide');
-  const autoCapEl  = document.getElementById('autoCap');
-  const scorePctEl = document.getElementById('scorePct');
+  const useGuide = document.getElementById('useGuide');
+  const autoCap  = document.getElementById('autoCap');
+  const scoreTag = document.getElementById('scoreTag');
 
-  const fine       = document.getElementById('fine');
-  const fineVal    = document.getElementById('fineVal');
-  const pxmmEl     = document.getElementById('pxmm');
-  const guidePxEl  = document.getElementById('guidePx');
-  const guidePyEl  = document.getElementById('guidePy');
+  const fineSlider = document.getElementById('fineSlider');
+  const finePct = document.getElementById('finePct');
+  const pxmmEl = document.getElementById('pxmm');
+  const guidePxEl = document.getElementById('guidePx');
 
-  const errBox     = document.getElementById('errBox');
+  const resultBox = document.getElementById('resultBox');
+  const ipdVal = document.getElementById('ipdVal');
+  const scaleVal = document.getElementById('scaleVal');
+  const annotImg = document.getElementById('annot');
 
-  const resultBox  = document.getElementById('resultBox');
-  const ipdEl      = document.getElementById('ipd');
-  const scaleEl    = document.getElementById('scale');
-  const scaleSrcEl = document.getElementById('scaleSrc');
-  const annoImg    = document.getElementById('anno');
-  const dlAnno     = document.getElementById('dlAnno');
-  const reprocess  = document.getElementById('reprocess');
+  let stream=null, raf=0, faceMesh=null;
+  let readyForAuto=false, holdStart=0;
+  let lastPxPerMm = 0;
 
-  // --- Estado
-  let stream = null;
-  let faceMesh = null;
-  let lastFrameCanvas = null;
-  let lastShot = null;
-  let holdStart = 0;
+  // helpers
+  const setErr = (msg)=>{ errBox.textContent = msg; errBox.classList.remove('hidden'); };
+  const clearErr = ()=> errBox.classList.add('hidden');
 
-  // Seguridad
-  secureChip.querySelector('b').textContent = (location.protocol==='https:')?'true':'false';
+  secureTag.textContent = 'secure: ' + (location.protocol==='https:' ? 'true' : 'false');
+  ocvTag.textContent = 'mediapipe: loading…';
+  stateTag.textContent = 'estado: idle';
 
-  // MediaPipe ready?
-  const mpReadyInterval = setInterval(()=>{
-    if (window.FaceMesh) {
-      clearInterval(mpReadyInterval);
-      mpChip.querySelector('b').textContent = 'ready';
-      // init facemesh
-      try{
-        faceMesh = new FaceMesh({locateFile:(f)=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-        faceMesh.setOptions({maxNumFaces:1, refineLandmarks:true, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
-      }catch(e){
-        mpChip.querySelector('b').textContent = 'error';
-      }
-    }
-  }, 200);
-
-  // --- Helpers
-  function showErr(msg){
-    errBox.textContent = msg;
-    errBox.classList.remove('hidden');
-  }
-  function clearErr(){ errBox.classList.add('hidden'); errBox.textContent=''; }
-
-  function setState(s){ stateChip.querySelector('b').textContent = s; }
-
-  function getGuideRect(w,h){
-    // Rectángulo CR80 centrado, bajo la nariz (alrededor del 60% vertical)
-    const guideHeight = Math.round(Math.min(h*0.16, 160));     // razonable en móvil
-    const guideWidth  = Math.round(guideHeight * CR80_AR);
-    const gx = Math.round((w - guideWidth)/2);
-    const gy = Math.round(h*0.58 - guideHeight/2);
-    return {x:gx, y:gy, w:guideWidth, h:guideHeight};
-  }
-
-  function scoreCardInROI(imgData, w, h){
-    // Borde: densidad de contrastes en 2px alrededor del perímetro
-    const data = imgData.data;
-    const thick = 2;
-    let edge=0, tot=0;
-    for(let y=0;y<h;y++){
-      for(let x=0;x<w;x++){
-        const onB = (y<thick)||(y>=h-thick)||(x<thick)||(x>=w-thick);
-        if(!onB) continue;
-        const i=(y*w + x)*4;
-        const lum = 0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
-        if(lum<70 || lum>200) edge++;
-        tot++;
-      }
-    }
-    const edgeScore = tot? edge/tot : 0;
-    // Uniformidad interior (tarjetas suelen ser relativamente uniformes)
-    let sum=0, cnt=0;
-    for(let y=Math.floor(h*0.2); y<Math.floor(h*0.8); y+=3){
-      for(let x=Math.floor(w*0.2); x<Math.floor(w*0.8); x+=3){
-        const i=(y*w+x)*4;
-        const lum = 0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
-        sum+=lum; cnt++;
-      }
-    }
-    let uni=0;
-    if(cnt>10){
-      const mean=sum/cnt; let varc=0;
-      for(let y=Math.floor(h*0.2); y<Math.floor(h*0.8); y+=5){
-        for(let x=Math.floor(w*0.2); x<Math.floor(w*0.8); x+=5){
-          const i=(y*w+x)*4;
-          const lum=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
-          varc += (lum-mean)*(lum-mean);
-        }
-      }
-      varc/=cnt;
-      const std=Math.sqrt(varc);
-      uni = Math.max(0, 1 - (std/60)); // std bajo => 1
-    }
-    // score total
-    return Math.max(0, Math.min(1, edgeScore*0.65 + uni*0.35));
-  }
-
-  function drawOverlay(){
-    if(!video.videoWidth) return;
-    overlay.width  = video.videoWidth;
-    overlay.height = video.videoHeight;
-    const w=overlay.width, h=overlay.height;
-    octx.clearRect(0,0,w,h);
-
-    // sombreado exterior
-    const r = getGuideRect(w,h);
-    if(useGuideEl.checked){
-      octx.fillStyle='rgba(0,0,0,.35)';
-      octx.fillRect(0,0,w,h);
-      octx.clearRect(r.x, r.y, r.w, r.h);
-    }
-
-    // ROI score
-    let pct = 0;
-    if(useGuideEl.checked){
-      const img = octx.getImageData(r.x, r.y, r.w, r.h);
-      const s = scoreCardInROI(img, r.w, r.h);
-      pct = Math.round(s*100);
-      scorePctEl.textContent = pct + '%';
-      octx.lineWidth = 4;
-      octx.strokeStyle = s >= MIN_SCORE ? '#22c55e' : '#a78bfa';
-      octx.strokeRect(r.x, r.y, r.w, r.h);
-
-      // título
-      octx.font='700 22px system-ui, -apple-system, Segoe UI';
-      octx.fillStyle='#fff';
-      octx.strokeStyle='#000'; octx.lineWidth=4;
-      const txt = `Guía CR80 — score ${pct}%`;
-      octx.strokeText(txt, Math.max(12,r.x), Math.max(26, r.y-10));
-      octx.fillText(txt,   Math.max(12,r.x), Math.max(26, r.y-10));
-    }
-
-    // stats
-    const rct = getGuideRect(w,h);
-    guidePxEl.textContent = rct.w;
-    guidePyEl.textContent = rct.h;
-
-    return pct >= 80;
-  }
-
-  // --- Loop de overlay
-  let raf=0, readyForAuto=false;
-  function frameLoop(){
-    if(!video || video.paused){ return; }
-    const ok = drawOverlay();
-
-    if (autoCapEl.checked){
-      if (ok){
-        if (!readyForAuto){ readyForAuto = true; holdStart = performance.now(); }
-        else{
-          if (performance.now() - holdStart > HOLD_MS){
-            // además pedimos pupilas antes de disparar
-            captureFrame(true); // con chequeo de pupilas
-            readyForAuto=false; holdStart=0;
-          }
-        }
-      } else { readyForAuto=false; holdStart=0; }
-    }
-
-    raf=requestAnimationFrame(frameLoop);
-  }
-
-  // --- Cámara
-  startBtn.onclick = async ()=>{
-    clearErr();
+  // FaceMesh init (opcional)
+  window.addEventListener('load', () => {
     try{
-      video.setAttribute('playsinline',''); video.muted = true; video.playsInline = true;
-      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'user'}, width:{ideal:1280}, height:{ideal:720}}, audio:false});
-      video.srcObject = stream;
-      await video.play();
-      camWrap.classList.remove('hidden');
-      stopBtn.classList.remove('hidden');
-      startBtn.classList.add('hidden');
-      setState('ready');
-      cancelAnimationFrame(raf); raf=requestAnimationFrame(frameLoop);
+      faceMesh = new window.FaceMesh({
+        locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+      });
+      faceMesh.setOptions({maxNumFaces:1, refineLandmarks:true, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
+      ocvTag.textContent = 'mediapipe: ready';
     }catch(e){
-      setState('error');
-      showErr('No se pudo acceder a la cámara: ' + (e.message||e));
+      ocvTag.textContent = 'mediapipe: off';
     }
-  };
+  });
 
-  stopBtn.onclick = ()=>{
+  function videoReady(){
+    return cam && cam.videoWidth && cam.videoHeight;
+  }
+
+  async function startCam(){
+    clearErr(); stateTag.textContent='estado: opening…';
     try{
-      if(video){ video.pause(); video.srcObject=null; }
-      if(stream){ stream.getTracks().forEach(t=>t.stop()); }
-    }catch(_){}
-    camWrap.classList.add('hidden');
-    stopBtn.classList.add('hidden');
-    startBtn.classList.remove('hidden');
-    cancelAnimationFrame(raf); raf=0;
-    setState('idle');
-  };
+      cam.setAttribute('playsinline',''); cam.setAttribute('autoplay',''); cam.muted=true; cam.playsInline=true;
+      stream = await navigator.mediaDevices.getUserMedia({
+        video:{ facingMode:{ideal:'user'}, width:{ideal:1280}, height:{ideal:720} },
+        audio:false
+      });
+      cam.srcObject = stream;
+      await cam.play().catch(()=>{});
+      stateTag.textContent='estado: ready';
+      layout();
+      loop();
+    }catch(e){
+      setErr('No se pudo acceder a la cámara: '+ (e?.message||e));
+      stateTag.textContent='estado: error';
+    }
+  }
 
-  // --- Captura
-  captureBtn.onclick = ()=> captureFrame(false);
+  function stopCam(){
+    cancelAnimationFrame(raf);
+    if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+    cam.pause(); cam.srcObject=null;
+    ctx.clearRect(0,0,overlay.width,overlay.height);
+    stateTag.textContent='estado: closed';
+  }
+
+  function layout(){
+    if(!videoReady()) return;
+    overlay.width = cam.clientWidth * devicePixelRatio;
+    overlay.height= cam.clientHeight * devicePixelRatio;
+  }
+
+  window.addEventListener('resize', layout);
+
+  // --- Overlay + match scoring ---
+  function loop(){
+    if(!videoReady()){ raf=requestAnimationFrame(loop); return; }
+    layout();
+    const w=overlay.width, h=overlay.height;
+
+    // dibujar frame video debajo del overlay para permitir “ghost” desenfoque ligero
+    ctx.clearRect(0,0,w,h);
+
+    // Guía: rectángulo pequeño centrado bajo la nariz (~60% altura)
+    const guideW = Math.round(Math.min(w,h)*0.22);
+    const guideH = Math.round(guideW/CR80_AR);
+    const gx = Math.round((w-guideW)/2);
+    const gy = Math.round(h*0.60 - guideH/2);
+
+    // marco translúcido
+    ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(0,0,w,h);
+    ctx.clearRect(gx,gy,guideW,guideH);
+
+    // “score” rápido por bordes: cuenta transiciones alto contraste en el perímetro
+    let edge=0, tot=0;
+    try{
+      const img = ctx.getImageData(gx,gy,guideW,guideH);
+      const px = img.data, thick=2;
+      const lumAt=(i)=> 0.299*px[i]+0.587*px[i+1]+0.114*px[i+2];
+
+      for(let y=0;y<guideH;y++){
+        for(let x=0;x<guideW;x++){
+          const rim = (y<thick)||(y>=guideH-thick)||(x<thick)||(x>=guideW-thick);
+          if(!rim) continue;
+          const i=(y*guideW+x)*4;
+          const L=lumAt(i);
+          if(L<70 || L>210){ edge++; }
+          tot++;
+        }
+      }
+    }catch(_){}
+    const score = tot? edge/tot : 0;
+    scoreTag.textContent = Math.round(score*100)+'%';
+
+    // contorno guía (verde si alto score)
+    ctx.lineWidth = 4*devicePixelRatio;
+    ctx.strokeStyle = score>=0.75 ? '#10b981' : '#a78bfa';
+    ctx.strokeRect(gx,gy,guideW,guideH);
+
+    // cálculo de escala base por guía (ancho real 85.60 mm)
+    let pxPerMm = guideW / CR80_W;
+
+    // ajuste fino ±10%
+    const adj = parseInt(fineSlider.value||'0',10)/100;
+    finePct.textContent = (adj>0?'+':'') + Math.round(adj*100)+'%';
+    pxPerMm = pxPerMm * (1 + adj);
+    lastPxPerMm = pxPerMm;
+    pxmmEl.textContent = pxPerMm.toFixed(3);
+    guidePxEl.textContent = guideW + 'px';
+
+    // auto-captura (arreglada: ahora sí dispara y no exige pupilas)
+    if(autoCap.checked && score>=0.80){
+      if(!readyForAuto){ readyForAuto=true; holdStart=performance.now(); }
+      else if(performance.now()-holdStart>HOLD_MS){
+        captureFrame(false); // primero sin pupilas; luego procesamos
+        readyForAuto=false; holdStart=0;
+      }
+    }else{ readyForAuto=false; holdStart=0; }
+
+    raf = requestAnimationFrame(loop);
+  }
+
+  // --- Captura (botón centrado SIEMPRE responde) ---
+  capBtn.addEventListener('click', (e)=>{
+    e.preventDefault();
+    captureFrame(false);
+  });
 
   async function captureFrame(requirePupils){
-    if(!video.videoWidth){ showErr('La cámara aún no está lista.'); return; }
+    if(!videoReady()){ setErr('La cámara aún no está lista'); return; }
     clearErr();
-    // congelar frame en canvas
-    const c=document.createElement('canvas');
-    c.width=video.videoWidth; c.height=video.videoHeight;
-    const x=c.getContext('2d');
-    // dibujar SIN espejo para procesamiento correcto
-    x.save(); x.translate(c.width,0); x.scale(-1,1);
-    x.drawImage(video,0,0,c.width,c.height);
-    x.restore();
-    lastFrameCanvas = c;
 
-    // Pupilas con MediaPipe
+    // Capturamos un frame nítido no espejado para análisis
+    const cw = cam.videoWidth, ch = cam.videoHeight;
+    const c = document.createElement('canvas'); c.width=cw; c.height=ch;
+    const x = c.getContext('2d');
+    x.save(); x.scale(-1,1); x.drawImage(cam,-cw,0,cw,ch); x.restore();
+    const dataUrl = c.toDataURL('image/jpeg',0.92);
+
+    // Landmarks con MediaPipe (si disponible)
     let pupils=null;
     if(faceMesh){
-      pupils = await new Promise((resolve)=>{
-        faceMesh.onResults((res)=>{
+      await new Promise((resolve)=>{
+        faceMesh.onResults(res=>{
           if(res.multiFaceLandmarks && res.multiFaceLandmarks[0]){
-            const L = res.multiFaceLandmarks[0];
-            const iris = arr => ({
-              x: arr.reduce((s,l)=>s+l.x*c.width,0)/arr.length,
-              y: arr.reduce((s,l)=>s+l.y*c.height,0)/arr.length
+            const L=res.multiFaceLandmarks[0];
+            const iris=(arr)=>({
+              x: arr.reduce((s,l)=>s+l.x*cw,0)/arr.length,
+              y: arr.reduce((s,l)=>s+l.y*ch,0)/arr.length
             });
-            resolve({
-              left:  iris(L.slice(473,477)),
-              right: iris(L.slice(468,472))
-            });
-          }else resolve(null);
+            pupils = { left:iris(L.slice(473,477)), right:iris(L.slice(468,472)) };
+          }
+          resolve();
         });
         faceMesh.send({image:c});
       });
     }
-    if(requirePupils && !pupils){ return; } // no dispares si pedimos pupilas
 
-    // px/mm por overlay (asumimos tarjeta llena el rectángulo)
-    const r = getGuideRect(c.width, c.height);
-    const basePxPerMm = r.w / CR80_W;
-    const adj = 1 + (parseInt(fine.value,10)/100);
-    const pxPerMm = basePxPerMm * adj;
+    if(requirePupils && !pupils){
+      setErr('No se detectaron pupilas. Intenta con mejor luz.');
+      return;
+    }
 
     // IPD
-    if(!pupils){ showErr('No se detectaron pupilas. Ajustá iluminación y mirada.'); return; }
-    const dx = pupils.right.x - pupils.left.x, dy = pupils.right.y - pupils.left.y;
-    const ipd_mm = Math.round((Math.hypot(dx,dy) / pxPerMm) * 10) / 10;
+    let ipd_mm = null;
+    if(pupils){
+      const dx=pupils.right.x-pupils.left.x, dy=pupils.right.y-pupils.left.y;
+      const di_px = Math.hypot(dx,dy);
+      ipd_mm = di_px / (lastPxPerMm||1);
+    }
 
-    // Anotada
-    const a=document.createElement('canvas'); a.width=c.width; a.height=c.height;
-    const ac=a.getContext('2d');
-    ac.drawImage(c,0,0);
+    // Anotado
+    const a=document.createElement('canvas'); a.width=cw; a.height=ch;
+    const g=a.getContext('2d'); g.drawImage(c,0,0);
+    if(pupils){
+      g.lineWidth = Math.max(2, Math.round(cw/600));
+      g.strokeStyle='#ff3344'; g.fillStyle='#ff3344';
+      g.beginPath(); g.moveTo(pupils.left.x,pupils.left.y); g.lineTo(pupils.right.x,pupils.right.y); g.stroke();
+      const r = Math.max(4, Math.round(cw/250));
+      g.beginPath(); g.arc(pupils.left.x,pupils.left.y,r,0,Math.PI*2); g.fill();
+      g.beginPath(); g.arc(pupils.right.x,pupils.right.y,r,0,Math.PI*2); g.fill();
 
-    ac.strokeStyle='#ff2a2a'; ac.lineWidth=LINE_W;
-    ac.beginPath(); ac.moveTo(pupils.left.x, pupils.left.y);
-    ac.lineTo(pupils.right.x, pupils.right.y); ac.stroke();
-    ac.fillStyle='#ff2a2a';
-    ac.beginPath(); ac.arc(pupils.left.x, pupils.left.y, PUPIL_R, 0, Math.PI*2); ac.fill();
-    ac.beginPath(); ac.arc(pupils.right.x, pupils.right.y, PUPIL_R, 0, Math.PI*2); ac.fill();
+      const mx=(pupils.left.x+pupils.right.x)/2, my=(pupils.left.y+pupils.right.y)/2-16;
+      g.font='bold '+Math.max(16, Math.round(cw/40))+'px system-ui';
+      g.lineWidth=4; g.strokeStyle='#000'; g.strokeText(`IPD: ${ipd_mm.toFixed(1)} mm`, mx-90, my);
+      g.fillStyle='#fff'; g.fillText(`IPD: ${ipd_mm.toFixed(1)} mm`, mx-90, my);
+    }
 
-    ac.font='700 24px system-ui, -apple-system'; ac.fillStyle='#fff'; ac.strokeStyle='#000'; ac.lineWidth=4;
-    const mx=(pupils.left.x+pupils.right.x)/2, my=(pupils.left.y+pupils.right.y)/2 - 18;
-    const label=`IPD: ${ipd_mm} mm`;
-    ac.strokeText(label, mx-70, my); ac.fillText(label, mx-70, my);
-
-    const url=a.toDataURL('image/png');
-    lastShot = { ipd_mm, pxPerMm, url };
-    // UI
-    ipdEl.textContent = ipd_mm + ' mm';
-    scaleEl.textContent = pxPerMm.toFixed(3) + ' px/mm';
-    scaleSrcEl.textContent = `Guía + ajuste ${parseInt(fine.value,10)}%`;
-    annoImg.src = url; dlAnno.href = url;
+    // Mostrar
     resultBox.classList.remove('hidden');
+    if(ipd_mm!=null) ipdVal.textContent = ipd_mm.toFixed(1)+' mm';
+    else ipdVal.textContent = '—';
+    scaleVal.textContent = (lastPxPerMm? lastPxPerMm.toFixed(3):'—') + ' px/mm';
+    annotImg.src = a.toDataURL('image/png');
   }
 
-  // Subir imagen (opcional: procesar igual que captura)
-  fileInput.onchange = async (e)=>{
-    const f = e.target.files?.[0]; if(!f) return;
-    clearErr();
-    const url = URL.createObjectURL(f);
-    const img = new Image(); img.src=url;
-    await img.decode();
-    const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight;
-    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    lastFrameCanvas = c;
-    await captureFrame(false);
-    URL.revokeObjectURL(url);
-  };
-
-  // Re-procesar última
-  reprocess.onclick = ()=> { if(lastFrameCanvas) captureFrame(false); };
-
-  // Ajuste fino
-  fine.oninput = ()=>{
-    fineVal.textContent = `${fine.value}%`;
-    // actualizar etiqueta de escala efectiva en vivo (estimación por overlay actual)
-    if(video.videoWidth){
-      const r = getGuideRect(video.videoWidth, video.videoHeight);
-      const base = r.w / CR80_W;
-      const pxmm = base * (1 + (parseInt(fine.value,10)/100));
-      pxmmEl.textContent = pxmm.toFixed(3);
-    }
-  };
-  // init etiquetas
-  fine.dispatchEvent(new Event('input'));
-
-  // Redibuja overlay al cambiar switches
-  useGuideEl.onchange = ()=> drawOverlay();
-  autoCapEl.onchange  = ()=> { readyForAuto=false; holdStart=0; };
-
-  // Redibuja overlay al redimensionar
-  window.addEventListener('resize', ()=>{ if(video.videoWidth) drawOverlay(); });
+  // Controles
+  openBtn.addEventListener('click', startCam);
+  closeBtn.addEventListener('click', stopCam);
+  fileIn.addEventListener('change', (e)=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    const rd=new FileReader();
+    rd.onload = ()=> {
+      // Mostrar imagen subida en el <video> a modo de preview
+      stopCam();
+      cam.removeAttribute('srcObject');
+      cam.srcObject=null;
+      cam.src = rd.result;
+      cam.style.transform='none'; // imagen no espejada
+      cam.onloadeddata=()=>{ cam.play().catch(()=>{}); layout(); };
+      stateTag.textContent='estado: still';
+    };
+    rd.readAsDataURL(f);
+  });
 
 })();
 </script>
 </body>
-</html></html>
+</html>
