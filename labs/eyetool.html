@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>Medidor Óptico Facial — Cámara + Guía CR80</title>
+  <title>Medidor Óptico Facial — Guía CR80</title>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -13,284 +13,315 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- OpenCV (opcional) -->
+  <!-- OpenCV opcional (usado dentro del ROI si está disponible) -->
   <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
 
   <style>
     html,body{background:#eef2ff}
-    video.cam{width:100%;height:auto;max-height:64vh;background:#000;border-radius:.75rem;object-fit:cover}
-    canvas.ov{position:absolute;inset:0;pointer-events:none;border-radius:.75rem}
+    video.cam{
+      width:100%; height:auto; max-height:62vh;
+      background:#000; border-radius:.75rem; object-fit:cover;
+      transform:scaleX(-1); /* espejo cámara frontal */
+    }
+    canvas.overlay{
+      position:absolute; inset:0; width:100%; height:100%; pointer-events:none;
+    }
     .tag{font-variant-numeric:tabular-nums}
-    .dbg{position:fixed;top:8px;right:8px;background:#0f172a;color:#fff;font:12px/1.2 system-ui,-apple-system;padding:8px 10px;border-radius:8px;opacity:.85;z-index:50}
   </style>
 </head>
 <body>
 <div id="root"></div>
 
 <script type="text/babel">
-const {useState,useEffect,useRef} = React;
-const CR80_W=85.60, CR80_H=53.98, CR80_AR=CR80_W/CR80_H;
+const {useState,useEffect,useRef,useMemo} = React;
+
+const CR80_W=85.60, CR80_H=53.98, CR80_AR=CR80_W/CR80_H; // 1.586
 
 function App(){
-  const [dbg,setDbg]=useState('');
-  const [state,setState]=useState('idle'); // idle|ready|captured|error
+  /* Estado base */
   const [image,setImage]=useState(null);
   const [annotated,setAnnotated]=useState(null);
-  const [autoCapture,setAutoCapture]=useState(true);
-  const [useGuide,setUseGuide]=useState(true);
-  const [ipd,setIpd]=useState(null);
-  const [pxmm,setPxmm]=useState(null);
-  const [method,setMethod]=useState('—');
+  const [results,setResults]=useState(null);
+  const [error,setError]=useState('');
+  const [processing,setProcessing]=useState(false);
+  const [processingStep,setProcessingStep]=useState('');
 
-  const vRef=useRef(null);
+  /* Cámara */
+  const videoRef=useRef(null);
   const streamRef=useRef(null);
-  const cRef=useRef(null);
-  const rafRef=useRef(0);
-  const ocvLast=useRef({found:false,score:0,long:0});
-  const [edgePct,setEdgePct]=useState(0);
-  const [ocvPct,setOcvPct]=useState(0);
+  const [camState,setCamState]=useState('idle'); // idle|ready|error
+  const [secure,setSecure]=useState(window.isSecureContext);
+  const [mediaAvail,setMediaAvail]=useState(!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia));
 
-  // FaceMesh
+  /* Overlay */
+  const overlayRef=useRef(null);
+  const [useGuide,setUseGuide]=useState(true);
+  const [autoShot,setAutoShot]=useState(true);
+  const [guidePx,setGuidePx]=useState(260);                // ancho en px
+  const [edgePct,setEdgePct]=useState(0);                  // 0..1
+  const [ocvPct,setOcvPct]=useState(0);                    // 0..1
+  const ocvLast=useRef(null);                              // {found,longSidePx,score}
+  const [lockedScale,setLockedScale]=useState(null);       // px/mm cuando se bloquea/auto-captura
+
+  /* FaceMesh (opcional) */
+  const [fmReady,setFmReady]=useState(false);
   useEffect(()=>{
     const init=()=>{
       try{
-        const fm=new window.FaceMesh({ locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
+        const fm=new window.FaceMesh({
+          locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+        });
         fm.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:0.5,minTrackingConfidence:0.5});
-        window.__fm=fm;
-        setDbg(d=>d+' | fm:ready');
-      }catch(e){ setDbg(d=>d+' | fm:err'); }
+        window.__faceMesh=fm; setFmReady(true);
+      }catch{ setFmReady(false); }
     };
     if(typeof window.FaceMesh==='undefined'){
-      const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js'; s.async=true;
-      s.onload=()=>{ const u=document.createElement('script'); u.src='https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js'; u.async=true; u.onload=init; document.body.appendChild(u); };
-      document.body.appendChild(s);
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js'; s.async=true;
+      s.onload=()=>{ const u=document.createElement('script');
+        u.src='https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js'; u.async=true;
+        u.onload=init; u.onerror=()=>setFmReady(false); document.body.appendChild(u); };
+      s.onerror=()=>setFmReady(false); document.body.appendChild(s);
     }else init();
   },[]);
 
-  const hasMedia = () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-
-  const stopStream=()=>{
-    cancelAnimationFrame(rafRef.current);
-    const v=vRef.current; if(v){ v.pause(); v.srcObject=null; }
-    if(streamRef.current){ try{streamRef.current.getTracks().forEach(t=>t.stop());}catch{} streamRef.current=null; }
-  };
-
-  const startCam = async () => {
-    // todo dentro del mismo handler del click
+  /* Arrancar cámara (amigable iOS) */
+  const startCamera=async()=>{
+    setError('');
+    if(!secure || !mediaAvail){ setCamState('error'); return; }
     try{
-      setDbg(`clk cam | secure:${location.protocol==='https:'} | media:${!!navigator.mediaDevices}`);
-      if(!hasMedia()){ setState('error'); return setDbg(d=>d+' | no mediaDevices'); }
-
-      // cerrar cualquier stream previo
-      stopStream();
-
-      const v=vRef.current;
+      const v=videoRef.current; if(!v) return;
       v.setAttribute('playsinline',''); v.setAttribute('autoplay',''); v.muted=true; v.playsInline=true;
 
-      // NO usar await antes de play(); pedir el stream y en .then establecer y play()
-      navigator.mediaDevices.getUserMedia({
-        video:{ facingMode:{ideal:'user'}, width:{ideal:1280}, height:{ideal:720} },
-        audio:false
-      }).then(stream=>{
-        streamRef.current=stream;
-        v.srcObject=stream;
-        // play en el mismo tick sincronizado al gesture del usuario
-        const p=v.play();
-        if(p && typeof p.then==='function'){
-          p.then(()=> setDbg(d=>d+' | play ok')).catch(e=> setDbg(d=>d+' | play err:'+e.message));
-        }
-        setState('ready');
-        startOverlayLoop();
-      }).catch(err=>{
-        setState('error');
-        setDbg(d=>d+` | gum err:${err.name}`);
+      const stream=await navigator.mediaDevices.getUserMedia({
+        video:{facingMode:{ideal:'user'},width:{ideal:1280},height:{ideal:720}}, audio:false
       });
-    }catch(e){
-      setState('error'); setDbg(d=>d+` | start err:${e.message}`);
+      streamRef.current=stream; v.srcObject=stream;
+      setCamState('ready');
+
+      // iOS necesita play() tras asignar srcObject
+      const tryPlay=async()=>{ try{ await v.play(); }catch{ setTimeout(()=>v.play().catch(()=>{}),150); } };
+      tryPlay();
+
+      // limpiar foto/resultado previos
+      setImage(null); setAnnotated(null); setResults(null); setLockedScale(null);
+    }catch(err){
+      setError('No se pudo acceder a la cámara: '+(err.message||err));
+      setCamState('error');
     }
   };
-
-  const roiBox = ()=>{
-    const v=vRef.current; if(!v || !v.videoWidth) return null;
-    const vw=v.videoWidth, vh=v.videoHeight;
-    const w=Math.round(Math.min(vw*0.42, 360));
-    const h=Math.round(w/CR80_AR);
-    const cx=Math.round(vw/2), cy=Math.round(vh*0.62);
-    return {x:cx-Math.round(w/2), y:cy-Math.round(h/2), w, h};
+  const stopCamera=()=>{
+    const v=videoRef.current;
+    if(v){ try{ v.pause(); }catch{} v.srcObject=null; }
+    if(streamRef.current){ streamRef.current.getTracks().forEach(t=>t.stop()); streamRef.current=null; }
+    setCamState('idle');
+    setEdgePct(0); setOcvPct(0); ocvLast.current=null;
   };
 
-  function ocvDetect(imageData, gw, gh){
+  /* OpenCV detección dentro del ROI (si cv está disponible) */
+  function ocvDetect(imageData,w,h){
     const cv=window.cv; if(!cv || !cv.Mat) return null;
     try{
       const src=cv.matFromImageData(imageData);
       const gray=new cv.Mat(), blur=new cv.Mat(), edges=new cv.Mat();
       cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
       cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);
+
+      // Umbrales según luminancia
       let sum=0; const d=blur.data; for(let i=0;i<d.length;i++) sum+=d[i];
       const mean=sum/d.length; const low=Math.max(0,0.66*mean), high=Math.min(255,1.33*mean);
       cv.Canny(blur,edges,low,high);
+
       const contours=new cv.MatVector(), hier=new cv.Mat();
       cv.findContours(edges,contours,hier,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
-      let best=null, bestScore=0;
+
+      let best=null,score=0;
       for(let i=0;i<contours.size();i++){
-        const cnt=contours.get(i);
-        const area=cv.contourArea(cnt); if(area < (gw*gh)*0.12){ cnt.delete(); continue; }
-        const peri=cv.arcLength(cnt,true);
-        const approx=new cv.Mat(); cv.approxPolyDP(cnt,approx,0.02*peri,true);
-        if(approx.rows===4){
-          const r=cv.minAreaRect(cnt);
-          const L=Math.max(r.size.width,r.size.height), S=Math.min(r.size.width,r.size.height);
-          const ar=L/S;
-          const aspectScore=Math.max(0,1-Math.min(Math.abs(ar-CR80_AR)/0.35,1));
-          const fillScore=Math.min(1,(area/(gw*gh))*2.0);
-          const score=aspectScore*0.7 + fillScore*0.3;
-          if(score>bestScore){ bestScore=score; best={found:true,long:L,score}; }
-        }
-        approx.delete(); cnt.delete();
+        const cnt=contours.get(i); const area=cv.contourArea(cnt);
+        if(area<(w*h)*0.06){ cnt.delete(); continue; }
+        const rect=cv.minAreaRect(cnt);
+        const W=rect.size.width,H=rect.size.height;
+        const long=Math.max(W,H), short=Math.min(W,H);
+        const ar=long/short;
+        const aspectScore=Math.max(0,1-Math.min(Math.abs(ar-CR80_AR)/0.3,1));
+        const contScore=Math.max(0,Math.min(1,(area/(w*h))*2.2));
+        const s=aspectScore*0.7+contScore*0.3;
+        if(s>score){score=s; best={found:true,longSidePx:long,score:s};}
+        cnt.delete();
       }
       gray.delete(); blur.delete(); edges.delete(); contours.delete(); hier.delete(); src.delete();
-      return best || {found:false,score:0,long:0};
-    }catch{ return null; }
+      return best || {found:false,longSidePx:0,score:0};
+    }catch(e){ return null; }
   }
 
-  const startOverlayLoop=()=>{
-    const v=vRef.current, c=cRef.current;
-    const ctx=c.getContext('2d', {willReadFrequently:true});
-    let frame=0;
+  /* Loop del overlay: máscara gris, ROI CR80 y métricas; autocaptura si hay tarjeta */
+  useEffect(()=>{
+    if(camState!=='ready' || !useGuide) return;
+    let raf=0, frame=0;
+    const v=videoRef.current, c=overlayRef.current;
+    const ctx=c.getContext('2d',{willReadFrequently:true});
 
     const loop=()=>{
-      if(!v || !v.videoWidth){ rafRef.current=requestAnimationFrame(loop); return; }
+      if(!v.videoWidth){ raf=requestAnimationFrame(loop); return; }
       c.width=v.videoWidth; c.height=v.videoHeight;
 
-      // frame espejo de fondo
+      // Dibujo el frame espejo para que la UI se vea integrada
       ctx.save(); ctx.scale(-1,1); ctx.drawImage(v,-c.width,0,c.width,c.height); ctx.restore();
 
-      // máscara gris
+      // ROI: centrado horizontal, en tercio inferior
+      const gw=guidePx, gh=Math.round(guidePx/CR80_AR);
+      const gx=Math.round((c.width-gw)/2);
+      const gy=Math.round(c.height*0.60 - gh/2); // ~debajo de la nariz
+
+      // 1) Edge match alrededor del perímetro
+      const img=ctx.getImageData(gx,gy,gw,gh);
+      const thick=3; let edge=0, tot=0;
+      const isEdge=(r,g,b)=>{ const lum=0.299*r+0.587*g+0.114*b; return (lum<70 || lum>210); };
+      for(let y=0;y<gh;y++){
+        for(let x=0;x<gw;x++){
+          const onB=(y<thick)||(y>=gh-thick)||(x<thick)||(x>=gw-thick);
+          if(!onB) continue;
+          const i=(y*gw+x)*4;
+          if(isEdge(img.data[i],img.data[i+1],img.data[i+2])) edge++;
+          tot++;
+        }
+      }
+      const edgeScore = tot ? edge/tot : 0;
+      setEdgePct(edgeScore);
+
+      // 2) OpenCV (si está, cada 3 frames)
+      if(frame%3===0){
+        const r=ocvDetect(img,gw,gh);
+        if(r){ ocvLast.current=r; setOcvPct(r.found ? r.score : 0); }
+      }
+      frame++;
+
+      // 3) Máscara gris + rectángulo CR80
       ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(0,0,c.width,c.height);
+      ctx.clearRect(gx,gy,gw,gh);
+      const best = Math.max(edgeScore, ocvPct||0);
+      ctx.strokeStyle = best>=0.7 ? '#22c55e' : '#a78bfa';
+      ctx.lineWidth=4; ctx.strokeRect(gx,gy,gw,gh);
 
-      const roi=roiBox();
-      if(roi){
-        const {x,y,w,h}=roi;
-        ctx.clearRect(x,y,w,h); // “agujero”
-        // borde
-        const img=ctx.getImageData(x,y,w,h);
-        const k=3; let edge=0, tot=0;
-        for(let yy=0; yy<h; yy++){
-          for(let xx=0; xx<w; xx++){
-            const onB=(yy<k)||(yy>=h-k)||(xx<k)||(xx>=w-k);
-            if(!onB) continue;
-            const i=(yy*w+xx)*4, r=img.data[i], g=img.data[i+1], b=img.data[i+2];
-            const lum=0.299*r+0.587*g+0.114*b;
-            if(lum<70 || lum>210) edge++; tot++;
-          }
-        }
-        const edgeScore=tot? edge/tot : 0; setEdgePct(edgeScore);
+      ctx.font='bold 18px -apple-system,system-ui';
+      ctx.fillStyle='#fff';
+      ctx.fillText(`Guía CR80 — Match ${Math.round(best*100)}%`, gx+12, Math.max(24, gy-10));
 
-        if(frame%3===0){
-          const r=ocvDetect(img,w,h);
-          if(r){ ocvLast.current=r; setOcvPct(r.found?r.score:0); }
-        }
-        frame++;
-
-        const combined=Math.max(edgeScore, ocvPct);
-        ctx.strokeStyle= combined>=0.7 ? '#22c55e' : '#a78bfa';
-        ctx.lineWidth=4; ctx.strokeRect(x,y,w,h);
-        ctx.font='bold 18px system-ui,-apple-system'; ctx.fillStyle='#fff';
-        ctx.fillText(`Guía CR80 — Match ${Math.round(combined*100)}%`, Math.max(12,x), Math.max(24,y-10));
-
-        // autocaptura solo si OpenCV ve tarjeta con score >= 0.7
-        if(autoCapture && ocvLast.current.found && ocvLast.current.score>=0.7){
-          captureFromVideo();
-          return;
-        }
+      // 4) Autodisparo si corresponde
+      if(autoShot && best>=0.70){
+        // fijar escala por guía
+        setLockedScale(gw/CR80_W);
+        capturePhotoFromVideo(); // pausa la cámara y deja lista la imagen
+        return; // cortamos loop porque la cámara se pausa
       }
-      rafRef.current=requestAnimationFrame(loop);
+
+      raf=requestAnimationFrame(loop);
     };
+    raf=requestAnimationFrame(loop);
+    return ()=> cancelAnimationFrame(raf);
+  },[camState,useGuide,guidePx,autoShot,ocvPct]);
 
-    cancelAnimationFrame(rafRef.current);
-    rafRef.current=requestAnimationFrame(loop);
+  /* Capturar frame actual y pausar cámara */
+  const capturePhotoFromVideo=()=>{
+    const v=videoRef.current; if(!v || !v.videoWidth){ setError('La cámara aún no está lista.'); return; }
+    const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight;
+    const x=c.getContext('2d');
+    // ¡Ojo! para la foto final quitamos el espejo
+    x.translate(c.width,0); x.scale(-1,1);
+    x.drawImage(v,0,0,c.width,c.height);
+    const url=c.toDataURL('image/jpeg',0.92);
+    setImage(url); setAnnotated(null); setResults(null);
+    // pausar cámara para que no tape el procesamiento
+    stopCamera();
   };
 
-  const captureFromVideo=()=>{
-    const v=vRef.current; if(!v || !v.videoWidth) return;
-    // fijar escala si tenemos tarjeta
-    if(useGuide && ocvLast.current.found){
-      setPxmm(ocvLast.current.long/CR80_W);
-    }
-    // congelar
-    const shot=document.createElement('canvas'); shot.width=v.videoWidth; shot.height=v.videoHeight;
-    shot.getContext('2d').drawImage(v,0,0,shot.width,shot.height);
-    setImage(shot.toDataURL('image/jpeg',0.92));
-
-    stopStream();
-    setState('captured');
-    process(); // sigue a procesamiento
-  };
-
-  const process=async()=>{
-    if(!image) return;
-    try{
-      const img=await new Promise((res,rej)=>{ const m=new Image(); m.src=image; m.onload=()=>res(m); m.onerror=rej; });
-      let scale = pxmm || (ocvLast.current.found ? ocvLast.current.long/CR80_W : null);
-      if(!scale){ // fallback
-        const w = Math.min(img.width,img.height)*0.42;
-        scale = w / CR80_W;
-      }
-      const lm = await new Promise(resolve=>{
-        if(window.__fm){
-          const c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
-          c.getContext('2d').drawImage(img,0,0);
-          window.__fm.onResults(r=>{
-            if(r.multiFaceLandmarks && r.multiFaceLandmarks[0]){
-              const L=r.multiFaceLandmarks[0];
-              const iris=(a)=>({x:a.reduce((s,l)=>s+l.x*img.width,0)/a.length,y:a.reduce((s,l)=>s+l.y*img.height,0)/a.length});
-              resolve({left:iris(L.slice(473,477)), right:iris(L.slice(468,472)), method:'MediaPipe'});
-            }else{
-              const cx=img.width/2, cy=img.height*0.45, d=img.width*0.15;
-              resolve({left:{x:cx-d/2,y:cy}, right:{x:cx+d/2,y:cy}, method:'Estimación'});
-            }
-          });
-          window.__fm.send({image:c});
-        }else{
-          const cx=img.width/2, cy=img.height*0.45, d=img.width*0.15;
-          resolve({left:{x:cx-d/2,y:cy}, right:{x:cx+d/2,y:cy}, method:'Estimación'});
-        }
-      });
-      setMethod(lm.method);
-      const d=Math.hypot(lm.right.x-lm.left.x, lm.right.y-lm.left.y);
-      const ipd_mm=Math.round((d/scale)*10)/10; setIpd(ipd_mm);
-
-      // anotación
-      const out=document.createElement('canvas'); out.width=img.width; out.height=img.height;
-      const a=out.getContext('2d'); a.drawImage(img,0,0);
-      a.fillStyle='#f00';
-      a.beginPath(); a.arc(lm.left.x,lm.left.y,10,0,Math.PI*2); a.fill();
-      a.beginPath(); a.arc(lm.right.x,lm.right.y,10,0,Math.PI*2); a.fill();
-      a.strokeStyle='#f00'; a.lineWidth=4; a.beginPath();
-      a.moveTo(lm.left.x,lm.left.y); a.lineTo(lm.right.x,lm.right.y); a.stroke();
-      a.font='bold 26px system-ui,-apple-system'; a.fillStyle='#fff'; a.strokeStyle='#000'; a.lineWidth=6;
-      const mx=(lm.left.x+lm.right.x)/2, my=(lm.left.y+lm.right.y)/2 - 22;
-      a.strokeText(`IPD: ${ipd_mm} mm`, mx-90, my); a.fillText(`IPD: ${ipd_mm} mm`, mx-90, my);
-      setAnnotated(out.toDataURL('image/png'));
-    }catch(e){ setDbg(d=>d+' | proc err:'+e.message); }
-  };
-
+  /* Subir imagen */
   const onUpload=e=>{
     const f=e.target.files?.[0]; if(!f) return;
-    const r=new FileReader();
-    r.onload=ev=>{ setImage(ev.target.result); setState('captured'); process(); };
-    r.readAsDataURL(f);
+    const rd=new FileReader();
+    rd.onload=ev=>{ setImage(ev.target.result); setAnnotated(null); setResults(null); stopCamera(); };
+    rd.readAsDataURL(f);
+  };
+
+  /* Procesar (IPD con MediaPipe o estimación) */
+  const process=async()=>{
+    if(!image){ setError('No hay imagen para procesar.'); return; }
+    setProcessing(true); setProcessingStep('Detectando pupilas…'); setError('');
+    try{
+      const img = await new Promise((res,rej)=>{ const im=new Image(); im.src=image; im.onload=()=>res(im); im.onerror=rej; });
+
+      // Escala px/mm
+      let pxPerMm = lockedScale ?? (ocvLast.current?.found ? ocvLast.current.longSidePx/CR80_W : null);
+      if(!pxPerMm){
+        // Suave fallback si no hay tarjeta: aproximación (para no frenar el flujo)
+        const approxWidthPx = Math.min(img.width,img.height)*0.22;
+        pxPerMm = approxWidthPx/CR80_W;
+      }
+
+      // Landmarks
+      const lm = await new Promise((resolve)=>{
+        if(window.__faceMesh){
+          const c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
+          c.getContext('2d').drawImage(img,0,0);
+          window.__faceMesh.onResults(r=>{
+            if(r.multiFaceLandmarks && r.multiFaceLandmarks[0]){
+              const L=r.multiFaceLandmarks[0];
+              const iris=a=>({x:a.reduce((s,l)=>s+l.x*img.width,0)/a.length,y:a.reduce((s,l)=>s+l.y*img.height,0)/a.length});
+              resolve({ rightPupil:iris(L.slice(468,472)), leftPupil:iris(L.slice(473,477)), method:'MediaPipe', confidence:0.95 });
+            }else{
+              const cx=img.width/2, cy=img.height*0.45, d=img.width*0.15;
+              resolve({ rightPupil:{x:cx+d/2,y:cy}, leftPupil:{x:cx-d/2,y:cy}, method:'Estimación', confidence:0.65 });
+            }
+          });
+          window.__faceMesh.send({image:c});
+        }else{
+          const cx=img.width/2, cy=img.height*0.45, d=img.width*0.15;
+          resolve({ rightPupil:{x:cx+d/2,y:cy}, leftPupil:{x:cx-d/2,y:cy}, method:'Estimación', confidence:0.65 });
+        }
+      });
+
+      // IPD
+      const dx=lm.rightPupil.x-lm.leftPupil.x, dy=lm.rightPupil.y-lm.leftPupil.y;
+      const ipd_mm = Math.round((Math.hypot(dx,dy)/pxPerMm)*10)/10;
+
+      // Imagen anotada (texto colocado en el centro de la línea)
+      const out=document.createElement('canvas'); out.width=img.width; out.height=img.height;
+      const a=out.getContext('2d'); a.drawImage(img,0,0);
+      a.fillStyle='#e11d48';
+      a.beginPath(); a.arc(lm.leftPupil.x,lm.leftPupil.y,10,0,Math.PI*2); a.fill();
+      a.beginPath(); a.arc(lm.rightPupil.x,lm.rightPupil.y,10,0,Math.PI*2); a.fill();
+      a.strokeStyle='#e11d48'; a.lineWidth=6; a.beginPath();
+      a.moveTo(lm.leftPupil.x,lm.leftPupil.y); a.lineTo(lm.rightPupil.x,lm.rightPupil.y); a.stroke();
+      const mx=(lm.leftPupil.x+lm.rightPupil.x)/2, my=(lm.leftPupil.y+lm.rightPupil.y)/2 - 16;
+      a.font='bold 28px -apple-system,system-ui'; a.fillStyle='#fff'; a.strokeStyle='rgba(0,0,0,.6)'; a.lineWidth=6;
+      a.strokeText(`IPD: ${ipd_mm} mm`, mx-90, my); a.fillText(`IPD: ${ipd_mm} mm`, mx-90, my);
+      const annotatedUrl=out.toDataURL('image/png');
+
+      setResults({
+        detectionMethod: lm.method,
+        calibration: { px_per_mm:pxPerMm, from_guide: !!lockedScale, from_ocv: (!lockedScale && !!ocvLast.current?.found) },
+        measurements: { DI_mm: ipd_mm }
+      });
+      setAnnotated(annotatedUrl);
+      setProcessingStep('¡Listo!');
+    }catch(e){
+      setError('No se pudo procesar la imagen: '+(e.message||e));
+    }finally{
+      setTimeout(()=>{ setProcessing(false); setProcessingStep(''); }, 300);
+    }
   };
 
   return (
     <div className="min-h-screen p-4">
-      <div className="dbg">estado:{state} • {dbg}</div>
       <div className="max-w-3xl mx-auto space-y-4">
         <div className="bg-white rounded-2xl shadow p-5 border-t-4 border-indigo-500">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
               <h1 className="text-3xl font-bold">Medidor Óptico Facial</h1>
               <p className="text-slate-600">Cámara embebida + Guía CR80</p>
+            </div>
+            <div className="text-xs bg-slate-100 px-3 py-1 rounded">
+              secure:{String(secure)} • media:{String(mediaAvail)} • estado:{camState}
             </div>
           </div>
         </div>
@@ -301,78 +332,112 @@ function App(){
           <div className="grid grid-cols-2 gap-3 mb-3">
             <label className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl cursor-pointer">
               🖼️ <span>Subir Foto</span>
-              <input type="file" accept="image/*" className="hidden" onChange={onUpload} />
+              <input type="file" className="hidden" accept="image/*" onChange={onUpload}/>
             </label>
 
-            {state!=='ready' ? (
-              <button type="button" onClick={startCam}
-                className="inline-flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 rounded-xl">
+            {camState!=='ready' ? (
+              <button onClick={startCamera}
+                      className="inline-flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 rounded-xl">
                 📷 Cámara
               </button>
             ) : (
-              <button type="button" onClick={()=>{ stopStream(); setState('idle'); }}
-                className="inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl">
-                🛑 Cerrar
+              <button onClick={stopCamera}
+                      className="inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl">
+                🔴 Cerrar
               </button>
             )}
           </div>
 
-          {/* Fallback nativo del sistema (abre UI de cámara de iOS/Android) */}
-          <div className="mb-4">
-            <label className="text-sm text-slate-600 underline cursor-pointer">
-              Usar cámara del sistema (fallback)
-              <input type="file" accept="image/*" capture="user" className="hidden" onChange={onUpload}/>
-            </label>
-          </div>
-
-          {state==='ready' && (
+          {/* Vista cámara */}
+          {camState==='ready' && (
             <div className="relative">
-              <video ref={vRef} className="cam" autoplay playsinline muted></video>
-              <canvas ref={cRef} className="ov"></canvas>
+              <video ref={videoRef} className="cam" autoplay playsinline muted></video>
+              {useGuide && <canvas ref={overlayRef} className="overlay"></canvas>}
 
-              <div className="mt-3 flex items-center gap-3 flex-wrap">
+              <div className="mt-3 flex flex-wrap items-center gap-3">
                 <label className="inline-flex items-center gap-2">
                   <input type="checkbox" className="scale-110" checked={useGuide} onChange={e=>setUseGuide(e.target.checked)}/>
                   <span>Usar Guía CR80</span>
                 </label>
-
                 <label className="inline-flex items-center gap-2">
-                  <input type="checkbox" className="scale-110" checked={autoCapture} onChange={e=>setAutoCapture(e.target.checked)}/>
-                  <span>Auto-capturar (≥70% con tarjeta)</span>
+                  <input type="checkbox" className="scale-110" checked={autoShot} onChange={e=>setAutoShot(e.target.checked)}/>
+                  <span>Auto-capturar (≥70%)</span>
                 </label>
 
-                <button type="button" onClick={captureFromVideo}
-                        className="ml-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+                <button onClick={capturePhotoFromVideo}
+                        className="ml-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl">
                   📸 Capturar
                 </button>
-              </div>
 
-              <div className="text-xs text-slate-600 mt-2">
-                Match: <b className="tag">{Math.round(Math.max(edgePct,ocvPct)*100)}%</b> • OpenCV: <b className="tag">{Math.round(ocvPct*100)}%</b>
+                <div className="w-full flex items-center gap-3">
+                  <input type="range" min="160" max="420" value={guidePx}
+                         onChange={e=>setGuidePx(parseInt(e.target.value))} className="w-full"/>
+                  <div className="text-xs text-slate-600">
+                    Ancho guía: <span className="tag">{guidePx}px</span> · Alto <span className="tag">{Math.round(guidePx/CR80_AR)}px</span><br/>
+                    Match: <b className="tag">{Math.round(Math.max(edgePct,ocvPct||0)*100)}%</b> · OpenCV: <b className="tag">{Math.round((ocvPct||0)*100)}%</b>
+                  </div>
+                </div>
               </div>
             </div>
           )}
         </div>
 
+        {/* Imagen y procesamiento */}
         {image && (
           <div className="bg-white rounded-2xl shadow p-5">
             <h3 className="font-semibold mb-3">Imagen Capturada</h3>
-            <img src={image} alt="capturada" className="w-full rounded-lg shadow"/>
-            <div className="mt-3 grid sm:grid-cols-3 gap-3">
+            <img src={image} alt="captura" className="w-full rounded-lg shadow"/>
+            <div className="mt-3 flex gap-3">
+              <button onClick={process} disabled={processing}
+                      className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white font-semibold px-4 py-2 rounded-xl">
+                🧮 {processing ? 'Procesando…' : 'Procesar'}
+              </button>
+              {camState!=='ready' && (
+                <button onClick={startCamera}
+                        className="inline-flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold px-4 py-2 rounded-xl">
+                  🔁 Reabrir Cámara
+                </button>
+              )}
+            </div>
+            {processing && <div className="text-sm text-slate-600 mt-2">{processingStep}</div>}
+          </div>
+        )}
+
+        {/* Resultados */}
+        {results && (
+          <div className="bg-white rounded-2xl shadow p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Resultado</h3>
+              <span className="text-xs px-2 py-1 rounded bg-slate-100">{results.detectionMethod}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded bg-indigo-50">
                 <div className="text-xs text-slate-600">IPD</div>
-                <div className="text-3xl font-bold">{ipd ?? '—'} {ipd && 'mm'}</div>
+                <div className="text-2xl font-bold">{results.measurements.DI_mm} mm</div>
               </div>
               <div className="p-3 rounded bg-violet-50">
                 <div className="text-xs text-slate-600">Escala (px/mm)</div>
-                <div className="text-xl font-semibold tag">{pxmm?.toFixed ? pxmm.toFixed(3) : '—'}</div>
-              </div>
-              <div className="p-3 rounded bg-emerald-50">
-                <div className="text-xs text-slate-600">Método</div>
-                <div className="text-lg font-semibold">{method}</div>
+                <div className="text-xl font-semibold tag">{results.calibration.px_per_mm.toFixed(3)}</div>
+                <div className="text-xs text-slate-500">
+                  {results.calibration.from_guide ? 'De guía CR80' : results.calibration.from_ocv ? 'OpenCV ROI' : 'Estimación'}
+                </div>
               </div>
             </div>
-            {annotated && <img src={annotated} className="w-full rounded-lg shadow mt-3" alt="anotada"/>}
+            {annotated && (
+              <div className="mt-2">
+                <h4 className="font-semibold mb-2">Imagen Anotada</h4>
+                <img src={annotated} className="w-full rounded-lg shadow" alt="anotada"/>
+                <a download={`annotated-${Date.now()}.png`} href={annotated}
+                   className="inline-block mt-3 px-3 py-2 rounded bg-blue-600 text-white">Descargar PNG</a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4">
+            <div className="font-semibold mb-1">Error</div>
+            <div className="text-sm">{error}</div>
           </div>
         )}
 
