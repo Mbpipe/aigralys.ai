@@ -1,371 +1,451 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Medidor Óptico Facial — CR80 + OpenCV/MediaPipe</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Medidor Óptico Facial — Guía CR80 + MediaPipe</title>
 
-<!-- Tailwind -->
+<!-- Tailwind (solo estilos rápidos) -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- React + Babel UMD -->
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-<!-- OpenCV opcional (para score extra) -->
-<script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+<!-- MediaPipe FaceMesh (con iris) -->
+<script async src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+<script async src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <style>
-  html,body{background:#eef2ff}
-  /* Contenedor fijo alto (no scrollea la página cuando se abre la cam) */
-  .viewer{position:relative;border-radius:12px;overflow:hidden;background:#000;max-height:62vh}
-  video.cam{
-    display:block;width:100%;height:auto;max-height:62vh;object-fit:cover;
-    transform:scaleX(-1); /* espejo para selfie */
-    background:#000;
+  body{background:#eef2ff}
+  .cam-wrap{position:relative; border-radius:1rem; overflow:hidden; background:#000}
+  video, canvas.overlay {width:100%; height:auto; display:block; transform:scaleX(-1);}
+  canvas.overlay{position:absolute; left:0; top:0; pointer-events:none;}
+  .cap-btn{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:72px; height:72px; border-radius:999px; background:#1d4ed8cc;
+    display:flex; align-items:center; justify-content:center; color:#fff;
+    font-size:28px; backdrop-filter: blur(2px); box-shadow:0 8px 24px #0006;
   }
-  canvas.overlay{position:absolute;inset:0;pointer-events:none;z-index:20}
-  .capture-fab{
-    position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
-    width:56px;height:56px;border-radius:9999px;display:flex;align-items:center;justify-content:center;
-    background:rgba(37,99,235,.96);color:#fff;font-size:22px;border:3px solid #fff;z-index:30;
-    box-shadow:0 10px 28px rgba(37,99,235,.35);
-  }
-  .tag{font-variant-numeric:tabular-nums}
+  .chip{font-variant-numeric:tabular-nums}
+  .thin{font-weight:600; letter-spacing:.2px}
 </style>
 </head>
 <body>
-<div id="root"></div>
+<div class="max-w-3xl mx-auto p-4 space-y-4">
+  <header class="bg-white rounded-2xl shadow p-5 border-t-4 border-indigo-500">
+    <h1 class="text-3xl font-bold">Medidor Óptico Facial</h1>
+    <p class="text-slate-600">Guía CR80 + OpenCV ligero (ROI) + MediaPipe FaceMesh</p>
+    <div class="flex gap-2 mt-3 text-sm">
+      <span id="secureChip" class="chip px-2 py-1 rounded bg-slate-100">secure: <b>—</b></span>
+      <span id="mpChip" class="chip px-2 py-1 rounded bg-slate-100">mediapipe: <b>cargando…</b></span>
+      <span id="stateChip" class="chip px-2 py-1 rounded bg-slate-100">estado: <b>idle</b></span>
+    </div>
+  </header>
 
-<script type="text/babel">
-const {useRef,useState,useEffect,useMemo} = React;
+  <section class="bg-white rounded-2xl shadow p-5 space-y-3">
+    <h2 class="text-xl font-semibold">Captura de Imagen</h2>
+    <div class="flex gap-3">
+      <label class="px-4 py-3 rounded-xl bg-slate-800 text-white cursor-pointer hover:bg-slate-700">
+        🖼️ Subir Foto
+        <input id="fileInput" type="file" accept="image/*" class="hidden">
+      </label>
+      <button id="startBtn" class="px-4 py-3 rounded-xl bg-violet-600 text-white hover:bg-violet-700">📷 Cámara</button>
+      <button id="stopBtn" class="px-4 py-3 rounded-xl bg-rose-600 text-white hover:bg-rose-700 hidden">🔴 Cerrar</button>
+    </div>
 
-const CR80_W=85.60, CR80_H=53.98, CR80_AR=CR80_W/CR80_H;
+    <!-- Cámara + Overlay -->
+    <div id="camWrap" class="cam-wrap mt-3 hidden">
+      <video id="video" playsinline muted></video>
+      <canvas id="overlay" class="overlay"></canvas>
+      <button id="captureBtn" class="cap-btn" title="Capturar">📸</button>
+    </div>
 
-function App(){
-  const [state,setState]=useState('idle');
-  const [err,setErr]=useState('');
-  const [ocvReady,setOcvReady]=useState(false);
+    <!-- Controles de overlay -->
+    <div class="flex flex-wrap items-center gap-3 mt-3">
+      <label class="flex items-center gap-2">
+        <input id="useGuide" type="checkbox" class="scale-110" checked>
+        <span>Usar Guía CR80</span>
+      </label>
+      <label class="flex items-center gap-2">
+        <input id="autoCap" type="checkbox" class="scale-110" checked>
+        <span>Auto-capturar (≥80% + pupilas)</span>
+      </label>
+      <div class="ml-auto text-sm text-slate-600 chip">score: <b id="scorePct">0%</b></div>
+    </div>
 
-  const vidRef=useRef(null);
-  const overlayRef=useRef(null);
-  const viewerRef=useRef(null);
-  const streamRef=useRef(null);
-  const workRef=useRef(document.createElement('canvas'));
-
-  const [cameraOn,setCameraOn]=useState(false);
-  const [image,setImage]=useState(null);
-  const [annotated,setAnnotated]=useState(null);
-
-  const [useGuide,setUseGuide]=useState(true);
-  const [scorePct,setScorePct]=useState(0);
-  const [guidePx,setGuidePx]=useState(120);
-  const [fineAdj,setFineAdj]=useState(0);
-  const pxPerMm=useMemo(()=> (guidePx/CR80_W)*(1+fineAdj/100),[guidePx,fineAdj]);
-
-  // MediaPipe
-  const [faceMesh,setFaceMesh]=useState(null);
-  const lastFaceCenter=useRef(null);
-
-  useEffect(()=>{
-    const init=()=>{
-      try{
-        const fm=new window.FaceMesh({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-        fm.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:0.5,minTrackingConfidence:0.5});
-        setFaceMesh(fm);
-      }catch(_){}
-    };
-    if(typeof window.FaceMesh==='undefined'){
-      const s=document.createElement('script'); s.async=true;
-      s.src='https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js';
-      s.onload=()=>{
-        const u=document.createElement('script'); u.async=true;
-        u.src='https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js';
-        u.onload=init; document.body.appendChild(u);
-      };
-      document.body.appendChild(s);
-    }else init();
-  },[]);
-
-  useEffect(()=>{
-    const t=setInterval(()=>{ if(window.cv && window.cv.Mat){ setOcvReady(true); clearInterval(t);} },300);
-    return()=>clearInterval(t);
-  },[]);
-
-  /* === Cámara === */
-  const startCam=()=>{
-    setErr('');
-    const go=async(retry=0)=>{
-      const v=vidRef.current;
-      if(!v){ if(retry<6) return requestAnimationFrame(()=>go(retry+1)); setErr('videoRef no disponible'); setState('error'); return; }
-      try{
-        v.setAttribute('playsinline',''); v.setAttribute('autoplay',''); v.muted=true; v.playsInline=true;
-        const stream=await navigator.mediaDevices.getUserMedia({
-          video:{facingMode:{ideal:'user'},width:{ideal:1280},height:{ideal:720}}, audio:false
-        });
-        streamRef.current=stream; v.srcObject=stream; await v.play();
-        setCameraOn(true); setState('ready');
-      }catch(e){ setErr('No se pudo acceder a la cámara: '+(e.message||e)); setState('error'); }
-    };
-    go();
-  };
-
-  const stopCam=()=>{
-    const v=vidRef.current; if(v){v.pause(); v.srcObject=null;}
-    if(streamRef.current){ streamRef.current.getTracks().forEach(t=>t.stop()); streamRef.current=null; }
-    setCameraOn(false);
-  };
-
-  /* === Utiles === */
-  const edgeScore=(imgData,w,h)=>{
-    const t=3; let e=0, tot=0;
-    for(let y=0;y<h;y++){
-      const b=(y<t)||(y>=h-t);
-      for(let x=0;x<w;x++){
-        if(!b && (x>=t && x<w-t)) continue;
-        const i=(y*w+x)*4;
-        const lum=0.299*imgData.data[i]+0.587*imgData.data[i+1]+0.114*imgData.data[i+2];
-        if(lum<75 || lum>205) e++; tot++;
-      }
-    }
-    return tot? e/tot : 0;
-  };
-
-  /* === Overlay: siempre visible y del tamaño exacto en pantalla === */
-  useEffect(()=>{
-    if(!cameraOn) return;
-    const v=vidRef.current, ov=overlayRef.current, viewer=viewerRef.current;
-    if(!v||!ov||!viewer) return;
-
-    const ctx=ov.getContext('2d');
-    const work=workRef.current, wctx=work.getContext('2d',{willReadFrequently:true});
-
-    const syncCanvasToCSS=()=>{
-      // usa tamaño visible (CSS) para evitar overlay 0x0 en iOS
-      const rect = v.getBoundingClientRect();
-      ov.style.width = rect.width+'px';
-      ov.style.height= rect.height+'px';
-      ov.width  = Math.max(1, Math.round(rect.width  * devicePixelRatio));
-      ov.height = Math.max(1, Math.round(rect.height * devicePixelRatio));
-    };
-    syncCanvasToCSS();
-    const ro=new ResizeObserver(syncCanvasToCSS);
-    ro.observe(viewer); ro.observe(v);
-
-    let raf=0;
-    const loop=()=>{
-      // dimensiones visibles
-      const rect=v.getBoundingClientRect();
-      const cssW=rect.width, cssH=rect.height;
-      if(cssW<=0||cssH<=0){ raf=requestAnimationFrame(loop); return; }
-
-      // limpiar
-      ctx.clearRect(0,0,ov.width,ov.height);
-
-      // posición guía bajo la nariz (si hay landmarks); conversion a px canvas (considerando DPR)
-      const dpr=devicePixelRatio||1;
-      let gyBase = (cssH*0.58)*dpr;
-      if(lastFaceCenter.current){
-        const y=lastFaceCenter.current.y*(ov.height/(v.videoHeight||cssH)); // map a canvas px
-        gyBase = Math.min(ov.height-20, Math.max(20, y + (cssH*0.12)*dpr));
-      }
-
-      const gw = (guidePx * ov.width) / (v.videoWidth || ov.width); // mantener escala si videoWidth=0
-      const gh = Math.round(gw/CR80_AR);
-      const gx = Math.round((ov.width - gw)/2);
-      const gy = Math.round(gyBase - gh/2);
-
-      // máscara y rectángulo
-      if(useGuide){
-        ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(0,0,ov.width,ov.height);
-        ctx.clearRect(gx,gy,gw,gh);
-      }
-
-      // ROI real (tomado del frame, corrigiendo espejo)
-      const vw=v.videoWidth||Math.round(cssW), vh=v.videoHeight||Math.round(cssH);
-      work.width=vw; work.height=vh; wctx.drawImage(v,0,0,vw,vh);
-      const scaleX = vw/ov.width, scaleY=vh/ov.height;
-      const roiX = (vw - Math.round(gx*scaleX) - Math.round(gw*scaleX)); // espejo
-      const roiY = Math.round(gy*scaleY);
-      const roiW = Math.round(gw*scaleX), roiH = Math.round(gh*scaleY);
-      const roi = wctx.getImageData(Math.max(0,roiX), Math.max(0,roiY), Math.max(1,roiW), Math.max(1,roiH));
-
-      // score combinado (edges + opcional OpenCV)
-      let combined=edgeScore(roi,roiW,roiH);
-      if(ocvReady){
-        try{
-          const cv=window.cv;
-          const src=cv.matFromImageData(roi);
-          const gray=new cv.Mat(), bl=new cv.Mat(), ed=new cv.Mat();
-          cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY); cv.GaussianBlur(gray,bl,new cv.Size(5,5),0);
-          let sum=0; const d=bl.data; for(let i=0;i<d.length;i++) sum+=d[i];
-          const mean=sum/d.length; const lo=Math.max(0,.66*mean), hi=Math.min(255,1.33*mean);
-          cv.Canny(bl,ed,lo,hi);
-          const contours=new cv.MatVector(), hier=new cv.Mat();
-          cv.findContours(ed,contours,hier,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
-          let best=0;
-          for(let i=0;i<contours.size();i++){
-            const cnt=contours.get(i); const area=cv.contourArea(cnt);
-            if(area<(roiW*roiH)*0.06){ cnt.delete(); continue; }
-            const rect=cv.minAreaRect(cnt);
-            const L=Math.max(rect.size.width,rect.size.height), S=Math.min(rect.size.width,rect.size.height);
-            const ar=L/S; const asp=Math.max(0,1-Math.min(Math.abs(ar-CR80_AR)/0.30,1));
-            const cont=Math.max(0,Math.min(1,(area/(roiW*roiH))*2.2));
-            best=Math.max(best, asp*0.7+cont*0.3); cnt.delete();
-          }
-          gray.delete(); bl.delete(); ed.delete(); contours.delete(); hier.delete(); src.delete();
-          combined=Math.max(combined,best);
-        }catch(_){}
-      }
-      setScorePct(combined);
-
-      // marco visible
-      if(useGuide){
-        ctx.lineWidth=3*dpr; ctx.strokeStyle=combined>=0.75? '#22c55e':'#a78bfa'; ctx.strokeRect(gx,gy,gw,gh);
-        ctx.font=`700 ${14*dpr}px system-ui,-apple-system`; ctx.fillStyle='#fff'; ctx.strokeStyle='#000'; ctx.lineWidth=4*dpr;
-        const label=`Guía CR80 — score ${Math.round(combined*100)}%`;
-        ctx.strokeText(label,12*dpr,Math.max(22*dpr, gy-8*dpr)); ctx.fillText(label,12*dpr,Math.max(22*dpr, gy-8*dpr));
-      }
-      raf=requestAnimationFrame(loop);
-    };
-    raf=requestAnimationFrame(loop);
-    return()=>{ cancelAnimationFrame(raf); ro.disconnect(); };
-  },[cameraOn,useGuide,guidePx,ocvReady]);
-
-  /* Capturar y procesar */
-  const capture=async()=>{
-    const v=vidRef.current; if(!v||!(v.videoWidth||v.clientWidth)){ setErr('La cámara no está lista.'); return; }
-    const c=document.createElement('canvas');
-    const w=v.videoWidth||v.clientWidth, h=v.videoHeight||v.clientHeight;
-    c.width=w; c.height=h; c.getContext('2d').drawImage(v,0,0,w,h);
-    const url=c.toDataURL('image/jpeg',0.92);
-    setImage(url); setAnnotated(null);
-    process(url);
-  };
-
-  const process=async(srcUrl)=>{
-    const src = srcUrl || image; if(!src){ setErr('No hay imagen.'); return; }
-    try{
-      const img=await new Promise((res,rej)=>{ const m=new Image(); m.src=src; m.onload=()=>res(m); m.onerror=rej; });
-
-      const getLm=()=> new Promise((resolve)=>{
-        if(faceMesh){
-          const c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
-          c.getContext('2d').drawImage(img,0,0);
-          faceMesh.onResults(r=>{
-            if(r.multiFaceLandmarks && r.multiFaceLandmarks[0]){
-              const L=r.multiFaceLandmarks[0];
-              const mean=(idxs)=>idxs.reduce((S,i)=>({x:S.x+L[i].x*img.width,y:S.y+L[i].y*img.height}),{x:0,y:0});
-              const Rm=mean([468,469,470,471,472]), Lm=mean([473,474,475,476,477]);
-              const R={x:Rm.x/5,y:Rm.y/5}, Lp={x:Lm.x/5,y:Lm.y/5};
-              lastFaceCenter.current={x:(R.x+Lp.x)/2,y:(R.y+Lp.y)/2};
-              resolve({R, L: Lp, method:'MediaPipe'});
-            }else{
-              const cx=img.width/2, cy=img.height*0.45, d=img.width*0.15;
-              resolve({R:{x:cx+d/2,y:cy}, L:{x:cx-d/2,y:cy}, method:'Estimación'});
-            }
-          });
-          faceMesh.send({image:c});
-        }else{
-          const cx=img.width/2, cy=img.height*0.45, d=img.width*0.15;
-          resolve({R:{x:cx+d/2,y:cy}, L:{x:cx-d/2,y:cy}, method:'Estimación'});
-        }
-      });
-
-      const lm=await getLm();
-      const dx=lm.R.x-lm.L.x, dy=lm.R.y-lm.L.y;
-      const ipd = Math.hypot(dx,dy)/pxPerMm;
-      const ipd10 = Math.round(ipd*10)/10;
-
-      // anotada — línea 3px y puntos radio 6px
-      const out=document.createElement('canvas'); out.width=img.width; out.height=img.height;
-      const a=out.getContext('2d'); a.drawImage(img,0,0);
-      a.fillStyle='#ef4444';
-      a.beginPath(); a.arc(lm.L.x,lm.L.y,6,0,Math.PI*2); a.fill();
-      a.beginPath(); a.arc(lm.R.x,lm.R.y,6,0,Math.PI*2); a.fill();
-      a.strokeStyle='#ef4444'; a.lineWidth=3; a.beginPath(); a.moveTo(lm.L.x,lm.L.y); a.lineTo(lm.R.x,lm.R.y); a.stroke();
-      a.font='700 22px system-ui,-apple-system'; a.fillStyle='#fff'; a.strokeStyle='#000'; a.lineWidth=5;
-      const mx=(lm.L.x+lm.R.x)/2, my=(lm.L.y+lm.R.y)/2-18;
-      a.strokeText(`IPD: ${ipd10} mm`,mx-80,my); a.fillText(`IPD: ${ipd10} mm`,mx-80,my);
-      setAnnotated(out.toDataURL('image/png'));
-    }catch(e){ setErr('No se pudo procesar: '+(e.message||e)); }
-  };
-
-  return (
-    <div className="min-h-screen p-4">
-      <div className="max-w-3xl mx-auto space-y-4">
-        <header className="bg-white rounded-2xl shadow p-5 border-t-4 border-indigo-500">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h1 className="text-3xl font-bold leading-tight">Medidor Óptico Facial</h1>
-              <p className="text-slate-600">Guía CR80 + OpenCV/MediaPipe</p>
-            </div>
-            <div className="flex gap-2 text-xs">
-              <span className="px-2 py-1 rounded bg-slate-100">secure: <b className="tag">{location.protocol==='https:'?'true':'false'}</b></span>
-              <span className="px-2 py-1 rounded bg-slate-100">opencv: <b className="tag">{ocvReady?'ready':'loading'}</b></span>
-              <span className="px-2 py-1 rounded bg-slate-100">estado: <b className="tag">{state}</b></span>
-            </div>
-          </div>
-        </header>
-
-        <section className="bg-white rounded-2xl shadow p-5">
-          <h2 className="text-xl font-semibold mb-3">Captura de Imagen</h2>
-          <div className="grid grid-cols-3 gap-3 mb-3">
-            <label className="flex items-center justify-center gap-2 bg-slate-800 text-white rounded-xl py-3 cursor-pointer">
-              🖼️ <span>Subir Foto</span>
-              <input type="file" accept="image/*" className="hidden"
-                     onChange={e=>{
-                       const f=e.target.files?.[0]; if(!f) return;
-                       const rd=new FileReader(); rd.onload=ev=>{ setImage(ev.target.result); setAnnotated(null); process(ev.target.result); };
-                       rd.readAsDataURL(f);
-                     }}/>
-            </label>
-            <button onClick={startCam} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl py-3">📷 Cámara</button>
-            <button onClick={stopCam} className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl py-3">🔴 Cerrar</button>
-          </div>
-
-          {err && <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-3 mb-3">{err}</div>}
-
-          <div ref={viewerRef} className="viewer">
-            <video ref={vidRef} className="cam" autoplay playsinline muted></video>
-            <canvas ref={overlayRef} className="overlay"></canvas>
-            {cameraOn && <button className="capture-fab" onClick={capture} aria-label="Capturar">📸</button>}
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <label className="inline-flex items-center gap-2">
-              <input type="checkbox" className="scale-110" checked={useGuide} onChange={e=>setUseGuide(e.target.checked)}/>
-              <span>Usar Guía CR80</span>
-            </label>
-            <div className="ml-auto text-sm text-slate-600">
-              score: <b className="tag">{Math.round(scorePct*100)}%</b>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <div className="text-sm text-slate-700 mb-1">Ajuste fino escala (±10%) · actual: <b className="tag">{fineAdj}%</b></div>
-            <input type="range" min="-10" max="10" step="1" value={fineAdj} onChange={e=>setFineAdj(parseInt(e.target.value))} className="w-full"/>
-            <div className="text-xs text-slate-500 mt-1">Escala efectiva: <b className="tag">{pxPerMm.toFixed(3)}</b> px/mm • Guía: <b className="tag">{guidePx}px</b> (alto {Math.round(guidePx/CR80_AR)}px)</div>
-          </div>
-        </section>
-
-        {annotated && (
-          <section className="bg-white rounded-2xl shadow p-5">
-            <h3 className="font-semibold mb-3">Resultado</h3>
-            <img src={annotated} className="w-full rounded-lg shadow" alt="resultado"/>
-            <a className="inline-block mt-3 px-3 py-2 rounded bg-indigo-600 text-white" download="resultado.png" href={annotated}>Descargar PNG</a>
-          </section>
-        )}
-
-        <footer className="text-center text-xs text-slate-500 py-6">© 2025 — CR80 + OpenCV + MediaPipe</footer>
+    <!-- Ajuste fino -->
+    <div class="mt-2">
+      <label class="text-sm text-slate-700">Ajuste fino escala (±15%) • actual: <span id="fineVal">0%</span></label>
+      <input id="fine" type="range" min="-15" max="15" step="1" value="0" class="w-full">
+      <div class="text-xs text-slate-600 mt-1">
+        Escala efectiva: <span id="pxmm" class="chip">—</span> px/mm • Guía: <span id="guidePx" class="chip">—</span>px (alto <span id="guidePy" class="chip">—</span>px)
       </div>
     </div>
-  );
-}
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App/>);
+    <div id="errBox" class="hidden mt-3 p-3 text-red-800 bg-red-50 rounded-lg border border-red-200 text-sm"></div>
+  </section>
+
+  <!-- Resultado -->
+  <section id="resultBox" class="bg-white rounded-2xl shadow p-5 space-y-3 hidden">
+    <h3 class="text-xl font-semibold">Resultado</h3>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="p-4 rounded bg-indigo-50">
+        <div class="text-xs text-slate-600">IPD</div>
+        <div id="ipd" class="text-3xl font-bold">—</div>
+      </div>
+      <div class="p-4 rounded bg-violet-50">
+        <div class="text-xs text-slate-600">Escala</div>
+        <div id="scale" class="text-xl font-semibold">—</div>
+        <div id="scaleSrc" class="text-xs text-slate-500">Guía + ajuste</div>
+      </div>
+    </div>
+    <img id="anno" alt="anotada" class="w-full rounded-lg shadow">
+    <div class="flex gap-2">
+      <a id="dlAnno" class="px-3 py-2 rounded bg-blue-600 text-white text-sm" download="annotated.png">Descargar PNG</a>
+      <button id="reprocess" class="px-3 py-2 rounded bg-slate-700 text-white text-sm">Procesar de nuevo</button>
+    </div>
+  </section>
+
+  <footer class="text-center text-xs text-slate-500 py-6">© 2025 — CR80 + MediaPipe (iris)</footer>
+</div>
+
+<script>
+(function(){
+  // --- Constantes
+  const CR80_W = 85.60, CR80_H = 53.98, CR80_AR = CR80_W/CR80_H;
+  const MIN_SCORE = 0.80;                // umbral de match
+  const HOLD_MS = 500;                   // sostener score para auto-captura
+  const PUPIL_R = 4, LINE_W = 2;         // marcadores finos
+
+  // --- Elementos
+  const secureChip = document.getElementById('secureChip');
+  const mpChip     = document.getElementById('mpChip');
+  const stateChip  = document.getElementById('stateChip');
+
+  const fileInput  = document.getElementById('fileInput');
+  const startBtn   = document.getElementById('startBtn');
+  const stopBtn    = document.getElementById('stopBtn');
+
+  const camWrap    = document.getElementById('camWrap');
+  const video      = document.getElementById('video');
+  const overlay    = document.getElementById('overlay');
+  const octx       = overlay.getContext('2d', { willReadFrequently:true });
+  const captureBtn = document.getElementById('captureBtn');
+
+  const useGuideEl = document.getElementById('useGuide');
+  const autoCapEl  = document.getElementById('autoCap');
+  const scorePctEl = document.getElementById('scorePct');
+
+  const fine       = document.getElementById('fine');
+  const fineVal    = document.getElementById('fineVal');
+  const pxmmEl     = document.getElementById('pxmm');
+  const guidePxEl  = document.getElementById('guidePx');
+  const guidePyEl  = document.getElementById('guidePy');
+
+  const errBox     = document.getElementById('errBox');
+
+  const resultBox  = document.getElementById('resultBox');
+  const ipdEl      = document.getElementById('ipd');
+  const scaleEl    = document.getElementById('scale');
+  const scaleSrcEl = document.getElementById('scaleSrc');
+  const annoImg    = document.getElementById('anno');
+  const dlAnno     = document.getElementById('dlAnno');
+  const reprocess  = document.getElementById('reprocess');
+
+  // --- Estado
+  let stream = null;
+  let faceMesh = null;
+  let lastFrameCanvas = null;
+  let lastShot = null;
+  let holdStart = 0;
+
+  // Seguridad
+  secureChip.querySelector('b').textContent = (location.protocol==='https:')?'true':'false';
+
+  // MediaPipe ready?
+  const mpReadyInterval = setInterval(()=>{
+    if (window.FaceMesh) {
+      clearInterval(mpReadyInterval);
+      mpChip.querySelector('b').textContent = 'ready';
+      // init facemesh
+      try{
+        faceMesh = new FaceMesh({locateFile:(f)=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+        faceMesh.setOptions({maxNumFaces:1, refineLandmarks:true, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
+      }catch(e){
+        mpChip.querySelector('b').textContent = 'error';
+      }
+    }
+  }, 200);
+
+  // --- Helpers
+  function showErr(msg){
+    errBox.textContent = msg;
+    errBox.classList.remove('hidden');
+  }
+  function clearErr(){ errBox.classList.add('hidden'); errBox.textContent=''; }
+
+  function setState(s){ stateChip.querySelector('b').textContent = s; }
+
+  function getGuideRect(w,h){
+    // Rectángulo CR80 centrado, bajo la nariz (alrededor del 60% vertical)
+    const guideHeight = Math.round(Math.min(h*0.16, 160));     // razonable en móvil
+    const guideWidth  = Math.round(guideHeight * CR80_AR);
+    const gx = Math.round((w - guideWidth)/2);
+    const gy = Math.round(h*0.58 - guideHeight/2);
+    return {x:gx, y:gy, w:guideWidth, h:guideHeight};
+  }
+
+  function scoreCardInROI(imgData, w, h){
+    // Borde: densidad de contrastes en 2px alrededor del perímetro
+    const data = imgData.data;
+    const thick = 2;
+    let edge=0, tot=0;
+    for(let y=0;y<h;y++){
+      for(let x=0;x<w;x++){
+        const onB = (y<thick)||(y>=h-thick)||(x<thick)||(x>=w-thick);
+        if(!onB) continue;
+        const i=(y*w + x)*4;
+        const lum = 0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
+        if(lum<70 || lum>200) edge++;
+        tot++;
+      }
+    }
+    const edgeScore = tot? edge/tot : 0;
+    // Uniformidad interior (tarjetas suelen ser relativamente uniformes)
+    let sum=0, cnt=0;
+    for(let y=Math.floor(h*0.2); y<Math.floor(h*0.8); y+=3){
+      for(let x=Math.floor(w*0.2); x<Math.floor(w*0.8); x+=3){
+        const i=(y*w+x)*4;
+        const lum = 0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
+        sum+=lum; cnt++;
+      }
+    }
+    let uni=0;
+    if(cnt>10){
+      const mean=sum/cnt; let varc=0;
+      for(let y=Math.floor(h*0.2); y<Math.floor(h*0.8); y+=5){
+        for(let x=Math.floor(w*0.2); x<Math.floor(w*0.8); x+=5){
+          const i=(y*w+x)*4;
+          const lum=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
+          varc += (lum-mean)*(lum-mean);
+        }
+      }
+      varc/=cnt;
+      const std=Math.sqrt(varc);
+      uni = Math.max(0, 1 - (std/60)); // std bajo => 1
+    }
+    // score total
+    return Math.max(0, Math.min(1, edgeScore*0.65 + uni*0.35));
+  }
+
+  function drawOverlay(){
+    if(!video.videoWidth) return;
+    overlay.width  = video.videoWidth;
+    overlay.height = video.videoHeight;
+    const w=overlay.width, h=overlay.height;
+    octx.clearRect(0,0,w,h);
+
+    // sombreado exterior
+    const r = getGuideRect(w,h);
+    if(useGuideEl.checked){
+      octx.fillStyle='rgba(0,0,0,.35)';
+      octx.fillRect(0,0,w,h);
+      octx.clearRect(r.x, r.y, r.w, r.h);
+    }
+
+    // ROI score
+    let pct = 0;
+    if(useGuideEl.checked){
+      const img = octx.getImageData(r.x, r.y, r.w, r.h);
+      const s = scoreCardInROI(img, r.w, r.h);
+      pct = Math.round(s*100);
+      scorePctEl.textContent = pct + '%';
+      octx.lineWidth = 4;
+      octx.strokeStyle = s >= MIN_SCORE ? '#22c55e' : '#a78bfa';
+      octx.strokeRect(r.x, r.y, r.w, r.h);
+
+      // título
+      octx.font='700 22px system-ui, -apple-system, Segoe UI';
+      octx.fillStyle='#fff';
+      octx.strokeStyle='#000'; octx.lineWidth=4;
+      const txt = `Guía CR80 — score ${pct}%`;
+      octx.strokeText(txt, Math.max(12,r.x), Math.max(26, r.y-10));
+      octx.fillText(txt,   Math.max(12,r.x), Math.max(26, r.y-10));
+    }
+
+    // stats
+    const rct = getGuideRect(w,h);
+    guidePxEl.textContent = rct.w;
+    guidePyEl.textContent = rct.h;
+
+    return pct >= 80;
+  }
+
+  // --- Loop de overlay
+  let raf=0, readyForAuto=false;
+  function frameLoop(){
+    if(!video || video.paused){ return; }
+    const ok = drawOverlay();
+
+    if (autoCapEl.checked){
+      if (ok){
+        if (!readyForAuto){ readyForAuto = true; holdStart = performance.now(); }
+        else{
+          if (performance.now() - holdStart > HOLD_MS){
+            // además pedimos pupilas antes de disparar
+            captureFrame(true); // con chequeo de pupilas
+            readyForAuto=false; holdStart=0;
+          }
+        }
+      } else { readyForAuto=false; holdStart=0; }
+    }
+
+    raf=requestAnimationFrame(frameLoop);
+  }
+
+  // --- Cámara
+  startBtn.onclick = async ()=>{
+    clearErr();
+    try{
+      video.setAttribute('playsinline',''); video.muted = true; video.playsInline = true;
+      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'user'}, width:{ideal:1280}, height:{ideal:720}}, audio:false});
+      video.srcObject = stream;
+      await video.play();
+      camWrap.classList.remove('hidden');
+      stopBtn.classList.remove('hidden');
+      startBtn.classList.add('hidden');
+      setState('ready');
+      cancelAnimationFrame(raf); raf=requestAnimationFrame(frameLoop);
+    }catch(e){
+      setState('error');
+      showErr('No se pudo acceder a la cámara: ' + (e.message||e));
+    }
+  };
+
+  stopBtn.onclick = ()=>{
+    try{
+      if(video){ video.pause(); video.srcObject=null; }
+      if(stream){ stream.getTracks().forEach(t=>t.stop()); }
+    }catch(_){}
+    camWrap.classList.add('hidden');
+    stopBtn.classList.add('hidden');
+    startBtn.classList.remove('hidden');
+    cancelAnimationFrame(raf); raf=0;
+    setState('idle');
+  };
+
+  // --- Captura
+  captureBtn.onclick = ()=> captureFrame(false);
+
+  async function captureFrame(requirePupils){
+    if(!video.videoWidth){ showErr('La cámara aún no está lista.'); return; }
+    clearErr();
+    // congelar frame en canvas
+    const c=document.createElement('canvas');
+    c.width=video.videoWidth; c.height=video.videoHeight;
+    const x=c.getContext('2d');
+    // dibujar SIN espejo para procesamiento correcto
+    x.save(); x.translate(c.width,0); x.scale(-1,1);
+    x.drawImage(video,0,0,c.width,c.height);
+    x.restore();
+    lastFrameCanvas = c;
+
+    // Pupilas con MediaPipe
+    let pupils=null;
+    if(faceMesh){
+      pupils = await new Promise((resolve)=>{
+        faceMesh.onResults((res)=>{
+          if(res.multiFaceLandmarks && res.multiFaceLandmarks[0]){
+            const L = res.multiFaceLandmarks[0];
+            const iris = arr => ({
+              x: arr.reduce((s,l)=>s+l.x*c.width,0)/arr.length,
+              y: arr.reduce((s,l)=>s+l.y*c.height,0)/arr.length
+            });
+            resolve({
+              left:  iris(L.slice(473,477)),
+              right: iris(L.slice(468,472))
+            });
+          }else resolve(null);
+        });
+        faceMesh.send({image:c});
+      });
+    }
+    if(requirePupils && !pupils){ return; } // no dispares si pedimos pupilas
+
+    // px/mm por overlay (asumimos tarjeta llena el rectángulo)
+    const r = getGuideRect(c.width, c.height);
+    const basePxPerMm = r.w / CR80_W;
+    const adj = 1 + (parseInt(fine.value,10)/100);
+    const pxPerMm = basePxPerMm * adj;
+
+    // IPD
+    if(!pupils){ showErr('No se detectaron pupilas. Ajustá iluminación y mirada.'); return; }
+    const dx = pupils.right.x - pupils.left.x, dy = pupils.right.y - pupils.left.y;
+    const ipd_mm = Math.round((Math.hypot(dx,dy) / pxPerMm) * 10) / 10;
+
+    // Anotada
+    const a=document.createElement('canvas'); a.width=c.width; a.height=c.height;
+    const ac=a.getContext('2d');
+    ac.drawImage(c,0,0);
+
+    ac.strokeStyle='#ff2a2a'; ac.lineWidth=LINE_W;
+    ac.beginPath(); ac.moveTo(pupils.left.x, pupils.left.y);
+    ac.lineTo(pupils.right.x, pupils.right.y); ac.stroke();
+    ac.fillStyle='#ff2a2a';
+    ac.beginPath(); ac.arc(pupils.left.x, pupils.left.y, PUPIL_R, 0, Math.PI*2); ac.fill();
+    ac.beginPath(); ac.arc(pupils.right.x, pupils.right.y, PUPIL_R, 0, Math.PI*2); ac.fill();
+
+    ac.font='700 24px system-ui, -apple-system'; ac.fillStyle='#fff'; ac.strokeStyle='#000'; ac.lineWidth=4;
+    const mx=(pupils.left.x+pupils.right.x)/2, my=(pupils.left.y+pupils.right.y)/2 - 18;
+    const label=`IPD: ${ipd_mm} mm`;
+    ac.strokeText(label, mx-70, my); ac.fillText(label, mx-70, my);
+
+    const url=a.toDataURL('image/png');
+    lastShot = { ipd_mm, pxPerMm, url };
+    // UI
+    ipdEl.textContent = ipd_mm + ' mm';
+    scaleEl.textContent = pxPerMm.toFixed(3) + ' px/mm';
+    scaleSrcEl.textContent = `Guía + ajuste ${parseInt(fine.value,10)}%`;
+    annoImg.src = url; dlAnno.href = url;
+    resultBox.classList.remove('hidden');
+  }
+
+  // Subir imagen (opcional: procesar igual que captura)
+  fileInput.onchange = async (e)=>{
+    const f = e.target.files?.[0]; if(!f) return;
+    clearErr();
+    const url = URL.createObjectURL(f);
+    const img = new Image(); img.src=url;
+    await img.decode();
+    const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight;
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    lastFrameCanvas = c;
+    await captureFrame(false);
+    URL.revokeObjectURL(url);
+  };
+
+  // Re-procesar última
+  reprocess.onclick = ()=> { if(lastFrameCanvas) captureFrame(false); };
+
+  // Ajuste fino
+  fine.oninput = ()=>{
+    fineVal.textContent = `${fine.value}%`;
+    // actualizar etiqueta de escala efectiva en vivo (estimación por overlay actual)
+    if(video.videoWidth){
+      const r = getGuideRect(video.videoWidth, video.videoHeight);
+      const base = r.w / CR80_W;
+      const pxmm = base * (1 + (parseInt(fine.value,10)/100));
+      pxmmEl.textContent = pxmm.toFixed(3);
+    }
+  };
+  // init etiquetas
+  fine.dispatchEvent(new Event('input'));
+
+  // Redibuja overlay al cambiar switches
+  useGuideEl.onchange = ()=> drawOverlay();
+  autoCapEl.onchange  = ()=> { readyForAuto=false; holdStart=0; };
+
+  // Redibuja overlay al redimensionar
+  window.addEventListener('resize', ()=>{ if(video.videoWidth) drawOverlay(); });
+
+})();
 </script>
 </body>
 </html>
