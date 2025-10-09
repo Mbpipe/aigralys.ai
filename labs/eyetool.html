@@ -1,760 +1,464 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Medidor Óptico Facial</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Medidor Óptico Facial</title>
 
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- React 18 UMD + Babel -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<!-- React 18 UMD + Babel -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- OpenCV.js -->
-  <script src="https://docs.opencv.org/4.x/opencv.js"></script>
+<!-- OpenCV (opcional para fallback de tarjeta) -->
+<script src="https://docs.opencv.org/4.x/opencv.js"></script>
 
-  <style>
-    html,body{background:#eef2ff}
-    .hidden-canvas{display:none}
-    /* Máscara: deja “ventana” central sin sombrear */
-    .mask {
-      position: absolute; inset: 0;
-      pointer-events: none;
-      --x: 50%; --y: 50%; --w: 60vmin; --h: calc(var(--w) / 1.586); /* relación CR80 */
-      --bw: 3px;
-      background:
-        radial-gradient(ellipse var(--w) var(--h) at var(--x) var(--y), transparent 99%, rgba(0,0,0,0.55) 100%);
-    }
-    .guide-rect {
-      position:absolute; transform:translate(-50%,-50%);
-      border:3px dashed #10b981; /* verde */
-      box-shadow:0 0 0 9999px rgba(0,0,0,0.4); /* fallback visual */
-      border-radius:8px;
-      pointer-events:none;
-    }
-  </style>
+<style>
+  html,body{background:#eef2ff}
+  .hidden-canvas{display:none}
+  /* Máscara con ventana CR80 */
+  .mask{position:absolute;inset:0;pointer-events:none;--w:60vmin;--h:calc(var(--w)/1.586);
+    background:radial-gradient(ellipse var(--w) var(--h) at 50% 50%, transparent 99%, rgba(0,0,0,.55) 100%)}
+  .guide-rect{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    border:3px dashed #10b981;border-radius:8px;pointer-events:none}
+  /* Mantener alto siempre para iOS */
+  .video-shell{position:relative; background:#000; border-radius: .75rem; overflow:hidden;
+    aspect-ratio:16/9;}
+  video{display:block; width:100%; height:auto; background:#000}
+</style>
 </head>
 <body>
-  <div id="root"></div>
+<div id="root"></div>
 
-  <script type="text/babel" data-presets="env,react">
-    const {useState,useRef,useEffect} = React;
+<script type="text/babel" data-presets="env,react">
+const {useState,useRef,useEffect} = React;
 
-    // Iconitos simples
-    const Icon = ({children}) => <span className="inline-flex w-5 h-5 items-center justify-center">{children}</span>;
-    const I = {
-      cam: <>📷</>,
-      up: <>📤</>,
-      eye: <>👁️</>,
-      rule: <>📏</>,
-      warn: <>⚠️</>,
-      ok: <>✅</>,
-      dl: <>⬇️</>,
-      info: <>ℹ️</>,
-      bolt: <>⚡</>,
-      spin: <>⏳</>,
-      grid: <>#️⃣</>
-    };
+const Icon = ({children}) => <span className="inline-flex w-5 h-5 items-center justify-center">{children}</span>;
+const I={eye:"👁️", up:"📤", cam:"📷", rule:"📏", ok:"✅", warn:"⚠️", dl:"⬇️", info:"ℹ️", spin:"⏳", bolt:"⚡"};
 
-    const CR80_WIDTH = 85.60, CR80_HEIGHT = 53.98, CR80_RATIO = CR80_WIDTH/CR80_HEIGHT;
+const CR80W=85.60, CR80H=53.98, RATIO=CR80W/CR80H;
 
-    // -------- Detección de tarjeta con OpenCV (fallback) ----------
-    const detectCardWithOpenCV = (canvas) => {
+// ------- OpenCV tarjeta (fallback) --------
+const detectCardWithOpenCV = (canvas)=>{
+  try{
+    if(!window.cv || !cv.Mat) return {found:false};
+    const src=cv.imread(canvas), gray=new cv.Mat(), blur=new cv.Mat(), edges=new cv.Mat();
+    cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY,0); cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);
+    let sum=0; for(const v of blur.data) sum+=v; const mean=sum/blur.data.length;
+    cv.Canny(blur,edges,Math.max(0,.66*mean),Math.min(255,1.33*mean));
+    const kernel=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(3,3)); cv.dilate(edges,edges,kernel);
+    const contours=new cv.MatVector(), hier=new cv.Mat();
+    cv.findContours(edges,contours,hier,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
+    let best=null, bestScore=0;
+    for(let i=0;i<contours.size();i++){
+      const cnt=contours.get(i), area=cv.contourArea(cnt);
+      if(area < (src.rows*src.cols)*0.002){ cnt.delete(); continue; }
+      const peri=cv.arcLength(cnt,true), approx=new cv.Mat();
+      cv.approxPolyDP(cnt,approx,0.02*peri,true);
+      if(approx.rows===4){
+        const rect=cv.minAreaRect(cnt); const w=rect.size.width, h=rect.size.height;
+        const long=Math.max(w,h), short=Math.min(w,h), ar=long/short;
+        if(Math.abs(ar-RATIO)<=RATIO*0.15){
+          const score=(area/(src.rows*src.cols))*0.8 + (1-Math.min(Math.abs(rect.angle)/90,1))*0.2;
+          if(score>bestScore){
+            const box=new cv.Mat(); cv.boxPoints(rect,box); const f=box.data32F;
+            best={found:true,corners:[{x:f[0],y:f[1]},{x:f[2],y:f[3]},{x:f[4],y:f[5]},{x:f[6],y:f[7]}],
+                  longSidePx:long, shortSidePx:short, angle:rect.angle, confidence:Math.min(.95,score*2)};
+            bestScore=score; box.delete();
+          }
+        }
+      }
+      approx.delete(); cnt.delete();
+    }
+    gray.delete(); blur.delete(); edges.delete(); contours.delete(); hier.delete(); src.delete();
+    return best || {found:false};
+  }catch(e){ console.log("OpenCV error:",e); return {found:false}; }
+};
+
+// ------- MediaPipe FaceMesh loader -------
+const useFaceMesh=()=>{
+  const faceMeshRef=useRef(null);
+  const [ready,setReady]=useState(false);
+  const [loading,setLoading]=useState(true);
+  useEffect(()=>{
+    const init=()=>{
       try{
-        if(!window.cv || !cv.Mat) return {found:false};
-        const src = cv.imread(canvas);
-        const gray = new cv.Mat(), blur = new cv.Mat(), edges = new cv.Mat();
-        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
-        cv.GaussianBlur(gray, blur, new cv.Size(5,5), 0);
-
-        // Umbrales Canny relativos al brillo
-        let sum=0; const data = blur.data; for(let i=0;i<data.length;i++) sum+=data[i];
-        const mean = sum/data.length;
-        const lower = Math.max(0, 0.66*mean), upper = Math.min(255, 1.33*mean);
-        cv.Canny(blur, edges, lower, upper);
-        const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3,3));
-        cv.dilate(edges, edges, kernel);
-
-        const contours = new cv.MatVector(), hierarchy = new cv.Mat();
-        cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-        let best=null, bestScore=0;
-        for(let i=0;i<contours.size();i++){
-          const cnt = contours.get(i);
-          const area = cv.contourArea(cnt);
-          if(area < (src.rows*src.cols)*0.002){ cnt.delete(); continue; }
-          const peri = cv.arcLength(cnt, true);
-          const approx = new cv.Mat();
-          cv.approxPolyDP(cnt, approx, 0.02*peri, true);
-          if(approx.rows===4){
-            const rect = cv.minAreaRect(cnt);
-            const w=rect.size.width, h=rect.size.height;
-            const longSide=Math.max(w,h), shortSide=Math.min(w,h);
-            const ar = longSide/shortSide;
-            if(Math.abs(ar-CR80_RATIO)<=CR80_RATIO*0.15){
-              const angle = rect.angle;
-              const score = (area/(src.rows*src.cols))*0.8 + (1 - Math.min(Math.abs(angle)/90,1))*0.2;
-              if(score>bestScore){
-                const box = new cv.Mat();
-                cv.boxPoints(rect, box); const f = box.data32F;
-                const corners = [{x:f[0],y:f[1]},{x:f[2],y:f[3]},{x:f[4],y:f[5]},{x:f[6],y:f[7]}];
-                box.delete();
-                best = {found:true, corners, longSidePx: longSide, shortSidePx: shortSide, angle, confidence: Math.min(0.95, score*2)};
-                bestScore=score;
-              }
-            }
-          }
-          approx.delete(); cnt.delete();
-        }
-        gray.delete(); blur.delete(); edges.delete(); contours.delete(); hierarchy.delete(); src.delete();
-        return best || {found:false};
-      }catch(e){ console.log("OpenCV error:", e); return {found:false}; }
+        const fm=new window.FaceMesh({locateFile:(f)=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+        fm.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:.5,minTrackingConfidence:.5});
+        faceMeshRef.current=fm; setReady(true); setLoading(false);
+      }catch(e){ console.error(e); setReady(false); setLoading(false); }
     };
+    if(typeof window.FaceMesh==="undefined"){
+      const s=document.createElement("script");
+      s.src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"; s.async=true;
+      s.onload=()=>{
+        const s2=document.createElement("script");
+        s2.src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"; s2.async=true;
+        s2.onload=init; s2.onerror=()=>{setReady(false);setLoading(false)};
+        document.body.appendChild(s2);
+      };
+      s.onerror=()=>{setReady(false);setLoading(false)}; document.body.appendChild(s);
+    } else init();
+  },[]);
+  return {faceMeshRef,ready,loading};
+};
 
-    // -------- MediaPipe loader ----------
-    const useFaceMesh = () => {
-      const faceMeshRef = useRef(null);
-      const [ready,setReady] = useState(false);
-      const [loading,setLoading] = useState(true);
+const detectFaceWithMediaPipe=(fmRef,img)=>new Promise((resolve,reject)=>{
+  const c=document.createElement("canvas"); c.width=img.width; c.height=img.height;
+  c.getContext("2d").drawImage(img,0,0);
+  fmRef.current.onResults((r)=>{
+    if(r.multiFaceLandmarks && r.multiFaceLandmarks[0]){
+      const L=r.multiFaceLandmarks[0];
+      const ri=L.slice(468,472), li=L.slice(473,477);
+      const rp={x:ri.reduce((s,k)=>s+k.x*img.width,0)/4,y:ri.reduce((s,k)=>s+k.y*img.height,0)/4};
+      const lp={x:li.reduce((s,k)=>s+k.x*img.width,0)/4,y:li.reduce((s,k)=>s+k.y*img.height,0)/4};
+      resolve({rightPupil:rp,leftPupil:lp,faceCenter:{x:(rp.x+lp.x)/2,y:(rp.y+lp.y)/2},
+               noseTip:{x:L[1].x*img.width,y:L[1].y*img.height},
+               chinBottom:{x:L[152].x*img.width,y:L[152].y*img.height},
+               confidence:.95, method:"MediaPipe"});
+    } else reject(new Error("No se detectó rostro"));
+  });
+  fmRef.current.send({image:c});
+});
 
-      useEffect(()=>{
-        const init = ()=>{
-          try{
-            const fm = new window.FaceMesh({
-              locateFile: (file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
-            });
-            fm.setOptions({
-              maxNumFaces:1, refineLandmarks:true,
-              minDetectionConfidence:0.5, minTrackingConfidence:0.5
-            });
-            faceMeshRef.current=fm; setReady(true); setLoading(false);
-          }catch(e){ console.error(e); setReady(false); setLoading(false); }
+const detectFaceFallback=(w,h)=>{
+  const cx=w/2, cy=h*.45, ipd=w*.15;
+  return {rightPupil:{x:cx+ipd/2,y:cy}, leftPupil:{x:cx-ipd/2,y:cy},
+          noseTip:{x:cx,y:cy+h*.08}, chinBottom:{x:cx,y:cy+h*.25},
+          faceCenter:{x:cx,y:cy}, confidence:.7, method:"Estimación"};
+};
+
+// ------- Medición “match” de guía -------
+const measureGuideMatch=(ctx,rect)=>{
+  const {x,y,w,h}=rect; const L=Math.round(x-w/2), R=Math.round(x+w/2), T=Math.round(y-h/2), B=Math.round(y+h/2);
+  const im=ctx.getImageData(0,0,ctx.canvas.width,ctx.canvas.height); const d=im.data, W=im.width;
+  const step=Math.max(4,Math.round(w/100)); let score=0,cnt=0;
+  const sample=(x1,y1,x2,y2)=>{
+    const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy), n=Math.max(2,Math.floor(len/step));
+    for(let i=0;i<=n;i++){
+      const t=i/n, sx=Math.round(x1+dx*t), sy=Math.round(y1+dy*t); if(sx<2||sy<2||sx>=im.width-2||sy>=im.height-2) continue;
+      const idx=(sy*W+sx)*4;
+      const c =(d[idx]+d[idx+1]+d[idx+2])/3;
+      const c1=(d[idx+4]+d[idx+5]+d[idx+6])/3, c2=(d[idx-4]+d[idx-3]+d[idx-2])/3;
+      const local=Math.abs(c1-c2); score+=Math.min(1,local/60); cnt++;
+    }
+  };
+  sample(L,T,R,T); sample(R,T,R,B); sample(R,B,L,B); sample(L,B,L,T);
+  return cnt? (score/cnt):0;
+};
+
+function App(){
+  const {faceMeshRef,ready:faceReady,loading:faceLoading}=useFaceMesh();
+
+  const [image,setImage]=useState(null);
+  const [results,setResults]=useState(null);
+  const [annotated,setAnnotated]=useState(null);
+  const [error,setError]=useState(null);
+  const [processing,setProcessing]=useState(false);
+  const [step,setStep]=useState("");
+
+  const videoRef=useRef(null);
+  const canvasRef=useRef(null);
+  const fileRef=useRef(null);
+
+  const [cameraActive,setCameraActive]=useState(false);
+  const [videoReady,setVideoReady]=useState(false);
+
+  // Guía CR80
+  const [useGuide,setUseGuide]=useState(true);
+  const [guideScale,setGuideScale]=useState(55);
+  const [guideMatch,setGuideMatch]=useState(0);
+  const [guideLock,setGuideLock]=useState(false);
+
+  // OpenCV listo?
+  const [cvReady,setCvReady]=useState(false);
+  useEffect(()=>{
+    const ok=()=> (window.cv && typeof cv.Mat!=="undefined");
+    if(ok()){ setCvReady(true); return; }
+    if(window.cv && cv.onRuntimeInitialized){ cv.onRuntimeInitialized=()=>setCvReady(true); }
+  },[]);
+
+  const startCamera=async()=>{
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:1280,height:720},audio:false});
+      const v=videoRef.current;
+      if(v){
+        // Atributos que iOS necesita explícitos
+        v.setAttribute('playsinline','true');
+        v.setAttribute('autoplay','true');
+        v.muted=true; v.removeAttribute('controls');
+        v.srcObject=stream;
+        v.onloadedmetadata=async ()=>{
+          try{ await v.play(); }catch(_){}
+          setVideoReady(true);
         };
-        if(typeof window.FaceMesh==="undefined"){
-          const s=document.createElement("script");
-          s.src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"; s.async=true;
-          s.onload=()=>{
-            const s2=document.createElement("script");
-            s2.src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"; s2.async=true;
-            s2.onload=init; s2.onerror=()=>{setReady(false);setLoading(false)};
-            document.body.appendChild(s2);
-          };
-          s.onerror=()=>{setReady(false);setLoading(false)};
-          document.body.appendChild(s);
-        }else init();
-      },[]);
-      return {faceMeshRef, ready, loading};
-    };
+        setCameraActive(true);
+        setImage(null); setResults(null); setAnnotated(null); setError(null);
+      }
+    }catch(e){ setError("No se pudo acceder a la cámara: "+e.message); }
+  };
 
-    // -------- Detección facial (MediaPipe) + fallback ----------
-    const detectFaceWithMediaPipe = (fmRef, img) => new Promise((resolve,reject)=>{
-      const c=document.createElement("canvas"); c.width=img.width; c.height=img.height;
-      const ctx=c.getContext("2d"); ctx.drawImage(img,0,0);
-      fmRef.current.onResults((res)=>{
-        if(res.multiFaceLandmarks && res.multiFaceLandmarks[0]){
-          const l=res.multiFaceLandmarks[0];
-          const ri=l.slice(468,472), li=l.slice(473,477);
-          const rp={x:ri.reduce((s,k)=>s+k.x*img.width,0)/4, y:ri.reduce((s,k)=>s+k.y*img.height,0)/4};
-          const lp={x:li.reduce((s,k)=>s+k.x*img.width,0)/4, y:li.reduce((s,k)=>s+k.y*img.height,0)/4};
-          resolve({
-            rightPupil:rp, leftPupil:lp,
-            noseTip:{x:l[1].x*img.width, y:l[1].y*img.height},
-            chinBottom:{x:l[152].x*img.width, y:l[152].y*img.height},
-            faceCenter:{x:(rp.x+lp.x)/2, y:(rp.y+lp.y)/2},
-            confidence:0.95, method:"MediaPipe"
-          });
-        } else reject(new Error("No se detectó rostro"));
+  const stopCamera=()=>{
+    const v=videoRef.current;
+    if(v && v.srcObject){ v.srcObject.getTracks().forEach(t=>t.stop()); v.srcObject=null; }
+    setCameraActive(false); setVideoReady(false);
+  };
+
+  const capturePhoto=()=>{
+    const v=videoRef.current; if(!v) return;
+    const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight;
+    c.getContext('2d').drawImage(v,0,0); const data=c.toDataURL('image/jpeg');
+    setImage(data); stopCamera();
+  };
+
+  const onUpload=(e)=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    const r=new FileReader(); r.onload=(ev)=>{ setImage(ev.target.result); setResults(null); setAnnotated(null); setError(null); };
+    r.readAsDataURL(f);
+  };
+
+  // Guía: rect en coords del video
+  const getGuideRect=()=>{
+    const v=videoRef.current; if(!v) return null;
+    const vw=v.videoWidth||1280, vh=v.videoHeight||720;
+    let gw=Math.max(120, Math.min(vw*.9, vw*(guideScale/100))), gh=gw/RATIO;
+    if(gh>vh*.8){ gh=vh*.8; gw=gh*RATIO; }
+    return {x:vw/2,y:vh/2,w:gw,h:gh};
+  };
+
+  // loop para calcular match mientras la cámara corre
+  useEffect(()=>{
+    if(!cameraActive || !useGuide) return;
+    let id;
+    const loop=()=>{
+      const v=videoRef.current, c=canvasRef.current; if(!v||!c){ id=requestAnimationFrame(loop); return; }
+      c.width=v.videoWidth; c.height=v.videoHeight;
+      const ctx=c.getContext('2d'); ctx.drawImage(v,0,0,c.width,c.height);
+      const r=getGuideRect(); if(r){ setGuideMatch(measureGuideMatch(ctx,r)); }
+      id=requestAnimationFrame(loop);
+    };
+    id=requestAnimationFrame(loop);
+    return ()=>cancelAnimationFrame(id);
+  },[cameraActive,useGuide,guideScale]);
+
+  const analyze=async()=>{
+    try{
+      if(!image) return;
+      setProcessing(true); setError(null); setStep("Cargando imagen…");
+      // Imagen
+      const img=new Image(); img.src=image;
+      await new Promise((res,rej)=>{img.onload=res; img.onerror=rej;});
+      const C=canvasRef.current; C.width=img.width; C.height=img.height;
+      const ctx=C.getContext('2d'); ctx.drawImage(img,0,0);
+
+      // Cara
+      setStep("Detectando rostro…");
+      let lm;
+      if(faceReady && window.FaceMesh){ try{ lm=await detectFaceWithMediaPipe({current:window.faceMesh||faceMeshRef.current},img); }catch{ lm=detectFaceFallback(C.width,C.height);} }
+      else { lm=detectFaceFallback(C.width,C.height); }
+
+      // Tarjeta: guía bloqueada -> escala directa, sino OpenCV
+      setStep("Escalando por CR80…");
+      let pxPerMm=null, card=null, usedGuide=false;
+      if(guideLock && !cameraActive){ // guía se bloquea antes de capturar; al capturar el frame coincide
+        // como la foto viene de la misma cámara, las dimensiones coinciden con la guía usada al capturar
+        // aproximamos la guía al centro de la imagen
+        const gw = img.width*(guideScale/100), gh=gw/RATIO;
+        pxPerMm = (gw)/CR80W; usedGuide=true;
+        card={found:true, corners:[
+          {x:img.width/2-gw/2,y:img.height/2-gh/2},
+          {x:img.width/2+gw/2,y:img.height/2-gh/2},
+          {x:img.width/2+gw/2,y:img.height/2+gh/2},
+          {x:img.width/2-gw/2,y:img.height/2+gh/2}
+        ]};
+      }
+      if(!pxPerMm){
+        if(!cvReady) throw new Error("OpenCV aún no está listo. Espera unos segundos o usa la guía bloqueada.");
+        setStep("Buscando tarjeta con OpenCV…");
+        const res=detectCardWithOpenCV(C);
+        if(!res.found) throw new Error("No se detectó la tarjeta. Usa la Guía CR80 o mejora la iluminación.");
+        pxPerMm = (res.longSidePx)/CR80W; card=res;
+      }
+
+      // Medidas
+      setStep("Calculando IPD…");
+      const diPx=Math.hypot(lm.rightPupil.x-lm.leftPupil.x,lm.rightPupil.y-lm.leftPupil.y);
+      const DI_mm = diPx/pxPerMm;
+      const meas={DI_mm:Math.round(DI_mm*10)/10, A_right_mm:null,A_left_mm:null,B_right_mm:null,B_left_mm:null, extras:{}};
+
+      // Anotada
+      const A=document.createElement('canvas'); A.width=img.width; A.height=img.height;
+      const a=A.getContext('2d'); a.drawImage(img,0,0);
+      if(card?.corners){ a.strokeStyle="#10b981"; a.lineWidth=4; a.beginPath();
+        a.moveTo(card.corners[0].x,card.corners[0].y); for(let i=1;i<card.corners.length;i++) a.lineTo(card.corners[i].x,card.corners[i].y);
+        a.closePath(); a.stroke(); }
+      a.fillStyle="#ef4444"; a.beginPath(); a.arc(lm.rightPupil.x,lm.rightPupil.y,10,0,Math.PI*2); a.fill();
+      a.beginPath(); a.arc(lm.leftPupil.x,lm.leftPupil.y,10,0,Math.PI*2); a.fill();
+      a.strokeStyle="#ef4444"; a.lineWidth=3; a.beginPath(); a.moveTo(lm.leftPupil.x,lm.leftPupil.y); a.lineTo(lm.rightPupil.x,lm.rightPupil.y); a.stroke();
+      const midx=(lm.leftPupil.x+lm.rightPupil.x)/2, midy=(lm.leftPupil.y+lm.rightPupil.y)/2-18;
+      a.fillStyle="#fff"; a.strokeStyle="#000"; a.lineWidth=4; a.font="bold 18px Arial";
+      a.strokeText(`IPD: ${meas.DI_mm} mm`,midx-60,midy); a.fillText(`IPD: ${meas.DI_mm} mm`,midx-60,midy);
+      setAnnotated(A.toDataURL());
+
+      setResults({
+        measurements:meas,
+        calibration:{px_per_mm:pxPerMm, method: usedGuide?"Guía CR80":"OpenCV"},
+        quality:{confidence_DI:lm.confidence, flags:[], notes: usedGuide?"Escala fijada por guía.":""},
+        detectionMethod: lm.method
       });
-      fmRef.current.send({image:c});
-    });
+      setStep("Listo");
+    }catch(e){ setError(e.message||String(e)); } finally { setProcessing(false); setStep(""); }
+  };
 
-    const detectFaceFallback = (w,h)=>{
-      const cx=w/2, cy=h*0.45, estIPD = w*0.15;
-      return {
-        rightPupil:{x:cx+estIPD/2,y:cy},
-        leftPupil:{x:cx-estIPD/2,y:cy},
-        noseTip:{x:cx,y:cy+h*0.08},
-        chinBottom:{x:cx,y:cy+h*0.25},
-        faceCenter:{x:cx,y:cy}, confidence:0.7, method:"Estimación"
-      };
-    };
+  const downloadPNG=()=>{ if(!annotated) return; const a=document.createElement("a"); a.href=annotated; a.download=`annotated-${Date.now()}.png`; a.click(); };
+  const downloadJSON=()=>{ if(!results) return; const b=new Blob([JSON.stringify(results,null,2)],{type:"application/json"}); const url=URL.createObjectURL(b); const a=document.createElement("a"); a.href=url; a.download=`results-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url); };
 
-    // -------- “Guía CR80” ----------
-    // Dibuja ventana de relación CR80. Si usuario alinea tarjeta real, usamos ancho de guía como referencia exacta.
-    // Además medimos “match” (0..1) mirando contraste de bordes a lo largo del perímetro de la guía.
-    const measureGuideMatch = (ctx, rect) => {
-      // muestreamos a lo largo del perímetro: buscamos gradiente (contraste) a través del borde
-      const {x,y,w,h} = rect; // x,y = centro
-      const left = Math.round(x - w/2), right = Math.round(x + w/2);
-      const top  = Math.round(y - h/2), bottom= Math.round(y + h/2);
+  // Dimensiones visuales de guía (en píxeles del elemento, no del stream)
+  const liveGuideStyle = ()=>{
+    const el = document.querySelector('.video-shell');
+    if(!el) return {display:'none'};
+    const w = Math.max(120, (guideScale/100)*(el.clientWidth||600));
+    const h = w/RATIO;
+    return {width:`${w}px`, height:`${h}px`, borderColor: guideMatch>=.7 ? '#16a34a' : '#10b981'};
+  };
 
-      const img = ctx.getImageData(0,0,ctx.canvas.width,ctx.canvas.height);
-      const px = img.data, W = img.width, H = img.height;
-      const sampleStep= Math.max(4, Math.round(w/100));
-      let score=0, count=0;
-
-      const sampleLine=(x1,y1,x2,y2)=>{
-        const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy);
-        const n=Math.max(2, Math.floor(len/sampleStep));
-        for(let i=0;i<=n;i++){
-          const t=i/n; const sx=Math.round(x1+dx*t), sy=Math.round(y1+dy*t);
-          if(sx<2||sy<2||sx>=W-2||sy>=H-2) continue;
-          const idx=(sy*W+sx)*4;
-          const c = (px[idx]+px[idx+1]+px[idx+2])/3;
-          const c1 = (px[idx+4]+px[idx+5]+px[idx+6])/3;      // un pixel adentro/afuera aprox
-          const c2 = (px[idx-4]+px[idx-3]+px[idx-2])/3;
-          const local = Math.abs(c1-c2); // salto de luminancia
-          // normalizar a [0..1] relativo
-          const s = Math.min(1, local/60);
-          score += s; count++;
-        }
-      };
-      sampleLine(left,top, right,top);
-      sampleLine(right,top, right,bottom);
-      sampleLine(right,bottom, left,bottom);
-      sampleLine(left,bottom, left,top);
-
-      if(count===0) return 0;
-      return score/count; // 0..1
-    };
-
-    const OpticalMeasurementApp = ()=>{
-      const [image,setImage]=useState(null);
-      const [processing,setProcessing]=useState(false);
-      const [results,setResults]=useState(null);
-      const [error,setError]=useState(null);
-      const [annotated,setAnnotated]=useState(null);
-      const [step,setStep]=useState("");
-      const [cvReady,setCvReady]=useState(false);
-
-      const {faceMeshRef, ready:faceReady, loading:faceLoading} = useFaceMesh();
-
-      const canvasRef=useRef(null);
-      const fileInputRef=useRef(null);
-      const videoRef=useRef(null);
-      const [cameraActive,setCameraActive]=useState(false);
-
-      // Guía CR80
-      const [useGuide,setUseGuide]=useState(true);
-      const [guideScale,setGuideScale]=useState(50); // % del ancho del video
-      const [guideMatch,setGuideMatch]=useState(0);
-      const [guideLock,setGuideLock]=useState(false);
-
-      // esperar OpenCV
-      useEffect(()=>{
-        const ok=()=> (window.cv && typeof cv.Mat!=="undefined");
-        if(ok()){ setCvReady(true); return; }
-        if(window.cv && cv.onRuntimeInitialized){
-          cv.onRuntimeInitialized=()=>setCvReady(true);
-        } else {
-          const id=setInterval(()=>{ if(ok()){ setCvReady(true); clearInterval(id);} },200);
-          return ()=>clearInterval(id);
-        }
-      },[]);
-
-      // cámara
-      const startCamera=async()=>{
-        try{
-          const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:1280,height:720}, audio:false});
-          if(videoRef.current){ videoRef.current.srcObject=st; await videoRef.current.play(); setCameraActive(true); setImage(null); setResults(null); setError(null); setAnnotated(null); }
-        }catch(e){ setError("No se pudo acceder a la cámara: "+e.message); }
-      };
-      const stopCamera=()=>{
-        if(videoRef.current && videoRef.current.srcObject){ videoRef.current.srcObject.getTracks().forEach(t=>t.stop()); setCameraActive(false); }
-      };
-      const capturePhoto=()=>{
-        if(!videoRef.current) return;
-        const c=document.createElement("canvas");
-        c.width=videoRef.current.videoWidth; c.height=videoRef.current.videoHeight;
-        const ctx=c.getContext("2d"); ctx.drawImage(videoRef.current,0,0);
-        const url=c.toDataURL("image/jpeg");
-        setImage(url); stopCamera(); setResults(null); setError(null); setAnnotated(null);
-      };
-
-      const onUpload=(e)=>{
-        const f=e.target.files?.[0]; if(!f) return;
-        const r=new FileReader();
-        r.onload=(ev)=>{ setImage(ev.target.result); setResults(null); setError(null); setAnnotated(null); };
-        r.readAsDataURL(f);
-      };
-
-      // calcula rectángulo de guía en coordenadas de video
-      const getGuideRect = ()=>{
-        const vid=videoRef.current; if(!vid) return null;
-        const vw=vid.videoWidth||1280, vh=vid.videoHeight||720;
-        let gw = Math.max(120, Math.min(vw*0.9, vw*(guideScale/100)));
-        let gh = gw / CR80_RATIO;
-        if(gh>vh*0.8){ gh = vh*0.8; gw = gh*CR80_RATIO; }
-        const cx = vw/2, cy = vh*0.5;
-        return { x:cx, y:cy, w:gw, h:gh };
-      };
-
-      // mide “match” en vivo
-      useEffect(()=>{
-        if(!cameraActive || !useGuide) return;
-        let raf;
-        const tick=()=>{
-          const vid=videoRef.current; if(!vid) { raf=requestAnimationFrame(tick); return; }
-          const c=canvasRef.current; const ctx=c.getContext("2d");
-          c.width=vid.videoWidth; c.height=vid.videoHeight;
-          ctx.drawImage(vid,0,0,c.width,c.height);
-          const rect=getGuideRect();
-          if(rect){
-            const m = measureGuideMatch(ctx, rect);
-            setGuideMatch(m);
-          }
-          raf=requestAnimationFrame(tick);
-        };
-        raf=requestAnimationFrame(tick);
-        return ()=>cancelAnimationFrame(raf);
-      },[cameraActive,useGuide,guideScale]);
-
-      const calcPxPerMmFromGuide = ()=>{
-        // Si el “match” es bueno, tomamos el ancho de la guía como 85.60mm exactos
-        const rect = getGuideRect();
-        if(!rect) return null;
-        return rect.w / CR80_WIDTH; // px/mm
-      };
-
-      // frame básico (como tu lógica)
-      const detectFrame = (ctx, lm, W,H)=>{
-        const {rightPupil,leftPupil}=lm;
-        const img=ctx.getImageData(0,0,W,H); const d=img.data;
-        const R = Math.abs(rightPupil.x-leftPupil.x)*0.8, N=200;
-        let dark=0;
-        for(let i=0;i<N;i++){
-          const ang=(Math.PI*2*i)/N;
-          const x=Math.floor(rightPupil.x+Math.cos(ang)*R);
-          const y=Math.floor(rightPupil.y+Math.sin(ang)*R);
-          if(x>=0&&y>=0&&x<W&&y<H){
-            const k=(y*W+x)*4;
-            const br=(d[k]+d[k+1]+d[k+2])/3;
-            if(br<80) dark++;
-          }
-        }
-        const present = dark>N*0.15;
-        if(!present) return {found:false};
-        const fw = Math.abs(rightPupil.x-leftPupil.x)*1.8;
-        const lw= fw*0.42, lh=lw*0.85, bridge=fw*0.16;
-        return {
-          found:true, centerX:(rightPupil.x+leftPupil.x)/2, bridge,
-          rightLens:{center:{x:rightPupil.x,y:rightPupil.y}, width:lw, height:lh, top:rightPupil.y-lh/2, bottom:rightPupil.y+lh/2},
-          leftLens :{center:{x:leftPupil.x ,y:leftPupil.y }, width:lw, height:lh, top:leftPupil.y -lh/2, bottom:leftPupil.y +lh/2},
-          confidence:0.75
-        };
-      };
-
-      const makeAnnotated = (img, card, lm, frame, meas)=>{
-        const c=document.createElement("canvas"); c.width=img.width; c.height=img.height;
-        const a=c.getContext("2d"); a.drawImage(img,0,0);
-        if(card?.found && card.corners){
-          a.strokeStyle="#10b981"; a.lineWidth=4; a.beginPath();
-          a.moveTo(card.corners[0].x,card.corners[0].y);
-          for(let i=1;i<card.corners.length;i++) a.lineTo(card.corners[i].x,card.corners[i].y);
-          a.closePath(); a.stroke();
-          a.fillStyle="#10b981"; a.font="bold 16px Arial"; a.strokeStyle="#000"; a.lineWidth=3;
-          a.strokeText("CR80", card.corners[0].x+10, card.corners[0].y+25);
-          a.fillText("CR80", card.corners[0].x+10, card.corners[0].y+25);
-        }
-        // Pupilas
-        a.fillStyle="#ef4444";
-        a.beginPath(); a.arc(lm.rightPupil.x,lm.rightPupil.y,10,0,Math.PI*2); a.fill();
-        a.beginPath(); a.arc(lm.leftPupil.x ,lm.leftPupil.y ,10,0,Math.PI*2); a.fill();
-        a.strokeStyle="#ef4444"; a.lineWidth=3;
-        a.beginPath(); a.moveTo(lm.leftPupil.x,lm.leftPupil.y); a.lineTo(lm.rightPupil.x,lm.rightPupil.y); a.stroke();
-
-        const midx=(lm.leftPupil.x+lm.rightPupil.x)/2, midy=(lm.leftPupil.y+lm.rightPupil.y)/2-20;
-        a.fillStyle="#fff"; a.strokeStyle="#000"; a.lineWidth=4; a.font="bold 18px Arial";
-        a.strokeText(`IPD: ${meas.DI_mm} mm`, midx-60, midy);
-        a.fillText(`IPD: ${meas.DI_mm} mm`, midx-60, midy);
-        a.font="bold 14px Arial"; a.fillStyle="#fde047"; a.strokeStyle="#000";
-        a.strokeText(`Método: ${lm.method}`, midx-60, midy+25); a.fillText(`Método: ${lm.method}`, midx-60, midy+25);
-
-        if(frame?.found){
-          a.setLineDash([10,5]); a.strokeStyle="#06b6d4"; a.lineWidth=2;
-          a.beginPath(); a.moveTo(frame.centerX, lm.rightPupil.y-120); a.lineTo(frame.centerX, lm.rightPupil.y+120); a.stroke();
-          a.setLineDash([]);
-          a.strokeStyle="#fff"; a.lineWidth=2;
-          a.strokeRect(frame.rightLens.center.x-frame.rightLens.width/2, frame.rightLens.top, frame.rightLens.width, frame.rightLens.height);
-          a.strokeRect(frame.leftLens.center.x -frame.leftLens.width/2 , frame.leftLens.top , frame.leftLens.width , frame.leftLens.height );
-        }
-        return c.toDataURL();
-      };
-
-      const compute = async ()=>{
-        if(!image) return;
-        setProcessing(true); setError(null); setStep("Iniciando…");
-        try{
-          // Cargar imagen
-          const img = new Image(); img.src=image;
-          await new Promise((res,rej)=>{img.onload=res; img.onerror=rej;});
-          const C=canvasRef.current, ctx=C.getContext("2d");
-          C.width=img.width; C.height=img.height; ctx.drawImage(img,0,0);
-
-          // Cara
-          setStep("Detectando rostro…");
-          let lm;
-          if(faceReady && faceMeshRef.current){
-            try{ lm = await detectFaceWithMediaPipe(faceMeshRef, img); }
-            catch{ lm = detectFaceFallback(C.width,C.height); }
-          } else { lm = detectFaceFallback(C.width,C.height); }
-
-          // Tarjeta: primero, si el usuario bloqueó la guía, usar la guía como referencia exacta
-          let card=null, pxPerMm=null, usedGuide=false;
-
-          if(guideLock){
-            // mapear rect guía del preview a la foto: asumimos mismo tamaño que el frame capturado de la camera
-            // Si la imagen viene de upload, no hay mapeo de preview; entonces cae a OpenCV.
-            const vidSizeKnown = !cameraActive; // si capturamos, coincide; si es upload, no.
-            if(vidSizeKnown){
-              // cuando captura de la misma cámara, el frame ya coincide con dimensiones
-              const rect=getGuideRect(); // este rect se calculó con video; tras capturar, coincide
-              if(rect){
-                pxPerMm = rect.w / CR80_WIDTH;
-                card = {
-                  found:true, corners:[
-                    {x:rect.x-rect.w/2,y:rect.y-rect.h/2},
-                    {x:rect.x+rect.w/2,y:rect.y-rect.h/2},
-                    {x:rect.x+rect.w/2,y:rect.y+rect.h/2},
-                    {x:rect.x-rect.w/2,y:rect.y+rect.h/2}
-                  ],
-                  longSidePx: rect.w, shortSidePx: rect.h, angle:0, confidence:0.99
-                };
-                usedGuide=true;
-              }
-            }
-          }
-
-          if(!card){
-            setStep("Detectando tarjeta CR80…");
-            // Fallback OpenCV en la imagen
-            if(!cvReady) throw new Error("OpenCV aún no está listo. Espera unos segundos y vuelve a intentar.");
-            const res = detectCardWithOpenCV(C);
-            if(!res.found) throw new Error("No se pudo detectar la tarjeta CR80. Usa la guía o mejora la iluminación/posición.");
-            card = res;
-            // escala por lado largo (85.60mm)
-            pxPerMm = (res.longSidePx || (res.corners ? (Math.hypot(res.corners[1].x-res.corners[0].x, res.corners[1].y-res.corners[0].y)) : null)) / CR80_WIDTH;
-          }
-
-          // Armazón
-          setStep("Detectando armazón…");
-          const frame = detectFrame(ctx, lm, C.width, C.height);
-
-          // Medidas
-          setStep("Calculando…");
-          const diPx = Math.hypot(lm.rightPupil.x-lm.leftPupil.x, lm.rightPupil.y-lm.leftPupil.y);
-          const DI_mm = diPx / pxPerMm;
-          const meas = {
-            DI_mm: Math.round(DI_mm*10)/10,
-            A_right_mm: frame.found ? Math.round((Math.abs(lm.rightPupil.x - frame.centerX)/pxPerMm)*10)/10 : null,
-            A_left_mm : frame.found ? Math.round((Math.abs(lm.leftPupil.x  - frame.centerX)/pxPerMm)*10)/10 : null,
-            B_right_mm: frame.found ? Math.round((Math.abs(frame.rightLens.bottom - lm.rightPupil.y)/pxPerMm)*10)/10 : null,
-            B_left_mm : frame.found ? Math.round((Math.abs(frame.leftLens.bottom  - lm.leftPupil.y )/pxPerMm)*10)/10 : null,
-            extras: frame.found ? {
-              bridge_mm: Math.round((frame.bridge/pxPerMm)*10)/10,
-              lens_right_width_mm: Math.round((frame.rightLens.width/pxPerMm)*10)/10,
-              lens_left_width_mm : Math.round((frame.leftLens.width /pxPerMm)*10)/10,
-              lens_right_height_mm: Math.round((frame.rightLens.height/pxPerMm)*10)/10,
-              lens_left_height_mm : Math.round((frame.leftLens.height /pxPerMm)*10)/10
-            } : {bridge_mm:null,lens_right_width_mm:null,lens_left_width_mm:null,lens_right_height_mm:null,lens_left_height_mm:null}
-          };
-
-          // Calidad
-          const quality = {
-            confidence_DI: lm.confidence,
-            confidence_A: frame.found ? frame.confidence : 0,
-            confidence_B: frame.found ? frame.confidence*0.95 : 0,
-            flags:[],
-            notes:""
-          };
-          if(meas.DI_mm<50 || meas.DI_mm>75){ quality.flags.push("unusual_ipd_value"); quality.notes+="IPD fuera de rango típico (50-75mm). Verifique guía/CR80 coplanar. "; }
-          if(!frame.found){ quality.flags.push("no_frame_detected"); quality.notes+="No se detectó armazón (A/B no disponibles). "; }
-          if(lm.method!=="MediaPipe"){ quality.flags.push("fallback_detection_used"); quality.notes+="Se usó estimación facial. "; }
-          if(usedGuide){ quality.notes = "Escala fijada por Guía CR80 (overlay). "+quality.notes; }
-          if(!quality.notes){ quality.notes=`Medición exitosa con ${lm.method}. IPD: ${meas.DI_mm}mm.`; }
-
-          const out = {
-            measurements:meas,
-            calibration:{
-              px_per_mm:pxPerMm,
-              card_detected:true,
-              method: usedGuide ? "Guía CR80" : "OpenCV",
-              perspective_corrected:true
-            },
-            quality, detectionMethod: lm.method
-          };
-          setResults(out);
-
-          // Imagen anotada
-          setStep("Generando imagen anotada…");
-          const ann = makeAnnotated(img, card, lm, frame, meas);
-          setAnnotated(ann);
-          setStep("¡Listo!");
-        }catch(e){
-          setError(e.message||String(e)); setStep("");
-        }finally{
-          setTimeout(()=>{ setProcessing(false); setStep(""); }, 400);
-        }
-      };
-
-      const downloadJSON=()=>{
-        if(!results) return;
-        const b=new Blob([JSON.stringify(results,null,2)],{type:"application/json"});
-        const url=URL.createObjectURL(b); const a=document.createElement("a");
-        a.href=url; a.download=`optical-measurements-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url);
-      };
-      const downloadPNG=()=>{
-        if(!annotated) return;
-        const a=document.createElement("a"); a.href=annotated; a.download=`annotated-${Date.now()}.png`; a.click();
-      };
-
-      return (
-        <div className="min-h-screen p-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 border-t-4 border-indigo-600">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-indigo-100 p-3 rounded-xl"><Icon>{I.eye}</Icon></div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Medidor Óptico Facial</h1>
-                    <p className="text-gray-600 mt-1">Guía CR80 + Detección (OpenCV/MediaPipe)</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {!cvReady && <div className="text-sm text-yellow-700 bg-yellow-50 px-3 py-2 rounded-lg flex items-center gap-2"><Icon>{I.spin}</Icon>OpenCV</div>}
-                  {faceLoading ? (
-                    <div className="text-sm text-yellow-700 bg-yellow-50 px-3 py-2 rounded-lg flex items-center gap-2"><Icon>{I.spin}</Icon>MediaPipe</div>
-                  ) : faceReady ? (
-                    <div className="text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg flex items-center gap-2"><Icon>{I.ok}</Icon>MediaPipe</div>
-                  ) : (
-                    <div className="text-sm text-blue-700 bg-blue-50 px-3 py-2 rounded-lg flex items-center gap-2"><Icon>{I.bolt}</Icon>Estimación</div>
-                  )}
-                </div>
+  return (
+    <div className="min-h-screen p-4">
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 border-t-4 border-indigo-600">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-indigo-100 p-3 rounded-xl"><Icon>{I.eye}</Icon></div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Medidor Óptico Facial</h1>
+                <p className="text-gray-600 mt-1">Guía CR80 + Detección (OpenCV/MediaPipe)</p>
               </div>
             </div>
-
-            <div className="grid lg:grid-cols-2 gap-6">
-              {/* Izquierda: captura */}
-              <div className="space-y-6">
-                <div className="bg-white rounded-2xl shadow-xl p-6 relative">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-4">Captura de Imagen</h2>
-
-                  <input type="file" ref={fileInputRef} onChange={onUpload} accept="image/*" className="hidden" />
-                  <div className="grid grid-cols-2 gap-3">
-                    <button onClick={()=>fileInputRef.current?.click()} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-105">
-                      <Icon>{I.up}</Icon> Subir Foto
-                    </button>
-                    <button onClick={cameraActive ? capturePhoto : startCamera} className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-105">
-                      <Icon>{I.cam}</Icon> {cameraActive ? "Capturar" : "Cámara"}
-                    </button>
-                  </div>
-
-                  {/* Vista de cámara + Guía */}
-                  {cameraActive && (
-                    <div className="mt-4 relative overflow-hidden rounded-xl">
-                      <video ref={videoRef} className="w-full h-auto rounded-xl" autoPlay playsInline muted></video>
-
-                      {/* GUIA */}
-                      {useGuide && (
-                        <>
-                          {/* overlay “recorte” */}
-                          <div className="absolute inset-0 mask"
-                            style={{
-                              '--w': `${Math.max(120, (guideScale/100)*(videoRef.current?.clientWidth||600))}px`,
-                              '--h': `calc(var(--w) / ${CR80_RATIO})`
-                            }} />
-                          {/* rect visible con borde */}
-                          {videoRef.current && (() => {
-                            const w = Math.max(120, (guideScale/100)*(videoRef.current.clientWidth||600));
-                            const h = w/CR80_RATIO;
-                            return (
-                              <div className="guide-rect"
-                                   style={{
-                                     left:'50%', top:'50%', width:`${w}px`, height:`${h}px`,
-                                     borderColor: guideMatch>=0.7 ? '#16a34a' : '#10b981'
-                                   }} />
-                            );
-                          })()}
-                        </>
-                      )}
-
-                      {/* Controles de guía */}
-                      <div className="absolute left-3 right-3 bottom-3 bg-white/80 backdrop-blur-md rounded-xl p-3 border border-white">
-                        <div className="flex items-center justify-between gap-3 flex-wrap">
-                          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                            <input type="checkbox" className="mr-1" checked={useGuide} onChange={e=>{setUseGuide(e.target.checked); setGuideLock(false);}} />
-                            Usar Guía CR80
-                          </label>
-                          <div className="flex items-center gap-2 grow">
-                            <span className="text-xs text-gray-600 whitespace-nowrap">Tamaño guía</span>
-                            <input type="range" min="30" max="80" value={guideScale} onChange={e=>{setGuideScale(+e.target.value); setGuideLock(false);}} className="w-full" />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs font-semibold ${guideMatch>=0.7?"text-green-700":"text-gray-700"}`}>
-                              Match: {(guideMatch*100).toFixed(0)}%
-                            </span>
-                            <button
-                              onClick={()=>setGuideLock(guideMatch>=0.7)}
-                              className={`px-3 py-1 rounded-lg text-sm font-semibold ${guideLock?"bg-green-600 text-white":"bg-emerald-100 text-emerald-700"}`}
-                              title="Bloquea la guía como referencia de escala cuando el match es alto"
-                            >
-                              {guideLock ? "Bloqueado ✓" : "Bloquear guía"}
-                            </button>
-                          </div>
-                        </div>
-                        <p className="text-[11px] text-gray-600 mt-2">
-                          Alinea una tarjeta CR80 real dentro de la guía. Cuando “Match” ≥ 70% puedes <b>bloquear la guía</b> y capturar.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Botón procesar (con foto cargada o capturada) */}
-                  {image && !cameraActive && (
-                    <button onClick={compute} disabled={processing || (!cvReady && !guideLock)} className="w-full mt-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-105">
-                      <Icon>{I.rule}</Icon> {processing ? "Procesando…" : "Analizar IPD"}
-                    </button>
-                  )}
-
-                  {/* Barra de progreso */}
-                  {processing && (
-                    <div className="mt-4 bg-indigo-50 rounded-lg p-4">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
-                        <span className="text-indigo-700 font-medium text-sm">{step}</span>
-                      </div>
-                      <div className="w-full bg-indigo-200 rounded-full h-2 overflow-hidden">
-                        <div className="bg-indigo-600 h-2 rounded-full animate-pulse" style={{width:"70%"}}></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Imagen original */}
-                {image && !cameraActive && (
-                  <div className="bg-white rounded-2xl shadow-xl p-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Imagen</h3>
-                    <img src={image} alt="Original" className="w-full rounded-xl shadow-md" />
-                  </div>
-                )}
-
-                {/* Imagen anotada */}
-                {annotated && (
-                  <div className="bg-white rounded-2xl shadow-xl p-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-semibold text-gray-800">Imagen Anotada</h3>
-                      <button onClick={downloadPNG} className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition-all hover:scale-105">
-                        <Icon>{I.dl}</Icon> Descargar
-                      </button>
-                    </div>
-                    <img src={annotated} alt="Annotated" className="w-full rounded-xl shadow-md" />
-                  </div>
-                )}
-              </div>
-
-              {/* Derecha: resultados */}
-              <div className="space-y-6">
-                {error && (
-                  <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl shadow-lg">
-                    <div className="flex items-center gap-2"><Icon>{I.warn}</Icon><p className="text-red-800 font-semibold">Error</p></div>
-                    <p className="text-red-700 mt-2 text-sm">{error}</p>
-                    <p className="text-red-600 mt-2 text-xs">Tip: usa la Guía CR80, buena iluminación y centra el rostro.</p>
-                  </div>
-                )}
-
-                {results && (
-                  <>
-                    <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-semibold">IPD (Distancia Interpupilar)</h3>
-                        <button onClick={downloadJSON} className="bg-white text-indigo-600 hover:bg-indigo-50 py-2 px-4 rounded-lg flex items-center gap-2 text-sm font-medium transition-all hover:scale-105">
-                          <Icon>{I.dl}</Icon> JSON
-                        </button>
-                      </div>
-                      <div className="bg-white/20 backdrop-blur-lg rounded-xl p-6 mb-4">
-                        <div className="text-center">
-                          <p className="text-sm opacity-90 mb-2">Valor</p>
-                          <p className="text-5xl font-bold mb-1">{results.measurements.DI_mm}</p>
-                          <p className="text-2xl font-semibold opacity-90">mm</p>
-                          <div className="mt-3 pt-3 border-t border-white/30">
-                            <p className="text-xs opacity-75">Escala</p>
-                            <p className="text-sm font-semibold mt-1">{results.calibration.method}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {results.measurements.A_right_mm!==null && (
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="bg-white/20 rounded-xl p-3"><p className="text-xs opacity-75 mb-1">A Derecha</p><p className="text-xl font-bold">{results.measurements.A_right_mm} mm</p></div>
-                          <div className="bg-white/20 rounded-xl p-3"><p className="text-xs opacity-75 mb-1">A Izquierda</p><p className="text-xl font-bold">{results.measurements.A_left_mm} mm</p></div>
-                          <div className="bg-white/20 rounded-xl p-3"><p className="text-xs opacity-75 mb-1">B Derecha</p><p className="text-xl font-bold">{results.measurements.B_right_mm} mm</p></div>
-                          <div className="bg-white/20 rounded-xl p-3"><p className="text-xs opacity-75 mb-1">B Izquierda</p><p className="text-xl font-bold">{results.measurements.B_left_mm} mm</p></div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="bg-white rounded-2xl shadow-xl p-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Calibración</h3>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                          <span className="text-gray-600 text-sm">px/mm</span>
-                          <span className="font-mono font-semibold text-gray-800">{results.calibration.px_per_mm.toFixed(3)}</span>
-                        </div>
-                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                          <span className="text-gray-600 text-sm">Resolución</span>
-                          <span className="font-semibold text-gray-800">{(1/results.calibration.px_per_mm).toFixed(2)} mm/px</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl shadow-xl p-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Calidad</h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between"><span>Confianza IPD</span><span className="font-semibold text-indigo-600">{(results.quality.confidence_DI*100).toFixed(0)}%</span></div>
-                        {results.quality.flags.length>0 && (
-                          <div className="mt-2 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                            <div className="flex items-center gap-2 mb-1"><Icon>{I.warn}</Icon><span className="font-semibold text-yellow-800">Advertencias</span></div>
-                            <ul className="list-disc ml-6 text-yellow-800">{results.quality.flags.map((f,i)=><li key={i}>{f}</li>)}</ul>
-                          </div>
-                        )}
-                        {results.quality.notes && <p className="mt-2 text-gray-700">{results.quality.notes}</p>}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Ayuda */}
-            {!results && !error && !image && !cameraActive && (
-              <div className="mt-6 bg-white rounded-2xl shadow-xl p-6">
-                <div className="flex items-center gap-2 mb-3 text-indigo-700"><Icon>{I.info}</Icon><h3 className="font-semibold">Cómo usar la Guía CR80</h3></div>
-                <ol className="list-decimal ml-5 text-sm text-gray-700 space-y-1">
-                  <li>Enciende la cámara y activa “Usar Guía CR80”.</li>
-                  <li>Ajusta el tamaño de la guía y coloca una tarjeta de crédito real dentro del rectángulo.</li>
-                  <li>Cuando “Match” ≥ 70%, presiona “Bloquear guía” y luego “Capturar”.</li>
-                  <li>Procesa la imagen. Si no bloqueas, el sistema intentará detectar la tarjeta con OpenCV.</li>
-                </ol>
-              </div>
-            )}
-
-            {/* Canvas procesamiento */}
-            <canvas ref={canvasRef} className="hidden-canvas"></canvas>
-
-            <div className="mt-8 text-center text-sm text-gray-600 pb-4">
-              <p className="font-semibold">Medidor Óptico Facial — Guía CR80 + OpenCV + MediaPipe</p>
+            <div>
+              {faceLoading ? <span className="text-sm text-yellow-700 bg-yellow-50 px-3 py-1 rounded-lg inline-flex items-center gap-2"><Icon>{I.spin}</Icon>MediaPipe</span>
+               : faceReady ? <span className="text-sm text-green-700 bg-green-50 px-3 py-1 rounded-lg inline-flex items-center gap-2"><Icon>{I.ok}</Icon>MediaPipe</span>
+               : <span className="text-sm text-blue-700 bg-blue-50 px-3 py-1 rounded-lg inline-flex items-center gap-2"><Icon>{I.bolt}</Icon>Estimación</span>}
             </div>
           </div>
         </div>
-      );
-    };
 
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(<OpticalMeasurementApp />);
-  </script>
+        <div className="bg-white rounded-2xl shadow-xl p-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Captura de Imagen</h2>
+
+          <input ref={fileRef} className="hidden" type="file" accept="image/*" onChange={onUpload}/>
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={()=>fileRef.current?.click()} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2"><Icon>{I.up}</Icon>Subir Foto</button>
+            <button onClick={cameraActive?capturePhoto:startCamera} className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2"><Icon>{I.cam}</Icon>{cameraActive?"Capturar":"Cámara"}</button>
+          </div>
+
+          {cameraActive && (
+            <div className="mt-4">
+              <div className="video-shell">
+                <video ref={videoRef} playsInline autoPlay muted></video>
+                {/* Guía y controles */}
+                {useGuide && (
+                  <>
+                    <div className="mask z-20"></div>
+                    <div className="guide-rect z-30" style={liveGuideStyle()}></div>
+                  </>
+                )}
+              </div>
+              {!videoReady && (
+                <p className="text-xs text-gray-600 mt-2">
+                  Si no ves la cámara en iOS, toca “Cámara” otra vez. Asegúrate de tener permisos y que la página esté en HTTPS.
+                </p>
+              )}
+
+              <div className="mt-3 bg-gray-50 rounded-xl p-3 flex flex-col sm:flex-row gap-3 items-center">
+                <label className="text-sm flex items-center gap-2">
+                  <input type="checkbox" checked={useGuide} onChange={e=>{setUseGuide(e.target.checked); setGuideLock(false);}}/>
+                  Usar Guía CR80
+                </label>
+                <div className="flex items-center gap-2 grow">
+                  <span className="text-xs text-gray-600">Tamaño</span>
+                  <input type="range" min="35" max="80" value={guideScale} onChange={e=>{setGuideScale(+e.target.value); setGuideLock(false);}} className="w-full"/>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-semibold ${guideMatch>=.7?"text-green-700":"text-gray-700"}`}>Match {(guideMatch*100).toFixed(0)}%</span>
+                  <button onClick={()=>setGuideLock(guideMatch>=.7)} className={`text-sm px-3 py-1 rounded-lg ${guideLock?"bg-green-600 text-white":"bg-emerald-100 text-emerald-700"}`}>{guideLock?"Bloqueado ✓":"Bloquear"}</button>
+                </div>
+              </div>
+
+              <button onClick={stopCamera} className="w-full mt-2 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg text-sm">Cerrar Cámara</button>
+            </div>
+          )}
+
+          {image && !cameraActive && (
+            <button onClick={analyze} disabled={processing} className="w-full mt-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2">
+              <Icon>{I.rule}</Icon>{processing?"Procesando…":"Analizar IPD"}
+            </button>
+          )}
+        </div>
+
+        {image && !cameraActive && (
+          <div className="bg-white rounded-2xl shadow-xl p-6 mt-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">Imagen</h3>
+            <img src={image} alt="captura" className="w-full rounded-xl"/>
+          </div>
+        )}
+
+        {annotated && (
+          <div className="bg-white rounded-2xl shadow-xl p-6 mt-6">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-semibold text-gray-800">Imagen anotada</h3>
+              <button onClick={downloadPNG} className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm flex items-center gap-2"><Icon>{I.dl}</Icon>Descargar</button>
+            </div>
+            <img src={annotated} alt="anotada" className="w-full rounded-xl"/>
+          </div>
+        )}
+
+        {results && (
+          <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-2xl shadow-xl p-6 mt-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">IPD</h3>
+              <button onClick={downloadJSON} className="bg-white text-indigo-600 hover:bg-indigo-50 py-2 px-4 rounded-lg text-sm flex items-center gap-2"><Icon>{I.dl}</Icon>JSON</button>
+            </div>
+            <div className="bg-white/20 rounded-xl p-6 text-center">
+              <p className="text-sm opacity-90 mb-2">Distancia interpupilar</p>
+              <p className="text-5xl font-bold">{results.measurements.DI_mm}</p>
+              <p className="text-2xl">mm</p>
+              <p className="mt-3 text-sm opacity-90">Escala: {results.calibration.method}</p>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 rounded-xl p-4 mt-6">
+            <div className="flex items-center gap-2"><Icon>{I.warn}</Icon><b>Error</b></div>
+            <p className="text-sm text-red-800 mt-2">{error}</p>
+          </div>
+        )}
+
+        <canvas ref={canvasRef} className="hidden-canvas"></canvas>
+
+        {!image && !cameraActive && (
+          <div className="mt-6 bg-white rounded-2xl shadow-xl p-6">
+            <div className="flex items-center gap-2 text-indigo-700 mb-2"><Icon>{I.info}</Icon><b>Cómo usar la Guía</b></div>
+            <ol className="list-decimal ml-5 text-sm text-gray-700 space-y-1">
+              <li>Enciende la cámara.</li>
+              <li>Activa “Usar Guía CR80”, ajusta el tamaño y pon tu tarjeta dentro.</li>
+              <li>Con <b>Match ≥ 70%</b> bloquea la guía y captura.</li>
+              <li>Procesa la imagen. Si no bloqueas, se intentará detectar la tarjeta con OpenCV.</li>
+            </ol>
+          </div>
+        )}
+
+        <p className="text-center text-xs text-gray-500 my-6">© {new Date().getFullYear()} — CR80 Guide + OpenCV + MediaPipe</p>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App/>);
+</script>
 </body>
 </html>
