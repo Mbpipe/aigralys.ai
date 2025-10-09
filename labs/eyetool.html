@@ -188,7 +188,7 @@ function App(){
 
         if(frame%3===0){
           const r=ocvDetect(img,w,h);
-          if(r){ ocvLast.current=r; setOc vPct(r.found?r.score:0); }
+          if(r){ ocvLast.current=r; setOcvPct(r.found?r.score:0); }
         }
         frame++;
 
