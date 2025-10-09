@@ -10,7 +10,7 @@
   .wrap{max-width:760px;margin:16px auto;padding:0 12px}
   .card{background:#fff;border-radius:16px;box-shadow:0 10px 28px rgba(2,6,23,.08);padding:14px}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  h1{margin:0 0 4px 0;font-size:28px} h2{margin:0 0 10px 0;font-size:20px}
+  h1{margin:0 0 4px;font-size:28px} h2{margin:0 0 10px;font-size:20px}
   .pill{background:#eef2ff;border-radius:999px;padding:6px 10px;font-size:12px}
   button{border:0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer;color:#fff;background:var(--vio)}
   button.red{background:var(--bad)} button.gray{background:#334155} button:disabled{opacity:.55;cursor:not-allowed}
@@ -25,9 +25,7 @@
   .box{background:#f8fafc;border-radius:12px;padding:10px}
   #log{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:#0b1020;color:#c7d2fe;padding:10px;border-radius:10px;max-height:160px;overflow:auto}
 </style>
-<!-- OpenCV -->
 <script src="https://docs.opencv.org/4.x/opencv.js" async></script>
-<!-- MediaPipe -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" async></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" async></script>
 </head>
@@ -68,12 +66,12 @@
 
     <div class="row" style="margin-top:10px">
       <label class="row"><input id="useGuide" type="checkbox" checked style="scale:1.15;margin-right:6px">Usar Guía CR80</label>
-      <label class="row"><input id="autoCap" type="checkbox" checked style="scale:1.15;margin-right:6px">Auto-capturar</label>
+      <label class="row"><input id="autoCap" type="checkbox" style="scale:1.15;margin-right:6px">Auto-capturar</label>
       <button id="capture" class="gray">📸 Capturar</button>
       <button id="process" class="gray">🧮 Procesar</button>
     </div>
     <div class="small" style="margin-top:6px">
-      Autocaptura estricta (OpenCV): score≥60%, fill 86–108%, |ángulo|≤12°, centrado≤10%, quietud≥85%.
+      La escala se fija con el ancho de la guía mapeado al tamaño **nativo** del video (corrige IPD inflado).
     </div>
 
     <div id="log" style="margin-top:10px"></div>
@@ -97,84 +95,55 @@
 </div>
 
 <script>
-/* ---------- helpers ---------- */
 const $=id=>document.getElementById(id);
-const log = s => logEl.textContent = `[${new Date().toLocaleTimeString()}] ${s}\n` + logEl.textContent;
-const setState=s=>pSta.textContent='estado: '+s;
-
 const v=$('v'), shot=$('shot'), pane=$('pane'), overlay=$('overlay'), ctx=overlay.getContext('2d',{willReadFrequently:true});
 const badge=$('badge'), meter=$('meter'), out=$('out'), ipdEl=$('ipd'), pxmmEl=$('pxmm'), scaleSrcEl=$('scaleSrc'), finalImg=$('final'), dl=$('dl');
 const btnOpen=$('open'), btnClose=$('close'), btnCapture=$('capture'), btnProcess=$('process'), pickBtn=$('pick'), fileIn=$('file');
 const pSec=$('p-sec'), pOcv=$('p-ocv'), pSta=$('p-sta'), chkGuide=$('useGuide'), chkAuto=$('autoCap'), logEl=$('log');
 
-pSec.textContent='secure: '+String(window.isSecureContext);
-
 const CR80_W=85.60, CR80_H=53.98, AR=CR80_W/CR80_H;
+pSec.textContent='secure: '+String(window.isSecureContext);
+const log = s=> logEl.textContent = `[${new Date().toLocaleTimeString()}] ${s}\n` + logEl.textContent;
+const setState=s=>pSta.textContent='estado: '+s;
 
 let stream=null, raf=0, frame=0, captured=null;
 let ocvReady=false, ocvLast=null;
-let guide={x:0,y:0,w:0,h:0, edge:0, ocv:0, pxPerMm:null};
-let stillBuf=[], hitBuf=[], prevThumb=null;
+let guide={x:0,y:0,w:0,h:0, pxPerMm:null};
+let sx=1, sy=1; // mapeo overlay -> resolución nativa
 
-/* ---------- OpenCV ready ---------- */
+/* OpenCV ready */
 if(window.cv && cv.getBuildInformation){ ocvReady=true; pOcv.textContent='opencv: ready' }
 else{
   pOcv.textContent='opencv: loading…';
   window.Module={onRuntimeInitialized:()=>{ ocvReady=true; pOcv.textContent='opencv: ready'; log('OpenCV listo') }};
 }
 
-/* ---------- layout ---------- */
+/* Layout */
 function sizeCanvases(){ overlay.width=pane.clientWidth; overlay.height=pane.clientHeight }
 new ResizeObserver(sizeCanvases).observe(pane); sizeCanvases();
 
-/* ---------- guía bajo la nariz ---------- */
+/* Guía bajo la nariz, tamaño más chico (~34% del menor lado) */
 function drawGuide(){
   ctx.clearRect(0,0,overlay.width,overlay.height);
   if(!chkGuide.checked) return;
-
   ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(0,0,overlay.width,overlay.height);
 
   const vw=overlay.width, vh=overlay.height;
-  const gw=Math.round(Math.min(vw,vh)*0.45);
+  const gw=Math.round(Math.min(vw,vh)*0.34);       // MÁS CHICO
   const gh=Math.round(gw/AR);
   const gx=Math.round((vw-gw)/2);
-  const gy=Math.round(vh*0.58-gh/2);
+  const gy=Math.round(vh*0.58-gh/2);               // debajo de la nariz
 
   guide.x=gx; guide.y=gy; guide.w=gw; guide.h=gh;
-
   ctx.clearRect(gx,gy,gw,gh);
-  const ok = strictOK();
-  ctx.lineWidth=4; ctx.strokeStyle= ok? '#16a34a' : '#a78bfa'; ctx.strokeRect(gx,gy,gw,gh);
+  ctx.lineWidth=4; ctx.strokeStyle='#a78bfa'; ctx.strokeRect(gx,gy,gw,gh);
 
   badge.style.display='block'; meter.style.display='block';
-  const m = ocvReady? Math.round((guide.ocv||0)*100) : Math.round((guide.edge||0)*100);
-  badge.textContent = `Guía CR80 — Match ${m}%`;
-  const s = Math.round(stillness()*100);
-  meter.textContent = `Ancho:${gw}px • Alto:${gh}px • OpenCV:${ocvReady?m:'n/a'}% • still:${s}%`;
+  badge.textContent='Guía CR80';
+  meter.textContent=`Ancho:${gw}px • Alto:${gh}px`;
 }
 
-/* ---------- tiny thumb & stillness ---------- */
-function tinyThumb(canvas,x,y,w,h){ const t=document.createElement('canvas'); t.width=64; t.height=64; const g=t.getContext('2d'); g.drawImage(canvas,x,y,w,h,0,0,64,64); return g.getImageData(0,0,64,64).data }
-function diff(a,b){ let sum=0,n=a.length; for(let i=0;i<n;i+=4){ sum+=Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2]) } return sum/(n/4)/255/3 }
-function stillness(){ if(stillBuf.length===0) return 0; const m=stillBuf.reduce((a,b)=>a+b,0)/stillBuf.length; return Math.max(0,1-m) }
-const isStill=()=> stillness()>=0.85;
-
-/* ---------- fallback de bordes ---------- */
-function edgeScore(img,w,h){
-  const d=img.data,t=3; let hit=0,tot=0;
-  const r=(yy,xx)=>{ const X=Math.max(0,Math.min(w-1,xx)), Y=Math.max(0,Math.min(h-1,yy)); return (Y*w+X)*4 }
-  const lum=i=>0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]
-  for(let y=0;y<h;y++){
-    for(let x=0;x<w;x++){
-      const border=(y<t)||(y>=h-t)||(x<t)||(x>=w-t); if(!border) continue;
-      const i=(y*w+x)*4; const gx=(lum(r(y,x+1))-lum(r(y,x-1)))/255; const gy=(lum(r(y+1,x))-lum(r(y-1,x)))/255;
-      const g=Math.sqrt(gx*gx+gy*gy); if(g>0.22) hit++; tot++;
-    }
-  }
-  return tot?hit/tot:0;
-}
-
-/* ---------- OpenCV en ROI (con fill/angle/centro) ---------- */
+/* OpenCV en ROI (para validar tarjeta; la escala final la derivamos del ANCHO de la guía mapeado) */
 function ocvDetect(img,w,h){
   if(!ocvReady || !window.cv || !cv.Mat) return null;
   try{
@@ -187,7 +156,6 @@ function ocvDetect(img,w,h){
     const m=s/dd.length, lo=Math.max(0,0.66*m), hi=Math.min(255,1.33*m);
     cv.Canny(blur,edges,lo,hi);
     const k=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(3,3)); cv.dilate(edges,edges,k);
-
     const cont=new cv.MatVector(), hier=new cv.Mat();
     cv.findContours(edges,cont,hier,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
     let best=null, bestScore=0;
@@ -202,9 +170,9 @@ function ocvDetect(img,w,h){
         bestScore=score;
         const fill = (r.size.width*r.size.height)/(w*h);
         const cx=r.center.x/w - 0.5, cy=r.center.y/h - 0.5;
-        const centerDist = Math.hypot(cx,cy); // 0..~0.7
-        const angle = r.angle; // [-90,0)
-        best={found:true,score,longSidePx:L,shortSidePx:S,angle,fill,centerDist};
+        const centerDist = Math.hypot(cx,cy);
+        const angle = Math.abs(r.angle);
+        best={found:true,score,fill,centerDist,angle};
       }
       c.delete();
     }
@@ -213,100 +181,78 @@ function ocvDetect(img,w,h){
   }catch(e){ log('ocv error: '+e); return null }
 }
 
-/* ---------- validación estricta ---------- */
-function strictOK(){
-  if(ocvReady){
-    if(!ocvLast?.found) return false;
-    const angle = Math.abs(ocvLast.angle);
-    return ocvLast.score>=0.60
-        && ocvLast.fill>=0.86 && ocvLast.fill<=1.08
-        && angle<=12
-        && ocvLast.centerDist<=0.10
-        && isStill();
-  }else{
-    // Si quisieras permitir fallback automático, descomenta:
-    // return guide.edge>=0.70 && isStill();
-    return false;
-  }
-}
-
-/* ---------- cámara loop ---------- */
+/* Loop */
 function loop(){
   if(!v.videoWidth){ raf=requestAnimationFrame(loop); return }
+  // factor de mapeo overlay -> resolución nativa
+  sx = v.videoWidth/overlay.width;
+  sy = v.videoHeight/overlay.height;
+
   drawGuide();
 
-  const W=overlay.width,H=overlay.height;
-  const c=document.createElement('canvas'); c.width=W; c.height=H;
-  const x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(v,0,0,W,H);
-
-  const img=x.getImageData(guide.x,guide.y,guide.w,guide.h);
-
-  // stillness
-  const th=tinyThumb(c,guide.x,guide.y,guide.w,guide.h);
-  if(prevThumb){ stillBuf.push(diff(th,prevThumb)); if(stillBuf.length>15) stillBuf.shift() }
-  prevThumb=th;
-
-  // scores
-  if(ocvReady && frame%3===0){ const r=ocvDetect(img,guide.w,guide.h); if(r){ ocvLast=r; guide.ocv=r.score } }
-  else { guide.edge=edgeScore(img,guide.w,guide.h) }
-
-  // histérico de hits
-  const okThis = strictOK();
-  hitBuf.push(okThis); if(hitBuf.length>15) hitBuf.shift();
-  const hits = hitBuf.filter(Boolean).length;
-
-  if(chkAuto.checked && ocvReady && hits>=12){
-    log('AUTO ✓ (OpenCV válido + quietud)'); captureNow(true); processNow(); return;
+  // validar CR80 en la ROI
+  if(ocvReady){
+    const c=document.createElement('canvas'); c.width=overlay.width; c.height=overlay.height;
+    const x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(v,0,0,overlay.width,overlay.height);
+    const img=x.getImageData(guide.x,guide.y,guide.w,guide.h);
+    const r=ocvDetect(img,guide.w,guide.h);
+    if(r && r.found){
+      const ok = (r.score>=0.60) && (r.fill>=0.86 && r.fill<=1.08) && (r.centerDist<=0.10) && (r.angle<=12);
+      ctx.lineWidth=4; ctx.strokeStyle= ok? '#16a34a' : '#a78bfa';
+      ctx.strokeRect(guide.x,guide.y,guide.w,guide.h);
+      badge.textContent = `Guía CR80 — ${ok?'OK':'ajusta'} • score ${Math.round(r.score*100)}%`;
+      // fija la escala solo cuando hay OK (pero no autocaptura; eso lo decides tú)
+      if(ok){
+        guide.pxPerMm = (guide.w * sx) / CR80_W;   // <— ESCALA CORREGIDA
+        meter.textContent=`px/mm=${guide.pxPerMm.toFixed(3)} • fill=${(r.fill*100|0)}% • ang=${r.angle.toFixed(1)}°`;
+      }else{
+        guide.pxPerMm = null;
+      }
+    } else {
+      guide.pxPerMm = null;
+      badge.textContent='Guía CR80 — buscando tarjeta…';
+    }
   }
 
-  frame++; raf=requestAnimationFrame(loop);
+  raf=requestAnimationFrame(loop);
 }
 
-/* ---------- cámara control ---------- */
+/* Cámara */
 async function openCam(){
-  setState('opening'); log('Abriendo cámara…');
-  shot.style.display='none'; out.style.display='none';
+  pSta.textContent='estado: opening'; shot.style.display='none'; out.style.display='none';
   try{
     v.setAttribute('playsinline',''); v.playsInline=true; v.muted=true;
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'user'},width:{ideal:1280},height:{ideal:720}},audio:false});
-    v.srcObject=stream; try{await v.play()}catch{setTimeout(()=>v.play().catch(()=>{}),150)}
-    setState('ready'); log('Cámara abierta');
-    stillBuf.length=0; hitBuf.length=0; prevThumb=null; ocvLast=null; guide.pxPerMm=null;
-    raf=requestAnimationFrame(loop);
-  }catch(e){ setState('error'); alert('No se pudo acceder a la cámara: '+e.message); log('gUM error: '+e) }
+    const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'user'},width:{ideal:1280},height:{ideal:720}},audio:false});
+    v.srcObject=st; await v.play().catch(()=>setTimeout(()=>v.play().catch(()=>{}),150));
+    stream=st; pSta.textContent='estado: ready'; requestAnimationFrame(loop);
+  }catch(e){ pSta.textContent='estado: error'; alert('No se pudo acceder a la cámara: '+e.message); }
 }
 function closeCam(){
-  cancelAnimationFrame(raf);
-  try{v.pause()}catch{}
-  v.srcObject=null;
-  if(stream){stream.getTracks().forEach(t=>t.stop()); stream=null}
-  setState('idle'); log('Cámara cerrada');
+  cancelAnimationFrame(raf); try{v.pause()}catch{}
+  v.srcObject=null; if(stream){stream.getTracks().forEach(t=>t.stop()); stream=null}
+  pSta.textContent='estado: idle';
 }
 
-/* ---------- captura y proceso ---------- */
-function captureNow(silent=false){
-  if(!v.videoWidth){ if(!silent) alert('La cámara aún no está lista'); return }
+/* Captura y proceso */
+function captureNow(){
+  if(!v.videoWidth){ alert('La cámara aún no está lista'); return }
   const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight;
   c.getContext('2d').drawImage(v,0,0,c.width,c.height);
   captured=c.toDataURL('image/jpeg',0.92);
-  guide.pxPerMm = ocvLast?.found ? (ocvLast.longSidePx/CR80_W) : null;
-  closeCam(); shot.src=captured; shot.style.display='block';
-  badge.style.display='none'; meter.style.display='none';
+  shot.src=captured; shot.style.display='block';
+  closeCam();
 }
 async function processNow(){
   try{
-    if(!captured){
-      if(stream){ log('No hay foto: capturo y proceso…'); captureNow(true) }
-      else{ alert('Primero captura o sube una foto.'); return }
-    }
+    if(!captured){ captureNow() }
     const img=await new Promise((res,rej)=>{ const im=new Image(); im.src=captured; im.onload=()=>res(im); im.onerror=rej });
 
-    let pxmm=guide.pxPerMm;
-    if(!pxmm){ const approxW=Math.min(img.width,img.height)*0.22; pxmm=approxW/CR80_W; scaleSrcEl.textContent='Estimación' }
-    else{ scaleSrcEl.textContent='ROI OpenCV (guía)' }
-    pxmmEl.textContent=pxmm.toFixed(3);
+    // escala: si la guía fijó px/mm, úsala; de lo contrario, estimación suave
+    let pxmm = guide.pxPerMm ? guide.pxPerMm : (Math.min(img.width,img.height)*0.22)/CR80_W;
+    pxmmEl.textContent = pxmm.toFixed(3);
+    scaleSrcEl.textContent = guide.pxPerMm ? 'Guía CR80 (mapeo nativo)' : 'Estimación';
 
-    // MediaPipe (si está; si no, estimación)
+    // MediaPipe si está (si no, estimación simple)
     let L=null;
     if(window.FaceMesh){
       const fm=new window.FaceMesh({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
@@ -341,22 +287,20 @@ async function processNow(){
     a.strokeText(`IPD: ${ipd} mm`, mx-110, my); a.fillText(`IPD: ${ipd} mm`, mx-110, my);
     const url=outC.toDataURL('image/png');
     finalImg.src=url; dl.href=url; out.style.display='block';
-    log('Procesado OK — IPD '+ipd+' mm');
-  }catch(e){ log('Error procesar: '+e.message); alert('No se pudo procesar: '+e.message) }
+  }catch(e){ alert('No se pudo procesar: '+e.message) }
 }
 
-/* ---------- eventos ---------- */
+/* Eventos */
 btnOpen.onclick=openCam;
 btnClose.onclick=closeCam;
-btnCapture.onclick=()=>captureNow(false);
+btnCapture.onclick=captureNow;
 btnProcess.onclick=processNow;
 pickBtn.onclick=()=>fileIn.click();
 fileIn.onchange=e=>{
   const f=e.target.files?.[0]; if(!f) return;
   const rd=new FileReader(); rd.onload=ev=>{
     captured=ev.target.result; shot.src=captured; shot.style.display='block';
-    closeCam(); badge.style.display='none'; meter.style.display='none'; guide.pxPerMm=null;
-    log('Imagen cargada desde galería');
+    closeCam(); guide.pxPerMm=null;
   }; rd.readAsDataURL(f);
 };
 </script>
