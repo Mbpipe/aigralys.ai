@@ -13,44 +13,33 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- OpenCV (para verificación de tarjeta en la ROI) -->
+  <!-- OpenCV (opcional) -->
   <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
 
   <style>
     html,body{background:#eef2ff}
-    video.cam{
-      width:100%;height:auto;max-height:64vh;background:#000;border-radius:.75rem;object-fit:cover;
-    }
-    canvas.ov{
-      position:absolute;inset:0;pointer-events:none;border-radius:.75rem;
-    }
+    video.cam{width:100%;height:auto;max-height:64vh;background:#000;border-radius:.75rem;object-fit:cover}
+    canvas.ov{position:absolute;inset:0;pointer-events:none;border-radius:.75rem}
     .tag{font-variant-numeric:tabular-nums}
+    .dbg{position:fixed;top:8px;right:8px;background:#0f172a;color:#fff;font:12px/1.2 system-ui,-apple-system;padding:8px 10px;border-radius:8px;opacity:.85;z-index:50}
   </style>
 </head>
 <body>
 <div id="root"></div>
 
 <script type="text/babel">
-const {useState,useEffect,useRef,useMemo} = React;
-
+const {useState,useEffect,useRef} = React;
 const CR80_W=85.60, CR80_H=53.98, CR80_AR=CR80_W/CR80_H;
 
 function App(){
+  const [dbg,setDbg]=useState('');
   const [state,setState]=useState('idle'); // idle|ready|captured|error
-  const [msg,setMsg]=useState('');
   const [image,setImage]=useState(null);
   const [annotated,setAnnotated]=useState(null);
-  const [processing,setProcessing]=useState(false);
-
   const [autoCapture,setAutoCapture]=useState(true);
   const [useGuide,setUseGuide]=useState(true);
-  const [locked,setLocked]=useState(false);
-
-  const [edgePct,setEdgePct]=useState(0);
-  const [ocvPct,setOcvPct]=useState(0);
-
-  const [pxmm,setPxmm]=useState(null); // px por mm (cuando bloqueamos guía)
   const [ipd,setIpd]=useState(null);
+  const [pxmm,setPxmm]=useState(null);
   const [method,setMethod]=useState('—');
 
   const vRef=useRef(null);
@@ -58,74 +47,78 @@ function App(){
   const cRef=useRef(null);
   const rafRef=useRef(0);
   const ocvLast=useRef({found:false,score:0,long:0});
+  const [edgePct,setEdgePct]=useState(0);
+  const [ocvPct,setOcvPct]=useState(0);
 
-  // ---------- FaceMesh on-demand ----------
-  const [faceMeshReady,setFaceMeshReady]=useState(false);
+  // FaceMesh
   useEffect(()=>{
     const init=()=>{
       try{
-        const fm=new window.FaceMesh({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+        const fm=new window.FaceMesh({ locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
         fm.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:0.5,minTrackingConfidence:0.5});
-        window.__fm=fm; setFaceMeshReady(true);
-      }catch{ setFaceMeshReady(false); }
+        window.__fm=fm;
+        setDbg(d=>d+' | fm:ready');
+      }catch(e){ setDbg(d=>d+' | fm:err'); }
     };
     if(typeof window.FaceMesh==='undefined'){
-      const s=document.createElement('script');
-      s.src='https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js';
-      s.async=true;
-      s.onload=()=>{
-        const u=document.createElement('script');
-        u.src='https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js';
-        u.async=true; u.onload=init; document.body.appendChild(u);
-      };
+      const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js'; s.async=true;
+      s.onload=()=>{ const u=document.createElement('script'); u.src='https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js'; u.async=true; u.onload=init; document.body.appendChild(u); };
       document.body.appendChild(s);
     }else init();
   },[]);
 
-  // ---------- Cámara ----------
-  const startCam=async()=>{
-    setMsg('');
+  const hasMedia = () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+  const stopStream=()=>{
+    cancelAnimationFrame(rafRef.current);
+    const v=vRef.current; if(v){ v.pause(); v.srcObject=null; }
+    if(streamRef.current){ try{streamRef.current.getTracks().forEach(t=>t.stop());}catch{} streamRef.current=null; }
+  };
+
+  const startCam = async () => {
+    // todo dentro del mismo handler del click
     try{
-      const v=vRef.current; if(!v) return;
+      setDbg(`clk cam | secure:${location.protocol==='https:'} | media:${!!navigator.mediaDevices}`);
+      if(!hasMedia()){ setState('error'); return setDbg(d=>d+' | no mediaDevices'); }
+
+      // cerrar cualquier stream previo
+      stopStream();
+
+      const v=vRef.current;
       v.setAttribute('playsinline',''); v.setAttribute('autoplay',''); v.muted=true; v.playsInline=true;
 
-      const stream=await navigator.mediaDevices.getUserMedia({
-        video:{facingMode:{ideal:'user'},width:{ideal:1280},height:{ideal:720}}, audio:false
+      // NO usar await antes de play(); pedir el stream y en .then establecer y play()
+      navigator.mediaDevices.getUserMedia({
+        video:{ facingMode:{ideal:'user'}, width:{ideal:1280}, height:{ideal:720} },
+        audio:false
+      }).then(stream=>{
+        streamRef.current=stream;
+        v.srcObject=stream;
+        // play en el mismo tick sincronizado al gesture del usuario
+        const p=v.play();
+        if(p && typeof p.then==='function'){
+          p.then(()=> setDbg(d=>d+' | play ok')).catch(e=> setDbg(d=>d+' | play err:'+e.message));
+        }
+        setState('ready');
+        startOverlayLoop();
+      }).catch(err=>{
+        setState('error');
+        setDbg(d=>d+` | gum err:${err.name}`);
       });
-      streamRef.current=stream;
-      v.srcObject=stream;
-      setState('ready');
-
-      // asegurar play en iOS
-      const tryPlay=async(attempt=0)=>{
-        try{ await v.play(); }catch(e){ if(attempt<5) setTimeout(()=>tryPlay(attempt+1), 200); }
-      }; tryPlay();
-
-      startOverlayLoop();
     }catch(e){
-      setState('error'); setMsg('No se pudo acceder a la cámara: '+e.message);
+      setState('error'); setDbg(d=>d+` | start err:${e.message}`);
     }
   };
 
-  const stopCam=()=>{
-    cancelAnimationFrame(rafRef.current);
-    const v=vRef.current; if(v){ v.pause(); v.srcObject=null; }
-    if(streamRef.current){ streamRef.current.getTracks().forEach(t=>t.stop()); streamRef.current=null; }
-  };
-
-  // ---------- ROI (debajo de la nariz) ----------
   const roiBox = ()=>{
     const v=vRef.current; if(!v || !v.videoWidth) return null;
     const vw=v.videoWidth, vh=v.videoHeight;
-    // ancho ROI en px (pequeño, cómodo para sostener tarjeta)
     const w=Math.round(Math.min(vw*0.42, 360));
     const h=Math.round(w/CR80_AR);
-    const cx=Math.round(vw/2);
-    const cy=Math.round(vh*0.62); // debajo de la nariz
+    const cx=Math.round(vw/2), cy=Math.round(vh*0.62);
     return {x:cx-Math.round(w/2), y:cy-Math.round(h/2), w, h};
   };
 
-  // ---------- OpenCV en ROI ----------
   function ocvDetect(imageData, gw, gh){
     const cv=window.cv; if(!cv || !cv.Mat) return null;
     try{
@@ -133,14 +126,11 @@ function App(){
       const gray=new cv.Mat(), blur=new cv.Mat(), edges=new cv.Mat();
       cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
       cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);
-      // umbrales canny por media
       let sum=0; const d=blur.data; for(let i=0;i<d.length;i++) sum+=d[i];
       const mean=sum/d.length; const low=Math.max(0,0.66*mean), high=Math.min(255,1.33*mean);
       cv.Canny(blur,edges,low,high);
-
       const contours=new cv.MatVector(), hier=new cv.Mat();
       cv.findContours(edges,contours,hier,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
-
       let best=null, bestScore=0;
       for(let i=0;i<contours.size();i++){
         const cnt=contours.get(i);
@@ -163,17 +153,16 @@ function App(){
     }catch{ return null; }
   }
 
-  // ---------- Overlay loop ----------
   const startOverlayLoop=()=>{
     const v=vRef.current, c=cRef.current;
-    const ctx=c.getContext('2d',{willReadFrequently:true});
+    const ctx=c.getContext('2d', {willReadFrequently:true});
     let frame=0;
 
     const loop=()=>{
       if(!v || !v.videoWidth){ rafRef.current=requestAnimationFrame(loop); return; }
       c.width=v.videoWidth; c.height=v.videoHeight;
 
-      // mostrar frame espejo detrás del overlay (para guía invertida)
+      // frame espejo de fondo
       ctx.save(); ctx.scale(-1,1); ctx.drawImage(v,-c.width,0,c.width,c.height); ctx.restore();
 
       // máscara gris
@@ -182,10 +171,8 @@ function App(){
       const roi=roiBox();
       if(roi){
         const {x,y,w,h}=roi;
-        // recorte "agujero" ROI
-        ctx.clearRect(x,y,w,h);
-
-        // quick edge % en el borde del rectángulo (por si no hay OpenCV)
+        ctx.clearRect(x,y,w,h); // “agujero”
+        // borde
         const img=ctx.getImageData(x,y,w,h);
         const k=3; let edge=0, tot=0;
         for(let yy=0; yy<h; yy++){
@@ -197,92 +184,66 @@ function App(){
             if(lum<70 || lum>210) edge++; tot++;
           }
         }
-        const edgeScore=tot? edge/tot : 0;
-        setEdgePct(edgeScore);
+        const edgeScore=tot? edge/tot : 0; setEdgePct(edgeScore);
 
-        // OpenCV cada 3 frames
         if(frame%3===0){
           const r=ocvDetect(img,w,h);
-          if(r){ ocvLast.current=r; setOcvPct(r.found?r.score:0); }
+          if(r){ ocvLast.current=r; setOc vPct(r.found?r.score:0); }
         }
         frame++;
 
-        // borde ROI (verde si alto match)
         const combined=Math.max(edgeScore, ocvPct);
         ctx.strokeStyle= combined>=0.7 ? '#22c55e' : '#a78bfa';
         ctx.lineWidth=4; ctx.strokeRect(x,y,w,h);
+        ctx.font='bold 18px system-ui,-apple-system'; ctx.fillStyle='#fff';
+        ctx.fillText(`Guía CR80 — Match ${Math.round(combined*100)}%`, Math.max(12,x), Math.max(24,y-10));
 
-        ctx.font='bold 20px system-ui, -apple-system';
-        ctx.fillStyle='#fff';
-        ctx.fillText(`Guía CR80 — Match ${Math.round(combined*100)}%`, Math.max(12,x), Math.max(28, y-10));
-
-        // auto-captura SOLO si OpenCV encontró tarjeta y supera umbral
+        // autocaptura solo si OpenCV ve tarjeta con score >= 0.7
         if(autoCapture && ocvLast.current.found && ocvLast.current.score>=0.7){
-          captureFromVideo(true);
-          return; // salimos del loop tras capturar
+          captureFromVideo();
+          return;
         }
       }
-
       rafRef.current=requestAnimationFrame(loop);
     };
+
     cancelAnimationFrame(rafRef.current);
     rafRef.current=requestAnimationFrame(loop);
   };
 
-  // ---------- Captura ----------
-  const captureFromVideo=(fromAuto=false)=>{
+  const captureFromVideo=()=>{
     const v=vRef.current; if(!v || !v.videoWidth) return;
-    // fijar escala si la guía estaba activa y la tarjeta "matcheó"
-    const roi=roiBox();
+    // fijar escala si tenemos tarjeta
     if(useGuide && ocvLast.current.found){
-      const pxPerMm = ocvLast.current.long / CR80_W;
-      setPxmm(pxPerMm);
-      setLocked(true);
+      setPxmm(ocvLast.current.long/CR80_W);
     }
+    // congelar
+    const shot=document.createElement('canvas'); shot.width=v.videoWidth; shot.height=v.videoHeight;
+    shot.getContext('2d').drawImage(v,0,0,shot.width,shot.height);
+    setImage(shot.toDataURL('image/jpeg',0.92));
 
-    // congelar frame y parar cámara
-    const shot=document.createElement('canvas');
-    shot.width=v.videoWidth; shot.height=v.videoHeight;
-    const x=shot.getContext('2d');
-    // OJO: el video no está espejado; dibujamos normal para procesar
-    x.drawImage(v,0,0,shot.width,shot.height);
-    const url=shot.toDataURL('image/jpeg',0.92);
-    setImage(url);
-
-    cancelAnimationFrame(rafRef.current);
-    const vv=vRef.current; if(vv){ vv.pause(); vv.srcObject=null; }
-    if(streamRef.current){ streamRef.current.getTracks().forEach(t=>t.stop()); streamRef.current=null; }
+    stopStream();
     setState('captured');
-
-    // procesar de una
-    process(url);
+    process(); // sigue a procesamiento
   };
 
-  // ---------- Procesamiento ----------
-  const process=async(dataUrl=image)=>{
-    if(!dataUrl) return;
-    setProcessing(true); setMsg('Detectando pupilas…');
-
+  const process=async()=>{
+    if(!image) return;
     try{
-      const img=await new Promise((res,rej)=>{ const m=new Image(); m.src=dataUrl; m.onload=()=>res(m); m.onerror=rej; });
-
-      // escala
-      let scale = pxmm;
-      if(!scale && ocvLast.current.found) scale = ocvLast.current.long / CR80_W;
-      if(!scale){ // fallback suave: ancho ROI estimado
+      const img=await new Promise((res,rej)=>{ const m=new Image(); m.src=image; m.onload=()=>res(m); m.onerror=rej; });
+      let scale = pxmm || (ocvLast.current.found ? ocvLast.current.long/CR80_W : null);
+      if(!scale){ // fallback
         const w = Math.min(img.width,img.height)*0.42;
         scale = w / CR80_W;
       }
-
-      // landmarks
-      const getLM=()=> new Promise((resolve)=>{
+      const lm = await new Promise(resolve=>{
         if(window.__fm){
           const c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
           c.getContext('2d').drawImage(img,0,0);
           window.__fm.onResults(r=>{
             if(r.multiFaceLandmarks && r.multiFaceLandmarks[0]){
               const L=r.multiFaceLandmarks[0];
-              const iris=(arr)=>({x:arr.reduce((s,l)=>s+l.x*img.width,0)/arr.length, y:arr.reduce((s,l)=>s+l.y*img.height,0)/arr.length});
+              const iris=(a)=>({x:a.reduce((s,l)=>s+l.x*img.width,0)/a.length,y:a.reduce((s,l)=>s+l.y*img.height,0)/a.length});
               resolve({left:iris(L.slice(473,477)), right:iris(L.slice(468,472)), method:'MediaPipe'});
             }else{
               const cx=img.width/2, cy=img.height*0.45, d=img.width*0.15;
@@ -295,54 +256,41 @@ function App(){
           resolve({left:{x:cx-d/2,y:cy}, right:{x:cx+d/2,y:cy}, method:'Estimación'});
         }
       });
-
-      const lm=await getLM();
       setMethod(lm.method);
-      const dx=lm.right.x-lm.left.x, dy=lm.right.y-lm.left.y;
-      const ipd_mm=Math.round((Math.hypot(dx,dy)/scale)*10)/10;
-      setIpd(ipd_mm);
+      const d=Math.hypot(lm.right.x-lm.left.x, lm.right.y-lm.left.y);
+      const ipd_mm=Math.round((d/scale)*10)/10; setIpd(ipd_mm);
 
-      // anotación precisa de pupilas
+      // anotación
       const out=document.createElement('canvas'); out.width=img.width; out.height=img.height;
       const a=out.getContext('2d'); a.drawImage(img,0,0);
-      a.fillStyle='#ff0000';
+      a.fillStyle='#f00';
       a.beginPath(); a.arc(lm.left.x,lm.left.y,10,0,Math.PI*2); a.fill();
       a.beginPath(); a.arc(lm.right.x,lm.right.y,10,0,Math.PI*2); a.fill();
-      a.strokeStyle='#ff0000'; a.lineWidth=4; a.beginPath();
+      a.strokeStyle='#f00'; a.lineWidth=4; a.beginPath();
       a.moveTo(lm.left.x,lm.left.y); a.lineTo(lm.right.x,lm.right.y); a.stroke();
-      a.font='bold 28px system-ui,-apple-system'; a.fillStyle='#fff'; a.lineWidth=6; a.strokeStyle='#000';
-      const mx=(lm.left.x+lm.right.x)/2, my=(lm.left.y+lm.right.y)/2 - 24;
+      a.font='bold 26px system-ui,-apple-system'; a.fillStyle='#fff'; a.strokeStyle='#000'; a.lineWidth=6;
+      const mx=(lm.left.x+lm.right.x)/2, my=(lm.left.y+lm.right.y)/2 - 22;
       a.strokeText(`IPD: ${ipd_mm} mm`, mx-90, my); a.fillText(`IPD: ${ipd_mm} mm`, mx-90, my);
       setAnnotated(out.toDataURL('image/png'));
-      setMsg('Listo');
-    }catch(e){
-      setMsg('Error al procesar: '+(e.message||e));
-      setState('error');
-    }finally{
-      setProcessing(false);
-    }
+    }catch(e){ setDbg(d=>d+' | proc err:'+e.message); }
   };
 
-  // ---------- Upload manual ----------
   const onUpload=e=>{
     const f=e.target.files?.[0]; if(!f) return;
-    const rd=new FileReader();
-    rd.onload=ev=>{ setImage(ev.target.result); setState('captured'); process(ev.target.result); };
-    rd.readAsDataURL(f);
+    const r=new FileReader();
+    r.onload=ev=>{ setImage(ev.target.result); setState('captured'); process(); };
+    r.readAsDataURL(f);
   };
 
   return (
     <div className="min-h-screen p-4">
+      <div className="dbg">estado:{state} • {dbg}</div>
       <div className="max-w-3xl mx-auto space-y-4">
         <div className="bg-white rounded-2xl shadow p-5 border-t-4 border-indigo-500">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold">Medidor Óptico Facial</h1>
               <p className="text-slate-600">Cámara embebida + Guía CR80</p>
-              <div className="text-xs text-slate-500 mt-1">estado: <b>{state}</b></div>
-            </div>
-            <div className={`px-3 py-1 rounded-lg text-sm ${faceMeshReady?'bg-emerald-50 text-emerald-700':'bg-indigo-50 text-indigo-700'}`}>
-              {faceMeshReady?'✅ MediaPipe':'⬇️ Cargando'}
             </div>
           </div>
         </div>
@@ -353,18 +301,28 @@ function App(){
           <div className="grid grid-cols-2 gap-3 mb-3">
             <label className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl cursor-pointer">
               🖼️ <span>Subir Foto</span>
-              <input type="file" accept="image/*" className="hidden" onChange={onUpload}/>
+              <input type="file" accept="image/*" className="hidden" onChange={onUpload} />
             </label>
 
             {state!=='ready' ? (
-              <button onClick={startCam} className="inline-flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 rounded-xl">
+              <button type="button" onClick={startCam}
+                className="inline-flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 rounded-xl">
                 📷 Cámara
               </button>
             ) : (
-              <button onClick={()=>{ stopCam(); setState('idle'); }} className="inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl">
+              <button type="button" onClick={()=>{ stopStream(); setState('idle'); }}
+                className="inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl">
                 🛑 Cerrar
               </button>
             )}
+          </div>
+
+          {/* Fallback nativo del sistema (abre UI de cámara de iOS/Android) */}
+          <div className="mb-4">
+            <label className="text-sm text-slate-600 underline cursor-pointer">
+              Usar cámara del sistema (fallback)
+              <input type="file" accept="image/*" capture="user" className="hidden" onChange={onUpload}/>
+            </label>
           </div>
 
           {state==='ready' && (
@@ -383,7 +341,8 @@ function App(){
                   <span>Auto-capturar (≥70% con tarjeta)</span>
                 </label>
 
-                <button onClick={()=>captureFromVideo(false)} className="ml-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+                <button type="button" onClick={captureFromVideo}
+                        className="ml-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">
                   📸 Capturar
                 </button>
               </div>
@@ -399,25 +358,10 @@ function App(){
           <div className="bg-white rounded-2xl shadow p-5">
             <h3 className="font-semibold mb-3">Imagen Capturada</h3>
             <img src={image} alt="capturada" className="w-full rounded-lg shadow"/>
-            <div className="mt-3 flex items-center gap-3">
-              <button onClick={()=>process(image)} disabled={processing}
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white font-semibold">
-                🧮 {processing?'Procesando…':'Reprocesar'}
-              </button>
-              <button onClick={()=>{ setImage(null); setAnnotated(null); setIpd(null); setMethod('—'); setPxmm(null); setState('idle'); }}
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold">
-                🔄 Nueva toma
-              </button>
-            </div>
-          </div>
-        )}
-
-        {(ipd!==null) && (
-          <div className="bg-white rounded-2xl shadow p-5 space-y-3">
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div className="mt-3 grid sm:grid-cols-3 gap-3">
               <div className="p-3 rounded bg-indigo-50">
                 <div className="text-xs text-slate-600">IPD</div>
-                <div className="text-3xl font-bold">{ipd} mm</div>
+                <div className="text-3xl font-bold">{ipd ?? '—'} {ipd && 'mm'}</div>
               </div>
               <div className="p-3 rounded bg-violet-50">
                 <div className="text-xs text-slate-600">Escala (px/mm)</div>
@@ -428,19 +372,9 @@ function App(){
                 <div className="text-lg font-semibold">{method}</div>
               </div>
             </div>
-
-            {annotated && (
-              <div className="mt-2">
-                <h4 className="font-semibold mb-2">Imagen Anotada</h4>
-                <img src={annotated} className="w-full rounded-lg shadow" alt="anotada"/>
-                <a download={`annotated-${Date.now()}.png`} href={annotated}
-                   className="inline-block mt-3 px-3 py-2 rounded bg-blue-600 text-white">Descargar PNG</a>
-              </div>
-            )}
+            {annotated && <img src={annotated} className="w-full rounded-lg shadow mt-3" alt="anotada"/>}
           </div>
         )}
-
-        {msg && <div className="text-center text-sm text-slate-600">{msg}</div>}
 
         <div className="text-center text-xs text-slate-500 py-4">© 2025 — Cámara + Guía CR80</div>
       </div>
