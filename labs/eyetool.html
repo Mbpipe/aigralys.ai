@@ -76,7 +76,7 @@
       <button id="process" class="gray">🧮 Procesar</button>
     </div>
     <div class="small" style="margin-top:6px">
-      El rectángulo aparece centrado y <b>debajo de la nariz</b>. Auto-captura: OpenCV ≥ 40% o (fallback) Bordes ≥ 60% durante 12 frames.
+      Auto-captura: OpenCV ≥ 50% + quietud (12/15 frames). Si no hay OpenCV: Bordes ≥ 70% + quietud.
     </div>
 
     <div id="log" style="margin-top:10px"></div>
@@ -103,156 +103,152 @@
 </div>
 
 <script>
-/** ---------- refs y constantes ---------- **/
-const v=document.getElementById('v'), shot=document.getElementById('shot');
-const overlay=document.getElementById('overlay'), ctx=overlay.getContext('2d',{willReadFrequently:true});
-const pane=document.getElementById('pane'), badge=document.getElementById('badge'), meter=document.getElementById('meter');
-const btnOpen=document.getElementById('open'), btnClose=document.getElementById('close');
-const btnCapture=document.getElementById('capture'), btnProcess=document.getElementById('process');
-const chkGuide=document.getElementById('useGuide'), chkAuto=document.getElementById('autoCap');
-const pickBtn=document.getElementById('pick'), fileIn=document.getElementById('file');
-const pSec=document.getElementById('p-sec'), pOcv=document.getElementById('p-ocv'), pSta=document.getElementById('p-sta');
-const out=document.getElementById('out'), ipdEl=document.getElementById('ipd'), pxmmEl=document.getElementById('pxmm'), scaleSrcEl=document.getElementById('scaleSrc');
-const finalImg=document.getElementById('final'), dl=document.getElementById('dl');
-const logEl=document.getElementById('log');
-
+/* ---------- refs ---------- */
+const v=$('v'), shot=$('shot'), pane=$('pane'), overlay=$('overlay'), ctx=overlay.getContext('2d',{willReadFrequently:true});
+const badge=$('badge'), meter=$('meter'), out=$('out'), ipdEl=$('ipd'), pxmmEl=$('pxmm'), scaleSrcEl=$('scaleSrc'), finalImg=$('final'), dl=$('dl');
+const btnOpen=$('open'), btnClose=$('close'), btnCapture=$('capture'), btnProcess=$('process'), pickBtn=$('pick'), fileIn=$('file');
+const pSec=$('p-sec'), pOcv=$('p-ocv'), pSta=$('p-sta'), chkGuide=$('useGuide'), chkAuto=$('autoCap'), logEl=$('log');
 const CR80_W=85.60, CR80_H=53.98, AR=CR80_W/CR80_H;
-pSec.textContent='secure: '+String(window.isSecureContext);
-
-/** ---------- estado ---------- **/
-let stream=null, raf=0, frame=0;
-let ocvReady=false, captured=null;
+let stream=null, raf=0, frame=0, captured=null;
+let ocvReady=false, ocvLast=null;
 let guide={x:0,y:0,w:0,h:0, edge:0, ocv:0, pxPerMm:null};
-let ocvLast=null, edgeStreak=0;
+let stillBuf=[], hitBuf=[], EDGE_STREAK=0, prevThumb=null;
 
-function log(s){ logEl.textContent=`[${new Date().toLocaleTimeString()}] ${s}\n`+logEl.textContent; }
-function setState(s){ pSta.textContent='estado: '+s; }
+function $(id){return document.getElementById(id)}
+function log(s){ logEl.textContent=`[${new Date().toLocaleTimeString()}] ${s}\n`+logEl.textContent }
+function setState(s){ pSta.textContent='estado: '+s }
+pSec.textContent='secure: '+String(window.isSecureContext)
 
-/** ---------- OpenCV ready ---------- **/
-if(window.cv && cv.getBuildInformation){ ocvReady=true; pOcv.textContent='opencv: ready'; }
+/* ---------- OpenCV ready ---------- */
+if(window.cv && cv.getBuildInformation){ ocvReady=true; pOcv.textContent='opencv: ready' }
 else{
   pOcv.textContent='opencv: loading…';
-  window.Module={ onRuntimeInitialized:()=>{ ocvReady=true; pOcv.textContent='opencv: ready'; log('OpenCV listo'); } };
+  window.Module={onRuntimeInitialized:()=>{ ocvReady=true; pOcv.textContent='opencv: ready'; log('OpenCV listo') }};
 }
 
-/** ---------- layout ---------- **/
-function sizeCanvases(){ overlay.width=pane.clientWidth; overlay.height=pane.clientHeight; }
+/* ---------- layout ---------- */
+function sizeCanvases(){ overlay.width=pane.clientWidth; overlay.height=pane.clientHeight }
 new ResizeObserver(sizeCanvases).observe(pane); sizeCanvases();
 
-/** ---------- guía rectangular debajo de la nariz ---------- **/
+/* ---------- guía bajo la nariz ---------- */
 function drawGuide(){
   ctx.clearRect(0,0,overlay.width,overlay.height);
+  if(!chkGuide.checked) return;
   ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(0,0,overlay.width,overlay.height);
 
   const vw=overlay.width, vh=overlay.height;
-  const gw=Math.round(Math.min(vw,vh)*0.48);            // ancho guía
-  const gh=Math.round(gw/AR);                            // alto acorde CR80
-  const gx=Math.round((vw-gw)/2);
-  const gy=Math.round(vh*0.58-gh/2);                     // debajo de la nariz aprox
+  const gw=Math.round(Math.min(vw,vh)*0.48); const gh=Math.round(gw/AR);
+  const gx=Math.round((vw-gw)/2); const gy=Math.round(vh*0.58-gh/2);
 
   guide.x=gx; guide.y=gy; guide.w=gw; guide.h=gh;
+  ctx.clearRect(gx,gy,gw,gh);
+  const ok = (ocvReady && guide.ocv>=0.50 && isStill()) || (!ocvReady && guide.edge>=0.70 && isStill());
+  ctx.lineWidth=4; ctx.strokeStyle= ok? '#16a34a' : '#a78bfa'; ctx.strokeRect(gx,gy,gw,gh);
 
-  ctx.clearRect(gx,gy,gw,gh);                            // ventana transparente
-  const ok = (ocvReady && guide.ocv>=0.40) || (!ocvReady && edgeStreak>=12);
-  ctx.lineWidth=4; ctx.strokeStyle= ok? '#16a34a' : '#a78bfa';
-  ctx.strokeRect(gx,gy,gw,gh);
-
-  // UI
-  badge.style.display='block';
-  const pct = Math.round((ocvReady?guide.ocv:guide.edge)*100);
-  badge.textContent=`Guía CR80 — Match ${pct}%`;
-  meter.style.display='block';
-  meter.textContent=`Ancho: ${gw}px • Alto: ${gh}px • OpenCV: ${ocvReady?Math.round(guide.ocv*100):'n/a'}% • edgeStreak:${edgeStreak}`;
+  badge.style.display='block'; meter.style.display='block';
+  badge.textContent=`Guía CR80 — Match ${Math.round((ocvReady?guide.ocv:guide.edge)*100)}%`;
+  meter.textContent=`Ancho: ${gw}px • Alto: ${gh}px • OpenCV: ${ocvReady?Math.round(guide.ocv*100):'n/a'}% • still:${Math.round(stillness()*100)}%`;
 }
 
-/** ---------- score por bordes con Sobel (fallback) ---------- **/
-function sobelEdgeScore(img,w,h){
-  const d=img.data, t=3; // perímetro 3px
-  let hit=0, tot=0;
+/* ---------- util: imagen reducida para stillness ---------- */
+function tinyThumb(canvas,x,y,w,h){
+  const t=document.createElement('canvas'); t.width=64; t.height=64;
+  const g=t.getContext('2d'); g.drawImage(canvas, x,y,w,h, 0,0,64,64);
+  return g.getImageData(0,0,64,64).data;
+}
+function diff(a,b){
+  let sum=0, n=a.length;
+  for(let i=0;i<n;i+=4){ sum+=Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2]) }
+  return sum/(n/4)/255/3; // 0..1
+}
+function stillness(){ // promedio últimos 15 (1 = quieto)
+  if(stillBuf.length===0) return 0;
+  const m = stillBuf.reduce((a,b)=>a+b,0)/stillBuf.length;
+  return Math.max(0, 1 - m); // 1=quieto, 0=muy movido
+}
+function isStill(){ return stillness()>=0.85 } // ≥85% quieto
+
+/* ---------- bordes Sobel (fallback) ---------- */
+function edgeScore(img,w,h){
+  const d=img.data, t=3; let hit=0, tot=0;
+  const r=(yy,xx)=>{ const X=Math.max(0,Math.min(w-1,xx)), Y=Math.max(0,Math.min(h-1,yy)); return (Y*w+X)*4 }
+  const lum=(i)=>0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]
   for(let y=0;y<h;y++){
     for(let x=0;x<w;x++){
-      const border=(y<t)||(y>=h-t)||(x<t)||(x>=w-t);
-      if(!border) continue;
+      const border=(y<t)||(y>=h-t)||(x<t)||(x>=w-t); if(!border) continue;
       const i=(y*w+x)*4;
-      const lum=(i)=>0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
-      const L = lum(i);
-      const r=(yy,xx)=>{ const X=Math.max(0,Math.min(w-1,xx)), Y=Math.max(0,Math.min(h-1,yy)); return (Y*w+X)*4; };
-      const gx = (lum(r(y,x+1))-lum(r(y,x-1)))/255;
-      const gy = (lum(r(y+1,x))-lum(r(y-1,x)))/255;
-      const g = Math.sqrt(gx*gx+gy*gy);
-      if(g>0.18) hit++; tot++;
+      const gx=(lum(r(y,x+1))-lum(r(y,x-1)))/255;
+      const gy=(lum(r(y+1,x))-lum(r(y-1,x)))/255;
+      const g=Math.sqrt(gx*gx+gy*gy); if(g>0.20) hit++; tot++;
     }
   }
   return tot? hit/tot : 0;
 }
 
-/** ---------- detección OpenCV en ROI ---------- **/
+/* ---------- OpenCV en ROI ---------- */
 function ocvDetect(img,w,h){
   if(!ocvReady || !window.cv || !cv.Mat) return null;
   try{
     const src=cv.matFromImageData(img);
     const gray=new cv.Mat(), blur=new cv.Mat(), edges=new cv.Mat();
     cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
-    // normalizar contraste para tarjetas oscuras
     cv.equalizeHist(gray,gray);
     cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);
-    let sum=0; const dd=blur.data; for(let i=0;i<dd.length;i++) sum+=dd[i];
-    const m=sum/dd.length, lo=Math.max(0,0.66*m), hi=Math.min(255,1.33*m);
+    let s=0; const dd=blur.data; for(let i=0;i<dd.length;i++) s+=dd[i];
+    const m=s/dd.length, lo=Math.max(0,0.66*m), hi=Math.min(255,1.33*m);
     cv.Canny(blur,edges,lo,hi);
-    // cerrar pequeñas rupturas
-    const k=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(3,3));
-    cv.dilate(edges,edges,k);
+    const k=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(3,3)); cv.dilate(edges,edges,k);
 
-    const contours=new cv.MatVector(), hier=new cv.Mat();
-    cv.findContours(edges,contours,hier,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
+    const cont=new cv.MatVector(), hier=new cv.Mat();
+    cv.findContours(edges,cont,hier,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
     let best=null, bestScore=0;
-    for(let i=0;i<contours.size();i++){
-      const cnt=contours.get(i);
-      const area=cv.contourArea(cnt);
-      if(area<(w*h)*0.08){ cnt.delete(); continue; }
-      const rect=cv.minAreaRect(cnt);
-      const W=rect.size.width, H=rect.size.height;
-      const L=Math.max(W,H), S=Math.min(W,H);
-      const ar=L/S;
-      const arS=Math.max(0,1-Math.min(Math.abs(ar-(CR80_W/CR80_H))/0.25,1));
+    for(let i=0;i<cont.size();i++){
+      const c=cont.get(i); const area=cv.contourArea(c); if(area<(w*h)*0.08){ c.delete(); continue; }
+      const r=cv.minAreaRect(c); const L=Math.max(r.size.width,r.size.height), S=Math.min(r.size.width,r.size.height);
+      const ar=L/S, arS=Math.max(0,1-Math.min(Math.abs(ar-(CR80_W/CR80_H))/0.22,1));
       const contS=Math.max(0,Math.min(1,(area/(w*h))*2.0));
       const score=0.72*arS+0.28*contS;
-      if(score>bestScore){ bestScore=score; best={found:true,longSidePx:L,score}; }
-      cnt.delete();
+      if(score>bestScore){ bestScore=score; best={found:true,longSidePx:L,score} }
+      c.delete();
     }
-    gray.delete(); blur.delete(); edges.delete(); contours.delete(); hier.delete(); src.delete();
+    gray.delete(); blur.delete(); edges.delete(); cont.delete(); hier.delete(); src.delete();
     return best||{found:false,longSidePx:0,score:0};
   }catch(e){ log('ocv error: '+e); return null; }
 }
 
-/** ---------- bucle de cámara ---------- **/
+/* ---------- bucle de cámara ---------- */
 function loop(){
-  if(!v.videoWidth){ raf=requestAnimationFrame(loop); return; }
+  if(!v.videoWidth){ raf=requestAnimationFrame(loop); return }
   drawGuide();
-
-  // tomar frame del <video> con tamaño del overlay
   const W=overlay.width,H=overlay.height;
   const c=document.createElement('canvas'); c.width=W; c.height=H;
   const x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(v,0,0,W,H);
   const img=x.getImageData(guide.x,guide.y,guide.w,guide.h);
 
-  // scores
-  guide.edge=sobelEdgeScore(img,guide.w,guide.h);
-  if(ocvReady && frame%3===0){
-    const r=ocvDetect(img,guide.w,guide.h);
-    if(r){ ocvLast=r; guide.ocv=r.found?r.score:0; }
-  }
-  // streak fallback
-  if(!ocvReady){ edgeStreak = (guide.edge>=0.60) ? edgeStreak+1 : 0; } else { edgeStreak=0; }
+  // stillness (usar thumbn. 64x64 de la ROI)
+  const th=tinyThumb(c,guide.x,guide.y,guide.w,guide.h);
+  if(prevThumb){ stillBuf.push(diff(th,prevThumb)); if(stillBuf.length>15) stillBuf.shift(); }
+  prevThumb=th;
 
-  // auto-captura
-  const shouldAuto = chkAuto.checked && ( (ocvReady && ocvLast?.found && ocvLast.score>=0.40) || (!ocvReady && edgeStreak>=12) );
-  if(shouldAuto){ log('Auto-captura disparada'); captureNow(true); return; }
+  // scores
+  guide.edge=edgeScore(img,guide.w,guide.h);
+  if(ocvReady && frame%3===0){ const r=ocvDetect(img,guide.w,guide.h); if(r){ ocvLast=r; guide.ocv=r.found?r.score:0 } }
+
+  // hit buffer (12 de 15 frames deben cumplir)
+  const okThis = (ocvReady && ocvLast?.found && ocvLast.score>=0.50 && isStill())
+              || (!ocvReady && guide.edge>=0.70 && isStill());
+  hitBuf.push(okThis); if(hitBuf.length>15) hitBuf.shift();
+  const hits = hitBuf.filter(Boolean).length;
+
+  if(chkAuto.checked && hits>=12){
+    log('Auto-captura: OK (score estable + quietud)');
+    captureNow(true); processNow(); return; // se cierra cámara adentro de captureNow
+  }
 
   frame++; raf=requestAnimationFrame(loop);
 }
 
-/** ---------- controles de cámara ---------- **/
+/* ---------- cámara ---------- */
 async function openCam(){
   setState('opening'); log('Abriendo cámara…');
   shot.style.display='none'; out.style.display='none';
@@ -260,28 +256,28 @@ async function openCam(){
     v.setAttribute('playsinline',''); v.playsInline=true; v.muted=true;
     stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'user'},width:{ideal:1280},height:{ideal:720}},audio:false});
     v.srcObject=stream;
-    try{await v.play();}catch{setTimeout(()=>v.play().catch(()=>{}),140);}
+    try{await v.play()}catch{setTimeout(()=>v.play().catch(()=>{}),150)}
     setState('ready'); log('Cámara abierta');
+    // reset buffers
+    stillBuf.length=0; hitBuf.length=0; prevThumb=null; ocvLast=null; guide.pxPerMm=null;
     raf=requestAnimationFrame(loop);
-  }catch(e){ setState('error'); alert('No se pudo acceder a la cámara: '+e.message); log('gUM error: '+e); }
+  }catch(e){ setState('error'); alert('No se pudo acceder a la cámara: '+e.message); log('gUM error: '+e) }
 }
 function closeCam(){
   cancelAnimationFrame(raf);
-  try{v.pause();}catch{}
+  try{v.pause()}catch{}
   v.srcObject=null;
-  if(stream){stream.getTracks().forEach(t=>t.stop()); stream=null;}
+  if(stream){stream.getTracks().forEach(t=>t.stop()); stream=null}
   setState('idle'); log('Cámara cerrada');
 }
 
-/** ---------- capturar y procesar ---------- **/
+/* ---------- capturar y procesar ---------- */
 function captureNow(silent=false){
-  if(!v.videoWidth){ if(!silent) alert('La cámara aún no está lista'); return; }
+  if(!v.videoWidth){ if(!silent) alert('La cámara aún no está lista'); return }
   const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight;
   c.getContext('2d').drawImage(v,0,0,c.width,c.height);
   captured=c.toDataURL('image/jpeg',0.92);
-  // escala desde OCV
   guide.pxPerMm = ocvLast?.found ? (ocvLast.longSidePx/CR80_W) : null;
-  // cerrar cámara y mostrar foto
   closeCam(); shot.src=captured; shot.style.display='block';
   badge.style.display='none'; meter.style.display='none';
 }
@@ -289,21 +285,16 @@ function captureNow(silent=false){
 async function processNow(){
   try{
     if(!captured){
-      if(stream){ log('No hay foto: capturo y proceso…'); captureNow(true); }
-      else{ alert('Primero captura o sube una foto.'); return; }
+      if(stream){ log('No hay foto: capturo y proceso…'); captureNow(true) }
+      else{ alert('Primero captura o sube una foto.'); return }
     }
-    // cargar imagen
-    const img=await new Promise((res,rej)=>{ const im=new Image(); im.src=captured; im.onload=()=>res(im); im.onerror=rej; });
-
-    // px/mm
+    const img=await new Promise((res,rej)=>{ const im=new Image(); im.src=captured; im.onload=()=>res(im); im.onerror=rej });
     let pxmm=guide.pxPerMm;
-    if(!pxmm){
-      const approxW=Math.min(img.width,img.height)*0.22; // fallback blando
-      pxmm=approxW/CR80_W; scaleSrcEl.textContent='Estimación';
-    }else{ scaleSrcEl.textContent='ROI OpenCV (guía)'; }
+    if(!pxmm){ const approxW=Math.min(img.width,img.height)*0.22; pxmm=approxW/CR80_W; scaleSrcEl.textContent='Estimación' }
+    else{ scaleSrcEl.textContent='ROI OpenCV (guía)' }
     pxmmEl.textContent=pxmm.toFixed(3);
 
-    // landmarks (MediaPipe si cargó)
+    // landmarks
     let L=null;
     if(window.FaceMesh){
       const fm=new window.FaceMesh({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
@@ -321,14 +312,12 @@ async function processNow(){
         fm.send({image:c});
       });
     }
-    if(!L){ const cx=img.width/2, cy=img.height*0.45, d=img.width*0.15/2; L={left:{x:cx-d,y:cy}, right:{x:cx+d,y:cy}}; }
+    if(!L){ const cx=img.width/2, cy=img.height*0.45, d=img.width*0.15/2; L={left:{x:cx-d,y:cy}, right:{x:cx+d,y:cy}} }
 
-    // IPD
     const dx=L.right.x-L.left.x, dy=L.right.y-L.left.y;
     const ipd=Math.round((Math.hypot(dx,dy)/pxmm)*10)/10;
     ipdEl.textContent=ipd+' mm';
 
-    // anotado
     const outC=document.createElement('canvas'); outC.width=img.width; outC.height=img.height;
     const a=outC.getContext('2d'); a.drawImage(img,0,0);
     a.fillStyle='#ff0000';
@@ -342,10 +331,10 @@ async function processNow(){
 
     finalImg.src=url; dl.href=url; out.style.display='block';
     log('Procesado OK — IPD '+ipd+' mm');
-  }catch(e){ log('Error procesar: '+e.message); alert('No se pudo procesar: '+e.message); }
+  }catch(e){ log('Error procesar: '+e.message); alert('No se pudo procesar: '+e.message) }
 }
 
-/** ---------- eventos UI ---------- **/
+/* ---------- eventos ---------- */
 btnOpen.onclick=openCam;
 btnClose.onclick=closeCam;
 btnCapture.onclick=()=>captureNow(false);
@@ -362,4 +351,4 @@ fileIn.onchange=(e)=>{
 };
 </script>
 </body>
-</html></html>
+</html>
