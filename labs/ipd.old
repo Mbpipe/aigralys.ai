@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medidor IPD - Distancia Interpupilar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4F46E5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen">
+    <div id="app" class="container mx-auto p-4 max-w-7xl">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 border-t-4 border-indigo-600">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-100 p-3 rounded-xl">
+                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800">Medidor IPD</h1>
+                        <p class="text-gray-600 mt-1">Distancia Interpupilar Precisa</p>
+                    </div>
+                </div>
+                <div id="status-badge"></div>
+            </div>
+        </div>
+
+```
+    <!-- Instructions -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-xl p-6 mb-6 text-white">
+        <h2 class="text-xl font-semibold mb-4">📋 Instrucciones Importantes</h2>
+        <div class="grid md:grid-cols-2 gap-3 text-sm">
+            <div class="flex items-start gap-2">
+                <span class="text-green-300">✓</span>
+                <span>Rostro frontal, ojos abiertos mirando a la cámara</span>
+            </div>
+            <div class="flex items-start gap-2">
+                <span class="text-green-300">✓</span>
+                <span>Tarjeta CR80 a la altura de la MEJILLA (no pecho)</span>
+            </div>
+            <div class="flex items-start gap-2">
+                <span class="text-green-300">✓</span>
+                <span>Tarjeta en el MISMO PLANO que el rostro</span>
+            </div>
+            <div class="flex items-start gap-2">
+                <span class="text-green-300">✓</span>
+                <span>Buena iluminación uniforme, sin sombras</span>
+            </div>
+        </div>
+        <div class="mt-4 bg-red-500 bg-opacity-30 p-3 rounded-lg">
+            <strong>⚠️ CRÍTICO:</strong> La tarjeta debe estar pegada a la mejilla o sostenida a la MISMA distancia que el rostro. Si está más cerca/lejos, la medición será incorrecta.
+        </div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6">
+        <!-- Left Column -->
+        <div class="space-y-6">
+            <!-- Controls -->
+            <div class="bg-white rounded-2xl shadow-xl p-6">
+                <h3 class="text-xl font-semibold mb-4">Captura de Imagen</h3>
+                
+                <input type="file" id="fileInput" accept="image/*" class="hidden">
+                
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <button id="uploadBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        Subir Foto
+                    </button>
+                    
+                    <button id="cameraBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span id="cameraBtnText">Cámara</span>
+                    </button>
+                </div>
+
+                <div id="videoContainer" class="hidden mb-4">
+                    <video id="video" autoplay playsinline class="w-full rounded-xl shadow-lg"></video>
+                    <div class="mt-2 flex gap-2">
+                        <button id="captureBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium">
+                            📸 Capturar
+                        </button>
+                        <button id="closeCameraBtn" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-medium">
+                            ✕ Cerrar
+                        </button>
+                    </div>
+                </div>
+                
+                <button id="analyzeBtn" class="hidden w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    Analizar IPD
+                </button>
+                
+                <div id="processingStatus" class="hidden mt-4 bg-indigo-50 rounded-lg p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="loading-spinner"></div>
+                        <span id="processingText" class="text-indigo-700 font-medium"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Original Image -->
+            <div id="originalContainer" class="hidden bg-white rounded-2xl shadow-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">Imagen Original</h3>
+                <img id="originalImage" class="w-full rounded-xl shadow-md">
+            </div>
+
+            <!-- Annotated Image -->
+            <div id="annotatedContainer" class="hidden bg-white rounded-2xl shadow-xl p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Imagen Anotada</h3>
+                    <button id="downloadImgBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Descargar
+                    </button>
+                </div>
+                <canvas id="annotatedCanvas" class="w-full rounded-xl shadow-md"></canvas>
+                
+                <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+                    <div class="flex items-center gap-2 bg-green-50 p-2 rounded-lg">
+                        <div class="w-3 h-3 bg-green-500 rounded"></div>
+                        <span>Tarjeta CR80</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-red-50 p-2 rounded-lg">
+                        <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <span>Pupilas e IPD</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-yellow-50 p-2 rounded-lg">
+                        <div class="w-3 h-3 bg-yellow-500 rounded"></div>
+                        <span>Método detección</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-blue-50 p-2 rounded-lg">
+                        <div class="w-3 h-3 bg-blue-500 rounded"></div>
+                        <span>Calibración</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Results -->
+        <div class="space-y-6">
+            <div id="errorContainer" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-xl">
+                <div class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                        <p class="text-red-800 font-semibold">Error</p>
+                        <p id="errorText" class="text-red-700 text-sm mt-1"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Result -->
+            <div id="resultsContainer" class="hidden space-y-6">
+                <!-- IPD Display -->
+                <div class="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">Medición IPD</h3>
+                        <button id="downloadJsonBtn" class="bg-white text-indigo-600 hover:bg-indigo-50 py-2 px-4 rounded-lg text-sm font-medium">
+                            📄 JSON
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-xl p-6 text-center">
+                        <p class="text-sm opacity-90 mb-2">Distancia Interpupilar</p>
+                        <p id="ipdValue" class="text-5xl font-bold mb-1">--</p>
+                        <p class="text-2xl font-semibold opacity-90">milímetros</p>
+                        <div class="mt-3 pt-3 border-t border-white border-opacity-30">
+                            <p class="text-xs opacity-75">Método de detección</p>
+                            <p id="detectionMethod" class="text-sm font-semibold mt-1">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IPD Info -->
+                <div class="bg-blue-50 border-l-4 border-blue-500 rounded-xl p-4">
+                    <p class="text-sm text-blue-900"><strong>ℹ️ IPD Normal:</strong> El rango típico para adultos es 54-74mm, con promedio de 63mm. Es fundamental para la correcta alineación de lentes.</p>
+                </div>
+
+                <!-- Calibration -->
+                <div class="bg-white rounded-2xl shadow-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Calibración</h3>
+                    <div id="calibrationData" class="space-y-3"></div>
+                </div>
+
+                <!-- Quality -->
+                <div class="bg-white rounded-2xl shadow-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Calidad de Medición</h3>
+                    <div id="qualityData"></div>
+                </div>
+            </div>
+
+            <!-- Help -->
+            <div id="helpContainer" class="bg-white rounded-2xl shadow-xl p-8 text-center">
+                <div class="bg-indigo-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Comience Subiendo una Foto</h3>
+                <p class="text-gray-600 mb-4">Suba una imagen o use la cámara para medir su IPD</p>
+                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 text-left text-sm">
+                    <p class="font-semibold mb-2">Proceso:</p>
+                    <ol class="text-gray-600 space-y-1 ml-4 list-decimal">
+                        <li>Detección de tarjeta CR80 en la mejilla</li>
+                        <li>Calibración precisa píxeles/mm</li>
+                        <li>Detección facial y localización de pupilas</li>
+                        <li>Cálculo de IPD en milímetros reales</li>
+                        <li>Validación y reporte de calidad</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="processingCanvas" class="hidden"></canvas>
+</div>
+
+<script>
+    // Constants
+    const CR80_WIDTH = 85.60; // mm
+    const CR80_HEIGHT = 53.98; // mm
+    
+    // State
+    let currentImage = null;
+    let videoStream = null;
+    let processingCanvas = document.getElementById('processingCanvas');
+    let processingCtx = processingCanvas.getContext('2d');
+    
+    // Elements
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const cameraBtn = document.getElementById('cameraBtn');
+    const cameraBtnText = document.getElementById('cameraBtnText');
+    const videoContainer = document.getElementById('videoContainer');
+    const video = document.getElementById('video');
+    const captureBtn = document.getElementById('captureBtn');
+    const closeCameraBtn = document.getElementById('closeCameraBtn');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const originalContainer = document.getElementById('originalContainer');
+    const originalImage = document.getElementById('originalImage');
+    const annotatedContainer = document.getElementById('annotatedContainer');
+    const annotatedCanvas = document.getElementById('annotatedCanvas');
+    const processingStatus = document.getElementById('processingStatus');
+    const processingText = document.getElementById('processingText');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const errorContainer = document.getElementById('errorContainer');
+    const errorText = document.getElementById('errorText');
+    const helpContainer = document.getElementById('helpContainer');
+    
+    // Event Listeners
+    uploadBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleFileUpload);
+    cameraBtn.addEventListener('click', toggleCamera);
+    captureBtn.addEventListener('click', capturePhoto);
+    closeCameraBtn.addEventListener('click', closeCamera);
+    analyzeBtn.addEventListener('click', analyzeImage);
+    document.getElementById('downloadImgBtn').addEventListener('click', downloadAnnotatedImage);
+    document.getElementById('downloadJsonBtn').addEventListener('click', downloadResults);
+    
+    function handleFileUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            loadImage(event.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    function loadImage(dataUrl) {
+        currentImage = dataUrl;
+        originalImage.src = dataUrl;
+        originalContainer.classList.remove('hidden');
+        analyzeBtn.classList.remove('hidden');
+        annotatedContainer.classList.add('hidden');
+        resultsContainer.classList.add('hidden');
+        errorContainer.classList.add('hidden');
+        helpContainer.classList.add('hidden');
+    }
+    
+    async function toggleCamera() {
+        if (videoStream) {
+            closeCamera();
+        } else {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                video.srcObject = videoStream;
+                videoContainer.classList.remove('hidden');
+                cameraBtnText.textContent = 'Cerrar';
+            } catch (err) {
+                showError('No se pudo acceder a la cámara: ' + err.message);
+            }
+        }
+    }
+    
+    function capturePhoto() {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+        loadImage(canvas.toDataURL('image/jpeg'));
+        closeCamera();
+    }
+    
+    function closeCamera() {
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+        }
+        videoContainer.classList.add('hidden');
+        cameraBtnText.textContent = 'Cámara';
+    }
+    
+    function showError(message) {
+        errorText.textContent = message;
+        errorContainer.classList.remove('hidden');
+        resultsContainer.classList.add('hidden');
+    }
+    
+    function showProcessing(text) {
+        processingText.textContent = text;
+        processingStatus.classList.remove('hidden');
+    }
+    
+    function hideProcessing() {
+        processingStatus.classList.add('hidden');
+    }
+    
+    async function analyzeImage() {
+        if (!currentImage) return;
+        
+        errorContainer.classList.add('hidden');
+        showProcessing('Cargando imagen...');
+        
+        try {
+            const img = new Image();
+            img.src = currentImage;
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+            });
+            
+            processingCanvas.width = img.width;
+            processingCanvas.height = img.height;
+            processingCtx.drawImage(img, 0, 0);
+            
+            // Step 1: Detect card
+            showProcessing('Detectando tarjeta CR80...');
+            await sleep(300);
+            const card = detectCard(processingCtx, img.width, img.height);
+            
+            console.log('Card detection:', card);
+            
+            if (!card.found) {
+                throw new Error('No se detectó tarjeta CR80. Asegúrese de que:\n• Esté completamente visible (4 esquinas)\n• A la altura de la mejilla\n• Con buena iluminación');
+            }
+            
+            // Validate card position
+            const cardCenterY = card.y + card.height / 2;
+            if (cardCenterY > img.height * 0.7) {
+                throw new Error('⚠️ La tarjeta está muy abajo (¿pecho?). Debe estar a la altura de la MEJILLA.');
+            }
+            if (cardCenterY < img.height * 0.3) {
+                throw new Error('⚠️ La tarjeta está muy arriba. Debe estar a la altura de la mejilla.');
+            }
+            
+            // Step 2: Calibration
+            const pxPerMm = card.width / CR80_WIDTH;
+            console.log(`Calibration: ${card.width}px / ${CR80_WIDTH}mm = ${pxPerMm.toFixed(3)} px/mm`);
+            
+            // Step 3: Detect face
+            showProcessing('Detectando rostro y pupilas...');
+            await sleep(500);
+            const landmarks = detectFace(img.width, img.height);
+            
+            // Step 4: Calculate IPD
+            showProcessing('Calculando IPD...');
+            await sleep(300);
+            const ipd = calculateIPD(landmarks, pxPerMm);
+            
+            console.log(`IPD calculated: ${ipd.toFixed(1)}mm`);
+            
+            // Validate IPD
+            if (ipd < 50) {
+                console.warn('IPD very low - card might be too far');
+            }
+            if (ipd > 75) {
+                console.warn('IPD very high - card might be too close');
+            }
+            
+            // Step 5: Create annotated image
+            showProcessing('Generando visualización...');
+            await sleep(300);
+            createAnnotatedImage(img, card, landmarks, ipd, pxPerMm);
+            
+            // Step 6: Display results
+            displayResults({
+                ipd: ipd,
+                card: card,
+                landmarks: landmarks,
+                pxPerMm: pxPerMm,
+                imageSize: { width: img.width, height: img.height }
+            });
+            
+            hideProcessing();
+            
+        } catch (err) {
+            hideProcessing();
+            showError(err.message);
+            console.error('Analysis error:', err);
+        }
+    }
+    
+    function detectCard(ctx, width, height) {
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const data = imageData.data;
+        
+        // Convert to grayscale
+        const gray = new Uint8ClampedArray(width * height);
+        for (let i = 0; i < data.length; i += 4) {
+            gray[i / 4] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        }
+        
+        // Apply Gaussian blur
+        const blurred = applyGaussianBlur(gray, width, height);
+        
+        // Edge detection
+        const edges = applySobelEdgeDetection(blurred, width, height);
+        
+        // Threshold edges
+        const threshold = 40;
+        for (let i = 0; i < edges.length; i++) {
+            edges[i] = edges[i] > threshold ? 255 : 0;
+        }
+        
+        // Find card
+        return findCardContour(edges, gray, width, height);
+    }
+    
+    function applyGaussianBlur(gray, width, height) {
+        const kernel = [1, 4, 7, 4, 1, 4, 16, 26, 16, 4, 7, 26, 41, 26, 7, 4, 16, 26, 16, 4, 1, 4, 7, 4, 1];
+        const kernelSum = 273;
+        const kernelSize = 5;
+        const offset = 2;
+        const blurred = new Uint8ClampedArray(width * height);
+        
+        for (let y = offset; y < height - offset; y++) {
+            for (let x = offset; x < width - offset; x++) {
+                let sum = 0;
+                for (let ky = -offset; ky <= offset; ky++) {
+                    for (let kx = -offset; kx <= offset; kx++) {
+                        const idx = (y + ky) * width + (x + kx);
+                        const kernelIdx = (ky + offset) * kernelSize + (kx + offset);
+                        sum += gray[idx] * kernel[kernelIdx];
+                    }
+                }
+                blurred[y * width + x] = sum / kernelSum;
+            }
+        }
+        
+        return blurred;
+    }
+    
+    function applySobelEdgeDetection(gray, width, height) {
+        const edges = new Uint8ClampedArray(width * height);
+        
+        for (let y = 1; y < height - 1; y++) {
+            for (let x = 1; x < width - 1; x++) {
+                const idx = y * width + x;
+                
+                const gx = -gray[idx - width - 1] + gray[idx - width + 1]
+                           -2 * gray[idx - 1] + 2 * gray[idx + 1]
+                           -gray[idx + width - 1] + gray[idx + width + 1];
+                
+                const gy = -gray[idx - width - 1] - 2 * gray[idx - width] - gray[idx - width + 1]
+                           + gray[idx + width - 1] + 2 * gray[idx + width] + gray[idx + width + 1];
+                
+                edges[idx] = Math.min(255, Math.sqrt(gx * gx + gy * gy));
+            }
+        }
+        
+        return edges;
+    }
+    
+    function findCardContour(edges, gray, width, height) {
+        const targetAspectRatio = CR80_WIDTH / CR80_HEIGHT;
+        const aspectTolerance = 0.12;
+        
+        let bestCard = null;
+        let bestScore = 0;
+        
+        // Search parameters - focused on cheek level
+        const startY = Math.floor(height * 0.35);
+        const endY = Math.floor(height * 0.65);
+        const minCardWidth = Math.floor(width * 0.08);
+        const maxCardWidth = Math.floor(width * 0.25);
+        
+        const stepX = 10;
+        const stepY = 10;
+        const stepW = 8;
+        
+        console.log(`Searching card: Y[${startY}-${endY}], W[${minCardWidth}-${maxCardWidth}]`);
+        
+        for (let y = startY; y < endY; y += stepY) {
+            for (let x = 10; x < width - minCardWidth - 10; x += stepX) {
+                for (let w = minCardWidth; w <= maxCardWidth; w += stepW) {
+                    const h = w / targetAspectRatio;
+                    
+                    if (y + h >= height - 10 || x + w >= width - 10) continue;
+                    
+                    const aspectRatio = w / h;
+                    if (Math.abs(aspectRatio - targetAspectRatio) > aspectTolerance * targetAspectRatio) {
+                        continue;
+                    }
+                    
+                    // Score the region
+                    let edgeScore = 0;
+                    let cornerScore = 0;
+                    
+                    // Check perimeter edges
+```
