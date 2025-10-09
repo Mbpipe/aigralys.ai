@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Medidor Óptico Facial — Guía CR80 + Fusión Iris</title>
+<style>
+  :root{--bg:#eef2ff;--ink:#0f172a;--mut:#64748b;--vio:#6d28d9;--ok:#16a34a;--bad:#dc2626}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .wrap{max-width:760px;margin:16px auto;padding:0 12px}
+  .card{background:#fff;border-radius:16px;box-shadow:0 10px 28px rgba(2,6,23,.08);padding:14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  h1{margin:0 0 4px;font-size:28px} h2{margin:0 0 10px;font-size:20px}
+  .pill{background:#eef2ff;border-radius:999px;padding:6px 10px;font-size:12px}
+  button{border:0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer;color:#fff;background:var(--vio)}
+  button.red{background:var(--bad)} button.gray{background:#334155} button:disabled{opacity:.55;cursor:not-allowed}
+  .pane{position:relative;border-radius:14px;overflow:hidden;background:#000;min-height:320px}
+  canvas#feed{display:block;width:100%;height:auto;max-height:62vh}
+  canvas#overlay{position:absolute;inset:0;pointer-events:none}
+  #badge{position:absolute;left:12px;top:12px;color:#fff;font-weight:900;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+  #meter{position:absolute;left:12px;bottom:12px;background:rgba(2,6,23,.7);color:#fff;border-radius:10px;padding:6px 10px;font-size:12px}
+  .floatbar{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .chip{position:absolute;left:10px;bottom:10px;background:rgba(2,6,23,.65);color:#fff;border-radius:999px;padding:8px 10px;font-size:12px;display:flex;align-items:center;gap:6px;pointer-events:auto}
+  .chip.right{left:auto;right:10px}
+  .btnRound{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:84px;height:84px;border-radius:50%;background:#0ea5e9;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;box-shadow:0 6px 18px rgba(14,165,233,.5);pointer-events:auto}
+  .btnRound:active{transform:translate(-50%,-50%) scale(.98)}
+  .small{font-size:12px;color:var(--mut)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .box{background:#f8fafc;border-radius:12px;padding:10px}
+  #log{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:#0b1020;color:#c7d2fe;padding:10px;border-radius:10px;max-height:160px;overflow:auto}
+  video{display:none}
+  .sliderRow{display:flex;align-items:center;gap:10px}
+  .sliderRow input[type=range]{flex:1}
+</style>
+<script src="https://docs.opencv.org/4.x/opencv.js" async></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" async></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" async></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="card" style="margin-bottom:10px">
+    <div class="row" style="justify-content:space-between">
+      <div><h1>Medidor Óptico Facial</h1><div class="small">Guía CR80 + OpenCV/MediaPipe (fusión iris)</div></div>
+      <div class="row">
+        <span id="p-sec" class="pill">secure: —</span>
+        <span id="p-ocv" class="pill">opencv: loading…</span>
+        <span id="p-sta" class="pill">estado: idle</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Captura de Imagen</h2>
+    <div class="row" style="margin:8px 0 12px">
+      <label class="row">
+        <button id="pick" class="gray">🖼️ Subir Foto</button>
+        <input id="file" type="file" accept="image/*" style="display:none">
+      </label>
+      <button id="open">📷 Cámara</button>
+      <button id="close" class="red">🛑 Cerrar</button>
+    </div>
+
+    <div class="pane" id="pane">
+      <video id="v" playsinline muted></video>
+      <canvas id="feed"></canvas>
+      <canvas id="overlay"></canvas>
+      <div id="badge" style="display:none"></div>
+      <div id="meter" style="display:none"></div>
+      <div class="floatbar" id="floatbar" style="display:none">
+        <button id="capture" class="btnRound">📸</button>
+        <label class="chip"><input id="useGuide" type="checkbox" checked>Usar Guía</label>
+        <label class="chip right"><input id="autoCap" type="checkbox">Auto-capturar</label>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <div class="sliderRow" style="flex:1">
+        <span class="small" style="min-width:140px">Ajuste fino escala</span>
+        <input id="scaleAdj" type="range" min="-5" max="5" value="0" step="0.5">
+        <span id="scaleAdjVal" class="small">0%</span>
+      </div>
+      <button id="process" class="gray">🧮 Procesar</button>
+    </div>
+
+    <div id="log" style="margin-top:10px"></div>
+  </div>
+
+  <div id="out" class="card" style="display:none;margin-top:10px">
+    <h2>Resultado</h2>
+    <div class="grid" style="margin-top:6px">
+      <div class="box"><div class="small">IPD</div><div id="ipd" style="font-size:28px;font-weight:900">–</div></div>
+      <div class="box">
+        <div class="small">Escala</div>
+        <div style="font-weight:800"><span id="pxmm">–</span> px/mm</div>
+        <div id="scaleSrc" class="small">–</div>
+      </div>
+    </div>
+    <div class="small" id="corrNote" style="margin-top:6px;color:#065f46;display:none">Corrección de coplanaridad aplicada.</div>
+    <div style="position:relative;margin-top:10px">
+      <img id="final" style="width:100%;border-radius:12px" alt="">
+      <a id="dl" download="annotated.png" class="small" style="display:inline-block;margin-top:6px">Descargar PNG</a>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- util ---------- */
+const $=id=>document.getElementById(id);
+const v=$('v'), feed=$('feed'), overlay=$('overlay'),
+      fctx=feed.getContext('2d',{willReadFrequently:true}),
+      octx=overlay.getContext('2d',{willReadFrequently:true});
+const pane=$('pane'), badge=$('badge'), meter=$('meter'), floatbar=$('floatbar');
+const pSec=$('p-sec'), pOcv=$('p-ocv'), pSta=$('p-sta'), logEl=$('log');
+const btnOpen=$('open'), btnClose=$('close'), btnCapture=$('capture'), btnProcess=$('process'), pickBtn=$('pick'), fileIn=$('file');
+const out=$('out'), ipdEl=$('ipd'), pxmmEl=$('pxmm'), scaleSrcEl=$('scaleSrc'), finalImg=$('final'), dl=$('dl');
+const scaleAdj=$('scaleAdj'), scaleAdjVal=$('scaleAdjVal'), corrNote=$('corrNote');
+const log=s=> logEl.textContent = `[${new Date().toLocaleTimeString()}] ${s}\n` + logEl.textContent;
+const setState=s=>pSta.textContent='estado: '+s;
+pSec.textContent='secure: '+String(window.isSecureContext);
+
+/* ---------- const ---------- */
+const CR80_W=85.60, CR80_H=53.98, AR=CR80_W/CR80_H;
+const IRIS_MM=11.7; // diámetro iris humano medio
+
+/* ---------- opencv ready ---------- */
+let ocvReady=false;
+if(window.cv && cv.getBuildInformation){ ocvReady=true; pOcv.textContent='opencv: ready' }
+else{
+  pOcv.textContent='opencv: loading…';
+  window.Module={onRuntimeInitialized:()=>{ ocvReady=true; pOcv.textContent='opencv: ready'; log('OpenCV listo') }};
+}
+
+/* ---------- layout ---------- */
+function sizeCanvases(){
+  const r=pane.getBoundingClientRect();
+  feed.width=r.width; feed.height=r.height;
+  overlay.width=r.width; overlay.height=r.height;
+}
+new ResizeObserver(sizeCanvases).observe(pane); sizeCanvases();
+
+/* ---------- video drawing ---------- */
+let stream=null, raf=0, captured=null;
+let scaleDisplay=1, offsetX=0, offsetY=0;
+function drawVideoToFeed(){
+  if(!v.videoWidth){ raf=requestAnimationFrame(drawVideoToFeed); return }
+  const cw=feed.width, ch=feed.height, vw=v.videoWidth, vh=v.videoHeight;
+  scaleDisplay = Math.max(cw/vw, ch/vh);
+  const dw = vw*scaleDisplay, dh = vh*scaleDisplay;
+  offsetX = (cw-dw)/2; offsetY = (ch-dh)/2;
+
+  fctx.save();
+  fctx.clearRect(0,0,cw,ch);
+  fctx.translate(cw,0); fctx.scale(-1,1);
+  fctx.drawImage(v, 0,0,vw,vh, (-offsetX), offsetY, dw, dh);
+  fctx.restore();
+
+  drawHUD();
+  raf=requestAnimationFrame(drawVideoToFeed);
+}
+
+/* ---------- guía CR80 con suavizado + histéresis ---------- */
+const guide={x:0,y:0,w:0,h:0,pxPerMm:null};
+let ema={score:0,fill:0,angle:90,center:1}; const alpha=0.2;
+let okState=false, okFrames=0;
+const T_on={score:0.60, fillLow:0.86, fillHigh:1.08, angle:12, center:0.10};
+const T_off={score:0.50, fillLow:0.82, fillHigh:1.12, angle:16, center:0.14};
+const useGuide=$('useGuide'), autoCap=$('autoCap');
+
+function drawHUD(){
+  octx.clearRect(0,0,overlay.width,overlay.height);
+  if(!useGuide.checked){ badge.style.display='none'; meter.style.display='none'; guide.pxPerMm=null; okState=false; okFrames=0; return }
+
+  const vw=overlay.width, vh=overlay.height;
+  const gw=Math.round(Math.min(vw,vh)*0.28);           // un poco más chico
+  const gh=Math.round(gw/AR);
+  const gx=Math.round((vw-gw)/2);
+  const gy=Math.round(vh*0.60-gh/2);                    // debajo de la nariz
+  Object.assign(guide,{x:gx,y:gy,w:gw,h:gh});
+
+  octx.fillStyle='rgba(0,0,0,.35)'; octx.fillRect(0,0,vw,vh);
+  octx.clearRect(gx,gy,gw,gh);
+
+  badge.style.display='block'; meter.style.display='block';
+
+  let r=null;
+  if(ocvReady){
+    const img=fctx.getImageData(gx,gy,gw,gh);
+    r=ocvDetect(img,gw,gh);
+  }
+  if(r){
+    ema.score = (1-alpha)*ema.score + alpha*(r.found?r.score:0);
+    ema.fill  = (1-alpha)*ema.fill  + alpha*(r.found?r.fill:0);
+    ema.angle = (1-alpha)*ema.angle + alpha*(r.found?r.angle:90);
+    ema.center= (1-alpha)*ema.center+ alpha*(r.found?r.centerDist:1);
+  }
+  const meetsOn  = ema.score>=T_on.score && ema.fill>=T_on.fillLow && ema.fill<=T_on.fillHigh && ema.angle<=T_on.angle && ema.center<=T_on.center;
+  const meetsOff = ema.score<T_off.score || ema.fill<T_off.fillLow || ema.fill>T_off.fillHigh || ema.angle>T_off.angle || ema.center>T_off.center;
+  if(!okState && meetsOn) okState=true; else if(okState && meetsOff) okState=false;
+
+  octx.lineWidth=4; octx.strokeStyle = okState? '#16a34a' : '#a78bfa'; octx.strokeRect(gx,gy,gw,gh);
+  badge.textContent = `Guía CR80 — ${okState?'OK':'ajusta'} • score ${Math.round(ema.score*100)}%`;
+
+  if(okState){
+    guide.pxPerMm = (gw/scaleDisplay) / CR80_W;
+    meter.textContent = `px/mm=${guide.pxPerMm.toFixed(3)} • fill=${Math.round(ema.fill*100)}% • ang=${ema.angle.toFixed(1)}°`;
+    okFrames++;
+  }else{
+    meter.textContent = `Ancho:${gw}px • Alto:${gh}px • score:${Math.round(ema.score*100)}%`;
+    okFrames=0; guide.pxPerMm=null;
+  }
+  if(autoCap.checked && okState && okFrames>=10){ okFrames=0; captureNow() }
+}
+
+function ocvDetect(img,w,h){
+  try{
+    const src=cv.matFromImageData(img);
+    const gray=new cv.Mat(), blur=new cv.Mat(), edges=new cv.Mat();
+    cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+    cv.equalizeHist(gray,gray);
+    cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);
+    let s=0; const dd=blur.data; for(let i=0;i<dd.length;i++) s+=dd[i];
+    const m=s/dd.length, lo=Math.max(0,0.66*m), hi=Math.min(255,1.33*m);
+    cv.Canny(blur,edges,lo,hi);
+    const k=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(3,3)); cv.dilate(edges,edges,k);
+    const cont=new cv.MatVector(), hier=new cv.Mat();
+    cv.findContours(edges,cont,hier,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
+    let best=null, bestScore=0;
+    for(let i=0;i<cont.size();i++){
+      const c=cont.get(i); const area=cv.contourArea(c); if(area<(w*h)*0.10){ c.delete(); continue }
+      const r=cv.minAreaRect(c);
+      const L=Math.max(r.size.width,r.size.height), S=Math.min(r.size.width,r.size.height);
+      const ar=L/S, arScore=Math.max(0,1-Math.min(Math.abs(ar-(CR80_W/CR80_H))/0.18,1));
+      const contScore=Math.max(0,Math.min(1,(area/(w*h))*2.0));
+      const score=0.72*arScore+0.28*contScore;
+      if(score>bestScore){
+        const fill=(r.size.width*r.size.height)/(w*h);
+        const cx=r.center.x/w - 0.5, cy=r.center.y/h - 0.5;
+        bestScore=score; best={found:true,score,fill,centerDist:Math.hypot(cx,cy),angle:Math.abs(r.angle)};
+      }
+      c.delete();
+    }
+    gray.delete(); blur.delete(); edges.delete(); cont.delete(); hier.delete(); src.delete();
+    return best||{found:false,score:0};
+  }catch(e){ log('ocv error: '+e); return null }
+}
+
+/* ---------- cámara ---------- */
+function openCam(){
+  out.style.display='none'; captured=null;
+  (async ()=>{
+    setState('opening');
+    try{
+      v.setAttribute('playsinline',''); v.playsInline=true; v.muted=true;
+      const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'user'},width:{ideal:1280},height:{ideal:720}},audio:false});
+      v.srcObject=st; await v.play().catch(()=>setTimeout(()=>v.play().catch(()=>{}),150));
+      stream=st; setState('ready'); floatbar.style.display='flex'; badge.style.display='block'; meter.style.display='block';
+      ema={score:0,fill:0,angle:90,center:1}; okState=false; okFrames=0;
+      requestAnimationFrame(drawVideoToFeed);
+    }catch(e){ setState('error'); alert('No se pudo acceder a la cámara: '+e.message) }
+  })();
+}
+function closeCam(){
+  cancelAnimationFrame(raf); try{v.pause()}catch{}
+  v.srcObject=null; if(stream){stream.getTracks().forEach(t=>t.stop()); stream=null}
+  setState('idle'); floatbar.style.display='none'; badge.style.display='none'; meter.style.display='none';
+  fctx.clearRect(0,0,feed.width,feed.height); octx.clearRect(0,0,overlay.width,overlay.height);
+}
+
+/* ---------- captura / proceso ---------- */
+let lastFusionNote='';
+function captureNow(){
+  if(!v.videoWidth){ alert('La cámara aún no está lista'); return }
+  const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight;
+  const x=c.getContext('2d');
+  x.translate(c.width,0); x.scale(-1,1);
+  x.drawImage(v,0,0,c.width,c.height);
+  captured=c.toDataURL('image/jpeg',0.92);
+  closeCam();
+  log('Foto capturada');
+}
+const pxmmFromGuide = ()=> guide.pxPerMm ?? null;
+
+const irisDiameterPx = (lm,isLeft)=>{
+  // MediaPipe: iris 468–471 (derecho), 473–476 (izquierdo)
+  const a = isLeft ? lm.slice(473,477) : lm.slice(468,472);
+  const cx = a.reduce((s,l)=>s+l.x,0)/a.length, cy=a.reduce((s,l)=>s+l.y,0)/a.length;
+  // diámetro ~ media de distancias entre puntos opuestos
+  const d1=Math.hypot((a[0].x-a[2].x),(a[0].y-a[2].y));
+  const d2=Math.hypot((a[1].x-a[3].x),(a[1].y-a[3].y));
+  return ((d1+d2)/2);
+};
+
+async function processNow(){
+  try{
+    if(!captured){ captureNow() }
+    const img=await new Promise((res,rej)=>{ const im=new Image(); im.src=captured; im.onload=()=>res(im); im.onerror=rej });
+
+    // 1) escala por guía (si está)
+    let pxmm_card = pxmmFromGuide();
+
+    // 2) landmarks + escala por iris
+    let L=null, pxmm_face=null;
+    if(window.FaceMesh){
+      const fm=new window.FaceMesh({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+      fm.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:0.5,minTrackingConfidence:0.5});
+      L=await new Promise(resolve=>{
+        const c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
+        c.getContext('2d').drawImage(img,0,0);
+        fm.onResults(r=>{
+          if(r.multiFaceLandmarks && r.multiFaceLandmarks[0]){
+            const lm=r.multiFaceLandmarks[0];
+            const irisPxR = irisDiameterPx(lm,false)*img.width; // valores 0..1 -> px
+            const irisPxL = irisDiameterPx(lm,true )*img.width;
+            pxmm_face = ((irisPxR+irisPxL)/2) / IRIS_MM;
+            const iris = a=>({x:a.reduce((s,l)=>s+l.x*img.width,0)/a.length, y:a.reduce((s,l)=>s+l.y*img.height,0)/a.length});
+            resolve({left:iris(lm.slice(473,477)), right:iris(lm.slice(468,472))});
+          } else resolve(null);
+        });
+        fm.send({image:c});
+      });
+    }
+    if(!L){ const cx=img.width/2, cy=img.height*0.45, d=img.width*0.15/2; L={left:{x:cx-d,y:cy}, right:{x:cx+d,y:cy}} }
+
+    // 3) fusión de escalas + ajuste fino
+    const adj = 1 + (parseFloat(scaleAdj.value||'0')/100);
+    let pxmm, srcTxt=[], corr=false;
+    if(pxmm_card && pxmm_face){
+      const diff = Math.abs(pxmm_face - pxmm_card)/pxmm_card; // relativo a tarjeta
+      let wFace = diff>0.08 ? 0.70 : 0.40;                  // si difieren mucho, confiar más en la cara
+      pxmm = (wFace*pxmm_face + (1-wFace)*pxmm_card) * adj;
+      srcTxt.push(`Guía`, `Iris ${Math.round(wFace*100)}%`);
+      corr = diff>0.08;
+      lastFusionNote = `Fusion: card=${pxmm_card.toFixed(3)}, face=${pxmm_face.toFixed(3)}, diff=${Math.round(diff*100)}%, wFace=${Math.round(wFace*100)}%`;
+    }else if(pxmm_card){
+      pxmm = pxmm_card * adj; srcTxt.push('Guía');
+      lastFusionNote='';
+    }else if(pxmm_face){
+      pxmm = pxmm_face * adj; srcTxt.push('Iris');
+      lastFusionNote='';
+    }else{
+      const approxWidthPx = Math.min(img.width,img.height)*0.22;
+      pxmm = (approxWidthPx/CR80_W) * adj; srcTxt.push('Estimación');
+      lastFusionNote='';
+    }
+
+    // 4) IPD
+    const dx=L.right.x-L.left.x, dy=L.right.y-L.left.y;
+    const ipd=Math.round((Math.hypot(dx,dy)/pxmm)*10)/10;
+
+    // 5) anotado
+    const outC=document.createElement('canvas'); outC.width=img.width; outC.height=img.height;
+    const a=outC.getContext('2d'); a.drawImage(img,0,0);
+    a.fillStyle='#ff0000';
+    a.beginPath(); a.arc(L.left.x,L.left.y,10,0,Math.PI*2); a.fill();
+    a.beginPath(); a.arc(L.right.x,L.right.y,10,0,Math.PI*2); a.fill();
+    a.strokeStyle='#ff0000'; a.lineWidth=4; a.beginPath(); a.moveTo(L.left.x,L.left.y); a.lineTo(L.right.x,L.right.y); a.stroke();
+    a.font='bold 36px system-ui,-apple-system'; a.fillStyle='#fff'; a.strokeStyle='#000'; a.lineWidth=6;
+    const mx=(L.left.x+L.right.x)/2, my=(L.left.y+L.right.y)-28;
+    a.strokeText(`IPD: ${ipd} mm`, mx-110, my); a.fillText(`IPD: ${ipd} mm`, mx-110, my);
+    const url=outC.toDataURL('image/png');
+
+    // 6) UI
+    pxmmEl.textContent = pxmm.toFixed(3);
+    scaleSrcEl.textContent = srcTxt.join(' + ') + (parseFloat(scaleAdj.value)?` • adj ${scaleAdj.value}%`:``);
+    ipdEl.textContent=ipd+' mm';
+    corrNote.style.display = corr ? 'block' : 'none';
+    if(corr) log('Corrección coplanaridad • '+lastFusionNote);
+
+    finalImg.src=url; dl.href=url; out.style.display='block';
+    out.scrollIntoView({behavior:'smooth'});
+  }catch(e){ alert('No se pudo procesar: '+e.message) }
+}
+
+/* ---------- eventos ---------- */
+$('open').onclick=openCam; $('close').onclick=closeCam;
+$('capture').onclick=captureNow; $('process').onclick=processNow;
+$('pick').onclick=()=>$('file').click();
+$('file').onchange=e=>{
+  const f=e.target.files?.[0]; if(!f) return;
+  const rd=new FileReader(); rd.onload=ev=>{
+    captured=ev.target.result; closeCam(); log('Foto cargada'); out.style.display='none';
+  }; rd.readAsDataURL(f);
+};
+
+/* ---------- helpers ---------- */
+function updateAdj(){ scaleAdjVal.textContent=(scaleAdj.value|0)+'%'; localStorage.setItem('scaleAdjPct',scaleAdj.value) }
+scaleAdj.value = localStorage.getItem('scaleAdjPct') ?? '0';
+updateAdj(); scaleAdj.oninput=updateAdj;
+
+/* ---------- OpenCV detector en ROI ---------- */
+function ocvDetect(img,w,h){
+  try{
+    const src=cv.matFromImageData(img);
+    const gray=new cv.Mat(), blur=new cv.Mat(), edges=new cv.Mat();
+    cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+    cv.equalizeHist(gray,gray);
+    cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);
+    let s=0; const dd=blur.data; for(let i=0;i<dd.length;i++) s+=dd[i];
+    const m=s/dd.length, lo=Math.max(0,0.66*m), hi=Math.min(255,1.33*m);
+    cv.Canny(blur,edges,lo,hi);
+    const k=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(3,3)); cv.dilate(edges,edges,k);
+    const cont=new cv.MatVector(), hier=new cv.Mat();
+    cv.findContours(edges,cont,hier,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
+    let best=null, bestScore=0;
+    for(let i=0;i<cont.size();i++){
+      const c=cont.get(i); const area=cv.contourArea(c); if(area<(w*h)*0.10){ c.delete(); continue }
+      const r=cv.minAreaRect(c);
+      const L=Math.max(r.size.width,r.size.height), S=Math.min(r.size.width,r.size.height);
+      const ar=L/S, arScore=Math.max(0,1-Math.min(Math.abs(ar-(CR80_W/CR80_H))/0.18,1));
+      const contScore=Math.max(0,Math.min(1,(area/(w*h))*2.0));
+      const score=0.72*arScore+0.28*contScore;
+      if(score>bestScore){
+        const fill=(r.size.width*r.size.height)/(w*h);
+        const cx=r.center.x/w - 0.5, cy=r.center.y/h - 0.5;
+        bestScore=score; best={found:true,score,fill,centerDist:Math.hypot(cx,cy),angle:Math.abs(r.angle)};
+      }
+      c.delete();
+    }
+    gray.delete(); blur.delete(); edges.delete(); cont.delete(); hier.delete(); src.delete();
+    return best||{found:false,score:0};
+  }catch(e){ log('ocv error: '+e); return null }
+}
+</script>
+</body>
+</html>
