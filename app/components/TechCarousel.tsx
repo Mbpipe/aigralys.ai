@@ -4,23 +4,23 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 
 const techLogosRow1 = [
-  { name: 'Azure', logo: 'https://cdn.simpleicons.org/microsoftazure/0078D4' },
-  { name: 'OpenAI', logo: 'https://cdn.simpleicons.org/openai/412991' },
-  { name: 'Python', logo: 'https://cdn.simpleicons.org/python/3776AB' },
-  { name: 'Google Cloud', logo: 'https://cdn.simpleicons.org/googlecloud/4285F4' },
-  { name: 'LangChain', logo: 'https://cdn.simpleicons.org/langchain/1C3C3C' },
-  { name: 'AWS', logo: 'https://cdn.simpleicons.org/amazonwebservices/FF9900' },
-  { name: 'HuggingFace', logo: 'https://cdn.simpleicons.org/huggingface/FFD21E' },
+  { name: 'Azure', logo: 'https://unpkg.com/simple-icons@latest/icons/microsoftazure.svg' },
+  { name: 'OpenAI', logo: 'https://unpkg.com/simple-icons@latest/icons/openai.svg' },
+  { name: 'Python', logo: 'https://unpkg.com/simple-icons@latest/icons/python.svg' },
+  { name: 'Google Cloud', logo: 'https://unpkg.com/simple-icons@latest/icons/googlecloud.svg' },
+  { name: 'LangChain', logo: 'https://unpkg.com/simple-icons@latest/icons/langchain.svg' },
+  { name: 'AWS', logo: 'https://unpkg.com/simple-icons@latest/icons/amazonwebservices.svg' },
+  { name: 'HuggingFace', logo: 'https://unpkg.com/simple-icons@latest/icons/huggingface.svg' },
 ]
 
 const techLogosRow2 = [
-  { name: 'Docker', logo: 'https://cdn.simpleicons.org/docker/2496ED' },
-  { name: 'React', logo: 'https://cdn.simpleicons.org/react/61DAFB' },
-  { name: 'TensorFlow', logo: 'https://cdn.simpleicons.org/tensorflow/FF6F00' },
-  { name: 'Kubernetes', logo: 'https://cdn.simpleicons.org/kubernetes/326CE5' },
-  { name: 'PostgreSQL', logo: 'https://cdn.simpleicons.org/postgresql/4169E1' },
-  { name: 'FastAPI', logo: 'https://cdn.simpleicons.org/fastapi/009688' },
-  { name: 'Redis', logo: 'https://cdn.simpleicons.org/redis/DC382D' },
+  { name: 'Docker', logo: 'https://unpkg.com/simple-icons@latest/icons/docker.svg' },
+  { name: 'React', logo: 'https://unpkg.com/simple-icons@latest/icons/react.svg' },
+  { name: 'TensorFlow', logo: 'https://unpkg.com/simple-icons@latest/icons/tensorflow.svg' },
+  { name: 'Kubernetes', logo: 'https://unpkg.com/simple-icons@latest/icons/kubernetes.svg' },
+  { name: 'PostgreSQL', logo: 'https://unpkg.com/simple-icons@latest/icons/postgresql.svg' },
+  { name: 'FastAPI', logo: 'https://unpkg.com/simple-icons@latest/icons/fastapi.svg' },
+  { name: 'Redis', logo: 'https://unpkg.com/simple-icons@latest/icons/redis.svg' },
 ]
 
 // Triplicar para efecto infinito
