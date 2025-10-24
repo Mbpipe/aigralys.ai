@@ -29,11 +29,11 @@ export default function Hero() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
-            className="flex justify-center items-center mb-4 relative"
+            className="flex flex-row items-center justify-center gap-6 sm:gap-8 md:gap-10 mb-4 relative"
           >
             {/* Glow animado de fondo */}
             <motion.div
-              className="absolute inset-0 blur-3xl opacity-40"
+              className="absolute inset-0 blur-3xl opacity-40 pointer-events-none"
               animate={{
                 background: [
                   'radial-gradient(circle, rgba(43,154,160,0.4) 0%, transparent 70%)',
@@ -50,48 +50,56 @@ export default function Hero() {
               }}
             />
             
-            {/* Logo estático */}
-            <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 xl:w-[32rem] xl:h-[32rem]"            >
-              <Image 
-                src="/images/logo.png" 
-                alt="Aigralys Logo" 
-                fill
-                className="object-contain drop-shadow-2xl"
-                priority
-              />
+            {/* Contenedor del ícono con órbitas */}
+            <div className="relative">
+              {/* Logo ícono - solo circuito */}
+              <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-52 md:h-52 lg:w-64 lg:h-64">
+                <Image 
+                  src="/images/logo.png" 
+                  alt="Aigralys Icon" 
+                  fill
+                  className="object-contain drop-shadow-2xl"
+                  priority
+                />
+              </div>
+              
+              {/* Anillos orbitales sutiles */}
+              <motion.div
+                className="absolute inset-0 pointer-events-none"
+              >
+                <motion.div
+                  className="absolute inset-0 border-2 border-azul/20 rounded-full"
+                  animate={{
+                    scale: [1, 1.15, 1],
+                    opacity: [0.2, 0.4, 0.2],
+                    rotate: [0, 360],
+                  }}
+                  transition={{
+                    duration: 10,
+                    repeat: Infinity,
+                    ease: 'linear',
+                  }}
+                />
+                <motion.div
+                  className="absolute inset-0 border-2 border-cian/20 rounded-full"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.2, 0.3, 0.2],
+                    rotate: [360, 0],
+                  }}
+                  transition={{
+                    duration: 12,
+                    repeat: Infinity,
+                    ease: 'linear',
+                  }}
+                />
+              </motion.div>
             </div>
             
-            {/* Anillos orbitales sutiles (fuera del contenedor del logo) */}
-            <motion.div
-              className="absolute inset-0 pointer-events-none"
-            >
-              <motion.div
-                className="absolute inset-0 border-2 border-azul/20 rounded-full"
-                animate={{
-                  scale: [1, 1.15, 1],
-                  opacity: [0.2, 0.4, 0.2],
-                  rotate: [0, 360],
-                }}
-                transition={{
-                  duration: 10,
-                  repeat: Infinity,
-                  ease: 'linear',
-                }}
-              />
-              <motion.div
-                className="absolute inset-0 border-2 border-cian/20 rounded-full"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.2, 0.3, 0.2],
-                  rotate: [360, 0],
-                }}
-                transition={{
-                  duration: 12,
-                  repeat: Infinity,
-                  ease: 'linear',
-                }}
-              />
-            </motion.div>
+            {/* Texto Aigralys con tipografía del navbar */}
+            <div className="text-white font-bold text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight">
+              Aigralys
+            </div>
           </motion.div>
 
           <motion.div
