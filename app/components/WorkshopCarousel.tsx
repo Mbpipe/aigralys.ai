@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { motion, AnimatePresence } from 'framer-motion'
 
 const workshopImages = [
   '0234983C-7DC8-41F6-A494-645A63F4A795_4_5005_c.jpeg',
@@ -22,178 +21,78 @@ const workshopImages = [
   'FB528A1F-C4B9-4B7B-B101-DC06FF969BF6_4_5005_c.jpeg',
 ]
 
+// Duplicar imágenes para crear efecto infinito
+const infiniteImages = [...workshopImages, ...workshopImages, ...workshopImages]
+
 export default function WorkshopCarousel() {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isHovered, setIsHovered] = useState(false)
-  const [direction, setDirection] = useState(0)
-
-  const nextSlide = useCallback(() => {
-    setDirection(1)
-    setCurrentIndex((prev) => (prev + 1) % workshopImages.length)
-  }, [])
-
-  const prevSlide = useCallback(() => {
-    setDirection(-1)
-    setCurrentIndex((prev) => (prev - 1 + workshopImages.length) % workshopImages.length)
-  }, [])
-
-  const goToSlide = useCallback((index: number) => {
-    setDirection(index > currentIndex ? 1 : -1)
-    setCurrentIndex(index)
-  }, [currentIndex])
-
-  // Autoplay
-  useEffect(() => {
-    if (isHovered) return
-
-    const interval = setInterval(() => {
-      nextSlide()
-    }, 4000)
-
-    return () => clearInterval(interval)
-  }, [isHovered, nextSlide])
-
-  const variants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 1000 : -1000,
-      opacity: 0,
-      scale: 0.8,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      scale: 1,
-    },
-    exit: (direction: number) => ({
-      x: direction < 0 ? 1000 : -1000,
-      opacity: 0,
-      scale: 0.8,
-    }),
-  }
-
   return (
-    <div
-      className="relative max-w-4xl mx-auto"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Main carousel */}
-      <div className="relative h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden glass">
-        <AnimatePresence initial={false} custom={direction}>
+    <div className="relative w-full overflow-hidden py-8">
+      {/* Gradientes en los bordes para fade effect */}
+      <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-grafito to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-grafito to-transparent z-10 pointer-events-none" />
+      
+      {/* Tira de fotos con movimiento orbital */}
+      <motion.div
+        className="flex gap-6"
+        animate={{
+          x: [0, -1920], // Ajustar según el ancho de las imágenes
+        }}
+        transition={{
+          x: {
+            repeat: Infinity,
+            duration: 40,
+            ease: 'linear',
+          },
+        }}
+      >
+        {infiniteImages.map((image, index) => (
           <motion.div
-            key={currentIndex}
-            custom={direction}
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: 'spring', stiffness: 300, damping: 30 },
-              opacity: { duration: 0.4 },
-              scale: { duration: 0.4 },
+            key={`${image}-${index}`}
+            className="relative flex-shrink-0 w-36 h-36 sm:w-40 sm:h-40 rounded-xl overflow-hidden glass"
+            animate={{
+              y: [
+                0,
+                Math.sin((index * Math.PI) / 4) * 20,
+                0,
+              ],
+              rotate: [
+                0,
+                Math.sin((index * Math.PI) / 6) * 5,
+                0,
+              ],
             }}
-            className="absolute inset-0"
-          >
-            <Image
-              src={`/images/workshops/${workshopImages[currentIndex]}`}
-              alt={`Workshop ${currentIndex + 1}`}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-              priority={currentIndex === 0}
-            />
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-grafito/60 via-transparent to-transparent" />
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Navigation arrows */}
-        <button
-          onClick={prevSlide}
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full glass hover:bg-white/20 transition-all duration-300 hover:scale-110 group"
-          aria-label="Previous image"
-        >
-          <svg
-            className="w-6 h-6 text-humo group-hover:text-azul transition-colors"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-
-        <button
-          onClick={nextSlide}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full glass hover:bg-white/20 transition-all duration-300 hover:scale-110 group"
-          aria-label="Next image"
-        >
-          <svg
-            className="w-6 h-6 text-humo group-hover:text-azul transition-colors"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
-
-        {/* Counter */}
-        <div className="absolute bottom-4 right-4 z-10 px-3 py-1.5 glass rounded-full">
-          <span className="text-sm font-medium text-humo">
-            {currentIndex + 1} / {workshopImages.length}
-          </span>
-        </div>
-      </div>
-
-      {/* Dots indicator */}
-      <div className="flex justify-center gap-2 mt-6">
-        {workshopImages.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            className={`transition-all duration-300 rounded-full ${
-              index === currentIndex
-                ? 'w-8 h-2 bg-azul'
-                : 'w-2 h-2 bg-humo/30 hover:bg-humo/50'
-            }`}
-            aria-label={`Go to image ${index + 1}`}
-          />
-        ))}
-      </div>
-
-      {/* Thumbnail preview (hidden on mobile) */}
-      <div className="hidden md:flex gap-3 mt-6 overflow-x-auto pb-2 scrollbar-hide">
-        {workshopImages.map((image, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden transition-all duration-300 ${
-              index === currentIndex
-                ? 'ring-2 ring-azul scale-110'
-                : 'opacity-50 hover:opacity-100'
-            }`}
+            transition={{
+              y: {
+                repeat: Infinity,
+                duration: 4 + (index % 3),
+                ease: 'easeInOut',
+                delay: index * 0.2,
+              },
+              rotate: {
+                repeat: Infinity,
+                duration: 5 + (index % 4),
+                ease: 'easeInOut',
+                delay: index * 0.15,
+              },
+            }}
+            whileHover={{
+              scale: 1.15,
+              zIndex: 20,
+              transition: { duration: 0.2 },
+            }}
           >
             <Image
               src={`/images/workshops/${image}`}
-              alt={`Thumbnail ${index + 1}`}
+              alt={`Workshop momento ${(index % workshopImages.length) + 1}`}
               fill
               className="object-cover"
-              sizes="80px"
+              sizes="160px"
             />
-          </button>
+            {/* Overlay sutil */}
+            <div className="absolute inset-0 bg-gradient-to-t from-grafito/40 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   )
 }
