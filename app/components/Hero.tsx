@@ -29,7 +29,7 @@ export default function Hero() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
-            className="flex flex-col items-center justify-center mb-4 relative"
+            className="flex justify-center items-center mb-4 relative"
           >
             {/* Glow animado de fondo */}
             <motion.div
@@ -50,56 +50,48 @@ export default function Hero() {
               }}
             />
             
-            {/* Contenedor del logo con órbitas */}
-            <div className="relative">
-              {/* Logo estático - Solo el icono del circuito-hoja */}
-              <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 xl:w-64 xl:h-64 mx-auto mb-6">
-                <Image 
-                  src="/images/logo.png" 
-                  alt="Aigralys Icon" 
-                  fill
-                  className="object-contain drop-shadow-2xl"
-                  priority
-                />
-              </div>
-              
-              {/* Anillos orbitales sutiles */}
-              <motion.div
-                className="absolute inset-0 pointer-events-none"
-              >
-                <motion.div
-                  className="absolute inset-0 border-2 border-azul/20 rounded-full"
-                  animate={{
-                    scale: [1, 1.15, 1],
-                    opacity: [0.2, 0.4, 0.2],
-                    rotate: [0, 360],
-                  }}
-                  transition={{
-                    duration: 10,
-                    repeat: Infinity,
-                    ease: 'linear',
-                  }}
-                />
-                <motion.div
-                  className="absolute inset-0 border-2 border-cian/20 rounded-full"
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.2, 0.3, 0.2],
-                    rotate: [360, 0],
-                  }}
-                  transition={{
-                    duration: 12,
-                    repeat: Infinity,
-                    ease: 'linear',
-                  }}
-                />
-              </motion.div>
+            {/* Logo estático */}
+            <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 xl:w-[32rem] xl:h-[32rem]"            >
+              <Image 
+                src="/images/logo.png" 
+                alt="Aigralys Logo" 
+                fill
+                className="object-contain drop-shadow-2xl"
+                priority
+              />
             </div>
             
-            {/* Texto AIGRALYS - Misma tipografía que navbar, blanco */}
-            <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-white tracking-wider">
-              AIGRALYS
-            </h2>
+            {/* Anillos orbitales sutiles (fuera del contenedor del logo) */}
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+            >
+              <motion.div
+                className="absolute inset-0 border-2 border-azul/20 rounded-full"
+                animate={{
+                  scale: [1, 1.15, 1],
+                  opacity: [0.2, 0.4, 0.2],
+                  rotate: [0, 360],
+                }}
+                transition={{
+                  duration: 10,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }}
+              />
+              <motion.div
+                className="absolute inset-0 border-2 border-cian/20 rounded-full"
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.2, 0.3, 0.2],
+                  rotate: [360, 0],
+                }}
+                transition={{
+                  duration: 12,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }}
+              />
+            </motion.div>
           </motion.div>
 
           <motion.div
