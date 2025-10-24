@@ -200,16 +200,27 @@
     <p class="section-subtitle" data-i18n="contact.subtitle">¿Listo para transformar tu ecosistema digital con Agentes de IA?</p>
 
     <div class="contact-form">
-      <form action="https://formspree.io/f/your-id" method="POST">
-        <input type="text" name="name" data-i18n="contact.form.name" placeholder="Nombre" required />
-        <input type="email" name="email" data-i18n="contact.form.email" placeholder="Email" required />
-        <input type="text" name="company" data-i18n="contact.form.company" placeholder="Empresa" />
-        <textarea name="message" rows="5" data-i18n="contact.form.message" placeholder="Mensaje"></textarea>
+      <form action="https://formspree.io/f/xrgwkpzv" method="POST" id="contact-form">
+        <div class="form-group">
+          <input type="text" name="name" data-i18n="contact.form.name" placeholder="Nombre" required minlength="2" />
+          <span class="error-message" data-error="name"></span>
+        </div>
+        <div class="form-group">
+          <input type="email" name="email" data-i18n="contact.form.email" placeholder="Email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" />
+          <span class="error-message" data-error="email"></span>
+        </div>
+        <div class="form-group">
+          <input type="text" name="company" data-i18n="contact.form.company" placeholder="Empresa" />
+        </div>
+        <div class="form-group">
+          <textarea name="message" rows="5" data-i18n="contact.form.message" placeholder="Mensaje" required minlength="10"></textarea>
+          <span class="error-message" data-error="message"></span>
+        </div>
         <button type="submit" class="button" data-i18n="contact.form.submit">Enviar mensaje</button>
       </form>
       <div class="contact-info">
-        <p data-i18n="contact.email"></p>
-        <p data-i18n="contact.location"></p>
+        <p data-i18n="contact.email">Email: contacto@aigralys.ai</p>
+        <p data-i18n="contact.location">Madrid, España | Santiago, Chile</p>
       </div>
     </div>
   </section>
@@ -243,5 +254,6 @@
   </footer>
 
   <script src="main.js?v=2025-10-06-01" defer></script>
+  <script src="form-validation.js?v=2025-10-06-01" defer></script>
 </body>
 </html>
