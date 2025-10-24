@@ -50,26 +50,8 @@ export default function Hero() {
               }}
             />
             
-            {/* Logo con animaciones múltiples */}
-            <motion.div
-              className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 xl:w-[32rem] xl:h-[32rem]"
-              animate={{
-                scale: [1, 1.02, 1],
-                rotateZ: [0, 1, -1, 0],
-              }}
-              transition={{
-                scale: {
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                },
-                rotateZ: {
-                  duration: 8,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                },
-              }}
-            >
+            {/* Logo estático */}
+            <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 xl:w-[32rem] xl:h-[32rem]"            >
               <Image 
                 src="/images/logo.png" 
                 alt="Aigralys Logo" 
@@ -77,8 +59,12 @@ export default function Hero() {
                 className="object-contain drop-shadow-2xl"
                 priority
               />
-              
-              {/* Anillos orbitales sutiles */}
+            </div>
+            
+            {/* Anillos orbitales sutiles (fuera del contenedor del logo) */}
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+            >
               <motion.div
                 className="absolute inset-0 border-2 border-azul/20 rounded-full"
                 animate={{

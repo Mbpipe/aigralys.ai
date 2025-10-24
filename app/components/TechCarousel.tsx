@@ -9,7 +9,7 @@ const techLogosRow1 = [
   { name: 'Python', logo: 'https://cdn.simpleicons.org/python/3776AB' },
   { name: 'Google Cloud', logo: 'https://cdn.simpleicons.org/googlecloud/4285F4' },
   { name: 'LangChain', logo: 'https://cdn.simpleicons.org/langchain/1C3C3C' },
-  { name: 'Anthropic', logo: 'https://cdn.simpleicons.org/anthropic/191919' },
+  { name: 'AWS', logo: 'https://cdn.simpleicons.org/amazonwebservices/FF9900' },
   { name: 'HuggingFace', logo: 'https://cdn.simpleicons.org/huggingface/FFD21E' },
 ]
 
