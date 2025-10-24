@@ -1,156 +1,104 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
 import Image from 'next/image'
 
-interface TechNode {
-  x: number
-  y: number
-  vx: number
-  vy: number
-  tech: {
-    name: string
-    icon: string
-  }
-  connections: number[]
-}
-
-const techStack = [
-  { name: 'Azure', icon: '☁️' },
-  { name: 'LangChain', icon: '🦜' },
-  { name: 'GCP', icon: '⚡' },
-  { name: 'Python', icon: '🐍' },
-  { name: 'OpenAI', icon: '🤖' },
-  { name: 'N8N', icon: '🔗' },
-  { name: 'Anthropic', icon: '🧠' },
-  { name: 'Docker', icon: '🐳' },
+const techLogosRow1 = [
+  { name: 'Microsoft Azure', logo: 'https://www.vectorlogo.zone/logos/microsoft_azure/microsoft_azure-icon.svg' },
+  { name: 'LangChain', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/langchain/langchain-original.svg' },
+  { name: 'OpenAI', logo: 'https://www.vectorlogo.zone/logos/openai/openai-icon.svg' },
+  { name: 'Python', logo: 'https://www.vectorlogo.zone/logos/python/python-icon.svg' },
+  { name: 'Google Cloud', logo: 'https://www.vectorlogo.zone/logos/google_cloud/google_cloud-icon.svg' },
+  { name: 'Anthropic', logo: 'https://www.anthropic.com/images/icons/menu-close.svg' },
+  { name: 'Hugging Face', logo: 'https://huggingface.co/datasets/huggingface/brand-assets/resolve/main/hf-logo.svg' },
 ]
 
+const techLogosRow2 = [
+  { name: 'Docker', logo: 'https://www.vectorlogo.zone/logos/docker/docker-icon.svg' },
+  { name: 'PostgreSQL', logo: 'https://www.vectorlogo.zone/logos/postgresql/postgresql-icon.svg' },
+  { name: 'N8N', logo: 'https://n8n.io/favicon.svg' },
+  { name: 'TensorFlow', logo: 'https://www.vectorlogo.zone/logos/tensorflow/tensorflow-icon.svg' },
+  { name: 'FastAPI', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/fastapi/fastapi-original.svg' },
+  { name: 'React', logo: 'https://www.vectorlogo.zone/logos/reactjs/reactjs-icon.svg' },
+  { name: 'Kubernetes', logo: 'https://www.vectorlogo.zone/logos/kubernetes/kubernetes-icon.svg' },
+]
+
+// Triplicar para efecto infinito
+const infiniteRow1 = [...techLogosRow1, ...techLogosRow1, ...techLogosRow1]
+const infiniteRow2 = [...techLogosRow2, ...techLogosRow2, ...techLogosRow2]
+
 export default function TechCarousel() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    let animationFrameId: number
-    let nodes: TechNode[] = []
-
-    const resizeCanvas = () => {
-      canvas.width = canvas.offsetWidth
-      canvas.height = 200 // Fixed height
-      initNodes()
-    }
-
-    const initNodes = () => {
-      nodes = techStack.map((tech, i) => ({
-        x: (canvas.width / (techStack.length + 1)) * (i + 1),
-        y: 100 + (Math.random() - 0.5) * 60,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        tech,
-        connections: []
-      }))
-    }
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-      // Update nodes
-      nodes.forEach((node, i) => {
-        node.x += node.vx
-        node.y += node.vy
-
-        // Bounce off edges with margin
-        if (node.x < 60 || node.x > canvas.width - 60) node.vx *= -1
-        if (node.y < 60 || node.y > canvas.height - 60) node.vy *= -1
-
-        // Keep within bounds
-        node.x = Math.max(60, Math.min(canvas.width - 60, node.x))
-        node.y = Math.max(60, Math.min(canvas.height - 60, node.y))
-
-        // Find connections
-        node.connections = []
-        nodes.forEach((otherNode, j) => {
-          if (i !== j) {
-            const dx = node.x - otherNode.x
-            const dy = node.y - otherNode.y
-            const distance = Math.sqrt(dx * dx + dy * dy)
-
-            if (distance < 200) {
-              node.connections.push(j)
-
-              // Draw connection line
-              const opacity = (1 - distance / 200) * 0.4
-              const gradient = ctx.createLinearGradient(node.x, node.y, otherNode.x, otherNode.y)
-              gradient.addColorStop(0, `rgba(43, 154, 160, ${opacity})`)
-              gradient.addColorStop(1, `rgba(74, 201, 207, ${opacity})`)
-
-              ctx.strokeStyle = gradient
-              ctx.lineWidth = 1.5
-              ctx.beginPath()
-              ctx.moveTo(node.x, node.y)
-              ctx.lineTo(otherNode.x, otherNode.y)
-              ctx.stroke()
-            }
-          }
-        })
-
-        // Draw node glow
-        const glowGradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, 35)
-        glowGradient.addColorStop(0, 'rgba(43, 154, 160, 0.6)')
-        glowGradient.addColorStop(0.5, 'rgba(43, 154, 160, 0.3)')
-        glowGradient.addColorStop(1, 'rgba(43, 154, 160, 0)')
-
-        ctx.fillStyle = glowGradient
-        ctx.beginPath()
-        ctx.arc(node.x, node.y, 35, 0, Math.PI * 2)
-        ctx.fill()
-
-        // Draw node circle (background for icon)
-        ctx.fillStyle = 'rgba(28, 28, 30, 0.9)'
-        ctx.strokeStyle = node.connections.length > 2 ? '#4AC9CF' : '#2B9AA0'
-        ctx.lineWidth = 2
-        ctx.beginPath()
-        ctx.arc(node.x, node.y, 28, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.stroke()
-
-        // Draw tech icon (emoji)
-        ctx.font = '28px Arial'
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText(node.tech.icon, node.x, node.y)
-
-        // Draw tech name below node
-        ctx.font = '11px Inter, sans-serif'
-        ctx.fillStyle = 'rgba(247, 248, 250, 0.8)'
-        ctx.fillText(node.tech.name, node.x, node.y + 45)
-      })
-
-      animationFrameId = requestAnimationFrame(draw)
-    }
-
-    resizeCanvas()
-    window.addEventListener('resize', resizeCanvas)
-    draw()
-
-    return () => {
-      window.removeEventListener('resize', resizeCanvas)
-      cancelAnimationFrame(animationFrameId)
-    }
-  }, [])
-
   return (
-    <div className="relative w-full">
-      <canvas
-        ref={canvasRef}
-        className="w-full"
-        style={{ height: '200px' }}
-      />
+    <div className="relative w-full overflow-hidden py-6 space-y-6">
+      {/* Gradient overlays */}
+      <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-grafito to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-grafito to-transparent z-10 pointer-events-none" />
+      
+      {/* Primera fila - Derecha */}
+      <motion.div
+        className="flex gap-8 items-center"
+        animate={{
+          x: ['0%', '-33.33%'],
+        }}
+        transition={{
+          x: {
+            repeat: Infinity,
+            duration: 25,
+            ease: 'linear',
+          },
+        }}
+      >
+        {infiniteRow1.map((tech, index) => (
+          <div
+            key={`row1-${tech.name}-${index}`}
+            className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 p-3 rounded-xl glass bg-white/5 hover:bg-white/10 transition-all duration-300 hover:scale-110 group"
+          >
+            <div className="relative w-full h-full">
+              <Image
+                src={tech.logo}
+                alt={tech.name}
+                fill
+                className="object-contain filter brightness-90 group-hover:brightness-110 transition-all"
+                sizes="80px"
+                unoptimized
+              />
+            </div>
+          </div>
+        ))}
+      </motion.div>
+
+      {/* Segunda fila - Izquierda */}
+      <motion.div
+        className="flex gap-8 items-center"
+        animate={{
+          x: ['-33.33%', '0%'],
+        }}
+        transition={{
+          x: {
+            repeat: Infinity,
+            duration: 30,
+            ease: 'linear',
+          },
+        }}
+      >
+        {infiniteRow2.map((tech, index) => (
+          <div
+            key={`row2-${tech.name}-${index}`}
+            className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 p-3 rounded-xl glass bg-white/5 hover:bg-white/10 transition-all duration-300 hover:scale-110 group"
+          >
+            <div className="relative w-full h-full">
+              <Image
+                src={tech.logo}
+                alt={tech.name}
+                fill
+                className="object-contain filter brightness-90 group-hover:brightness-110 transition-all"
+                sizes="80px"
+                unoptimized
+              />
+            </div>
+          </div>
+        ))}
+      </motion.div>
     </div>
   )
 }

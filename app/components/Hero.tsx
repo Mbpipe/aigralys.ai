@@ -24,22 +24,93 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          {/* Logo Central Grande - ARRIBA del título */}
+          {/* Logo Central Grande - ARRIBA del título con animación */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
-            className="flex justify-center items-center mb-4"
+            className="flex justify-center items-center mb-4 relative"
           >
-            <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 xl:w-[32rem] xl:h-[32rem]">
+            {/* Glow animado de fondo */}
+            <motion.div
+              className="absolute inset-0 blur-3xl opacity-40"
+              animate={{
+                background: [
+                  'radial-gradient(circle, rgba(43,154,160,0.4) 0%, transparent 70%)',
+                  'radial-gradient(circle, rgba(74,201,207,0.4) 0%, transparent 70%)',
+                  'radial-gradient(circle, rgba(139,195,74,0.3) 0%, transparent 70%)',
+                  'radial-gradient(circle, rgba(43,154,160,0.4) 0%, transparent 70%)',
+                ],
+                scale: [1, 1.1, 1.05, 1],
+              }}
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+            />
+            
+            {/* Logo con animaciones múltiples */}
+            <motion.div
+              className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 xl:w-[32rem] xl:h-[32rem]"
+              animate={{
+                scale: [1, 1.02, 1],
+                rotateZ: [0, 1, -1, 0],
+              }}
+              transition={{
+                scale: {
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                },
+                rotateZ: {
+                  duration: 8,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                },
+              }}
+              whileHover={{
+                scale: 1.05,
+                rotateZ: 5,
+                transition: { duration: 0.3 },
+              }}
+            >
               <Image 
                 src="/images/logo.png" 
                 alt="Aigralys Logo" 
                 fill
-                className="object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-300"
+                className="object-contain drop-shadow-2xl"
                 priority
               />
-            </div>
+              
+              {/* Anillos orbitales sutiles */}
+              <motion.div
+                className="absolute inset-0 border-2 border-azul/20 rounded-full"
+                animate={{
+                  scale: [1, 1.15, 1],
+                  opacity: [0.2, 0.4, 0.2],
+                  rotate: [0, 360],
+                }}
+                transition={{
+                  duration: 10,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }}
+              />
+              <motion.div
+                className="absolute inset-0 border-2 border-cian/20 rounded-full"
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.2, 0.3, 0.2],
+                  rotate: [360, 0],
+                }}
+                transition={{
+                  duration: 12,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }}
+              />
+            </motion.div>
           </motion.div>
 
           <motion.div
