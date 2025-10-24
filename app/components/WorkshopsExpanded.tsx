@@ -5,6 +5,7 @@ import { useInView } from 'framer-motion'
 import { useRef } from 'react'
 import Link from 'next/link'
 import { useLanguage } from '../i18n/LanguageContext'
+import WorkshopCarousel from './WorkshopCarousel'
 
 const workshops = [
   {
@@ -87,6 +88,16 @@ export default function WorkshopsExpanded() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
           </Link>
+        </motion.div>
+
+        {/* Workshop Gallery Carousel */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-16 px-4"
+        >
+          <WorkshopCarousel />
         </motion.div>
 
         {/* Workshops Grid */}
