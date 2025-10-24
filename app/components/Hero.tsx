@@ -52,15 +52,18 @@ export default function Hero() {
             
             {/* Contenedor del ícono con órbitas */}
             <div className="relative">
-              {/* Logo ícono - solo circuito */}
-              <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-52 md:h-52 lg:w-64 lg:h-64">
-                <Image 
-                  src="/images/logo.png" 
-                  alt="Aigralys Icon" 
-                  fill
-                  className="object-contain drop-shadow-2xl"
-                  priority
-                />
+              {/* Logo ícono - solo circuito (recortado para ocultar texto) */}
+              <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-52 md:h-52 lg:w-64 lg:h-64 overflow-hidden">
+                <div className="absolute inset-0" style={{ clipPath: 'inset(0% 50% 0% 0%)' }}>
+                  <Image 
+                    src="/images/logo.png" 
+                    alt="Aigralys Icon" 
+                    fill
+                    className="object-contain drop-shadow-2xl"
+                    style={{ objectPosition: 'left center' }}
+                    priority
+                  />
+                </div>
               </div>
               
               {/* Anillos orbitales sutiles */}
