@@ -33,7 +33,7 @@ export const translations = {
         title: 'Enablement',
         description: 'Capacitación de equipos internos para autonomía en gestión de agentes.',
       },
-      cta: "Solicitá una sesión Discovery (30')",
+      cta: "Solicitá una sesión Discovery",
     },
     workshops: {
       badge: 'WORKSHOPS',
@@ -229,7 +229,7 @@ export const translations = {
         title: 'Enablement',
         description: 'Training internal teams for autonomy in agent management.',
       },
-      cta: "Request a Discovery Session (30')",
+      cta: "Request a Discovery Session",
     },
     workshops: {
       badge: 'WORKSHOPS',
