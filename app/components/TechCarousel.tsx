@@ -4,23 +4,23 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 
 const techLogosRow1 = [
-  { name: 'Microsoft Azure', logo: 'https://www.vectorlogo.zone/logos/microsoft_azure/microsoft_azure-icon.svg' },
-  { name: 'LangChain', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/langchain/langchain-original.svg' },
-  { name: 'OpenAI', logo: 'https://www.vectorlogo.zone/logos/openai/openai-icon.svg' },
-  { name: 'Python', logo: 'https://www.vectorlogo.zone/logos/python/python-icon.svg' },
-  { name: 'Google Cloud', logo: 'https://www.vectorlogo.zone/logos/google_cloud/google_cloud-icon.svg' },
-  { name: 'Anthropic', logo: 'https://www.anthropic.com/images/icons/menu-close.svg' },
-  { name: 'Hugging Face', logo: 'https://huggingface.co/datasets/huggingface/brand-assets/resolve/main/hf-logo.svg' },
+  { name: 'Azure', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a8/Microsoft_Azure_Logo.svg' },
+  { name: 'OpenAI', logo: 'https://static-00.iconduck.com/assets.00/openai-icon-2021x2048-4rpe5x7n.png' },
+  { name: 'Python', logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg' },
+  { name: 'GCP', logo: 'https://static-00.iconduck.com/assets.00/google-cloud-icon-2048x1646-7admxejz.png' },
+  { name: 'Anthropic', logo: 'https://asset.brandfetch.io/idv9cjU_Ta/id0kZBu_6q.png' },
+  { name: 'LangChain', logo: 'https://avatars.githubusercontent.com/u/126733545?s=280&v=4' },
+  { name: 'Hugging Face', logo: 'https://workable-application-form.s3.amazonaws.com/advanced/production/61557f91d9510741dc62e7f8/c3635b59-a3d2-444a-b636-a9d0061dcdde' },
 ]
 
 const techLogosRow2 = [
-  { name: 'Docker', logo: 'https://www.vectorlogo.zone/logos/docker/docker-icon.svg' },
-  { name: 'PostgreSQL', logo: 'https://www.vectorlogo.zone/logos/postgresql/postgresql-icon.svg' },
-  { name: 'N8N', logo: 'https://n8n.io/favicon.svg' },
-  { name: 'TensorFlow', logo: 'https://www.vectorlogo.zone/logos/tensorflow/tensorflow-icon.svg' },
-  { name: 'FastAPI', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/fastapi/fastapi-original.svg' },
-  { name: 'React', logo: 'https://www.vectorlogo.zone/logos/reactjs/reactjs-icon.svg' },
-  { name: 'Kubernetes', logo: 'https://www.vectorlogo.zone/logos/kubernetes/kubernetes-icon.svg' },
+  { name: 'Docker', logo: 'https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png' },
+  { name: 'PostgreSQL', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg' },
+  { name: 'TensorFlow', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2d/Tensorflow_logo.svg' },
+  { name: 'FastAPI', logo: 'https://cdn.worldvectorlogo.com/logos/fastapi-1.svg' },
+  { name: 'React', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' },
+  { name: 'Kubernetes', logo: 'https://upload.wikimedia.org/wikipedia/commons/3/39/Kubernetes_logo_without_workmark.svg' },
+  { name: 'MongoDB', logo: 'https://cdn.worldvectorlogo.com/logos/mongodb-icon-1.svg' },
 ]
 
 // Triplicar para efecto infinito

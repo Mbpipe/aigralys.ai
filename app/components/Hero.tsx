@@ -69,11 +69,6 @@ export default function Hero() {
                   ease: 'easeInOut',
                 },
               }}
-              whileHover={{
-                scale: 1.05,
-                rotateZ: 5,
-                transition: { duration: 0.3 },
-              }}
             >
               <Image 
                 src="/images/logo.png" 
