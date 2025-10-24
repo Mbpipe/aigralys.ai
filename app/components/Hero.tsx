@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useLanguage } from '../i18n/LanguageContext'
+import AnimatedBackground from './AnimatedBackground'
 
 export default function Hero() {
   const { t } = useLanguage()
@@ -13,29 +14,8 @@ export default function Hero() {
       {/* Background gradient */}
       <div className="absolute inset-0 hero-gradient" />
       
-      {/* Animated particles/neural network effect */}
-      <div className="absolute inset-0 opacity-30">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-azul rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0.2, 0.8, 0.2],
-              scale: [1, 1.5, 1],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
+      {/* Animated network background */}
+      <AnimatedBackground />
 
       {/* Content */}
       <div className="relative z-10 section-padding max-w-7xl mx-auto text-center">

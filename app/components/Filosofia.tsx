@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
 import { useRef } from 'react'
 import { useLanguage } from '../i18n/LanguageContext'
+import SubtleBackground from './SubtleBackground'
 
 export default function Filosofia() {
   const ref = useRef(null)
@@ -17,6 +18,9 @@ export default function Filosofia() {
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-azul rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cian rounded-full blur-3xl" />
       </div>
+      
+      {/* Animated particles */}
+      <SubtleBackground />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4">
         <motion.div
