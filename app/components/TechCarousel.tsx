@@ -4,23 +4,23 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 
 const techLogosRow1 = [
-  { name: 'Azure', logo: 'https://unpkg.com/simple-icons@latest/icons/microsoftazure.svg' },
-  { name: 'OpenAI', logo: 'https://unpkg.com/simple-icons@latest/icons/openai.svg' },
-  { name: 'Python', logo: 'https://unpkg.com/simple-icons@latest/icons/python.svg' },
-  { name: 'Google Cloud', logo: 'https://unpkg.com/simple-icons@latest/icons/googlecloud.svg' },
-  { name: 'LangChain', logo: 'https://unpkg.com/simple-icons@latest/icons/langchain.svg' },
-  { name: 'AWS', logo: 'https://unpkg.com/simple-icons@latest/icons/amazonwebservices.svg' },
-  { name: 'HuggingFace', logo: 'https://unpkg.com/simple-icons@latest/icons/huggingface.svg' },
+  { name: 'Azure', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg', color: '#0078D4' },
+  { name: 'OpenAI', logo: 'https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg', color: '#10A37F' },
+  { name: 'Python', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg', color: '#3776AB' },
+  { name: 'Google Cloud', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/googlecloud/googlecloud-original.svg', color: '#4285F4' },
+  { name: 'AWS', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original-wordmark.svg', color: '#FF9900' },
+  { name: 'Node.js', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg', color: '#339933' },
+  { name: 'TypeScript', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg', color: '#3178C6' },
 ]
 
 const techLogosRow2 = [
-  { name: 'Docker', logo: 'https://unpkg.com/simple-icons@latest/icons/docker.svg' },
-  { name: 'React', logo: 'https://unpkg.com/simple-icons@latest/icons/react.svg' },
-  { name: 'TensorFlow', logo: 'https://unpkg.com/simple-icons@latest/icons/tensorflow.svg' },
-  { name: 'Kubernetes', logo: 'https://unpkg.com/simple-icons@latest/icons/kubernetes.svg' },
-  { name: 'PostgreSQL', logo: 'https://unpkg.com/simple-icons@latest/icons/postgresql.svg' },
-  { name: 'FastAPI', logo: 'https://unpkg.com/simple-icons@latest/icons/fastapi.svg' },
-  { name: 'Redis', logo: 'https://unpkg.com/simple-icons@latest/icons/redis.svg' },
+  { name: 'Docker', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg', color: '#2496ED' },
+  { name: 'React', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg', color: '#61DAFB' },
+  { name: 'TensorFlow', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tensorflow/tensorflow-original.svg', color: '#FF6F00' },
+  { name: 'Kubernetes', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg', color: '#326CE5' },
+  { name: 'PostgreSQL', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg', color: '#4169E1' },
+  { name: 'FastAPI', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastapi/fastapi-original.svg', color: '#009688' },
+  { name: 'Redis', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg', color: '#DC382D' },
 ]
 
 // Triplicar para efecto infinito
@@ -58,7 +58,7 @@ export default function TechCarousel() {
                 src={tech.logo}
                 alt={tech.name}
                 fill
-                className="object-contain filter brightness-90 group-hover:brightness-110 transition-all"
+                className="object-contain group-hover:scale-110 transition-all"
                 sizes="80px"
                 unoptimized
               />
@@ -91,7 +91,7 @@ export default function TechCarousel() {
                 src={tech.logo}
                 alt={tech.name}
                 fill
-                className="object-contain filter brightness-90 group-hover:brightness-110 transition-all"
+                className="object-contain group-hover:scale-110 transition-all"
                 sizes="80px"
                 unoptimized
               />
