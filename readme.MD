@@ -1,379 +1,216 @@
-# Aigralys.ai - Complete Website Package
+# Aigralys - IA Agéntica para ecosistemas complejos
 
-## 🎯 Overview
+Sitio web corporativo de Aigralys, construido con Next.js 14, TypeScript, TailwindCSS y Framer Motion.
 
-Production-ready bilingual (Spanish/English) website for **Aigralys.ai**, a global startup specializing in **Agentic AI systems** for complex digital ecosystems.
+## 🚀 Stack Tecnológico
 
-**Design Theme**: Dark elegant with warm golden accents, cinematic aesthetic  
-**Technology Stack**: Pure HTML5, CSS3, Vanilla JavaScript (no frameworks)  
-**Languages**: Spanish (default) + English with persistent toggle  
-**Deployment**: Optimized for static hosting (Netlify, Vercel, GitHub Pages)
+- **Framework**: Next.js 14 (App Router)
+- **Lenguaje**: TypeScript
+- **Estilos**: TailwindCSS
+- **Animaciones**: Framer Motion
+- **Internacionalización**: Sistema i18n personalizado (ES/EN)
+- **Deployment**: Configurado para exportación estática (Netlify/Vercel)
 
------
+## ✨ Características
 
-## 📁 File Structure
+### 🌐 Multilenguaje
+- **Español** (por defecto)
+- **Inglés**
+- Cambio de idioma en tiempo real
+- Persistencia en localStorage
 
-```
-aigralys-website/
-├── index.html              # Home page with hero, solutions, industries, technology
-├── consultoria.html        # Consulting services page
-├── workshops.html          # Workshops catalog page
-├── styles.css              # Global styles (dark theme, responsive)
-├── main.js                 # Bilingual i18n with localStorage persistence
-├── logo.png                # Company logo (40x40px recommended)
-├── Scenario1.jpg           # Network Operations Center (1600x900)
-├── Scenario2.jpg           # Smart Agriculture (1600x900)
-├── Scenario3.jpg           # Energy Control Center (1600x900)
-├── Scenario4.jpg           # Futuristic Retail (1600x900)
-├── IMAGE_PROMPTS.md        # AI image generation instructions
-└── README.md               # This file
-```
+### 📱 Diseño Responsive
+- Mobile-first approach
+- Breakpoints optimizados para todos los dispositivos
+- Menú móvil hamburguesa
+- Imágenes optimizadas con Next.js Image
 
------
+### 🎨 Diseño Moderno
+- Modo oscuro por defecto
+- Glassmorphism effects
+- Gradientes sutiles azul-cian
+- Animaciones suaves con Framer Motion
+- Scroll-triggered animations
+- Microinteracciones al hover
 
-## 🚀 Quick Start
+### 📧 Formulario de Contacto
+- Validación de campos
+- Estados de envío (loading, success, error)
+- Diseño glassmorphic
+- Responsive
 
-### 1. Clone or Download Files
+## 🎨 Paleta de Colores
 
-Place all files in a single directory maintaining the structure above.
+- **Grafito profundo**: `#1C1C1E` - Background principal
+- **Azul eléctrico**: `#0A84FF` - Acentos y CTAs
+- **Cian suave**: `#5DE1E6` - Gradientes y highlights
+- **Blanco humo**: `#F7F8FA` - Textos principales
 
-### 2. Add Images
-
-Generate or place the following images:
-
-- `logo.png` - Company logo (40x40px, transparent PNG)
-- `Scenario1.jpg` through `Scenario4.jpg` - Hero images (1600x900px, 16:9)
-
-See `IMAGE_PROMPTS.md` for detailed image generation instructions.
-
-### 3. Local Testing
-
-```bash
-# Option 1: Python
-python -m http.server 8000
-
-# Option 2: Node.js
-npx http-server
-
-# Option 3: PHP
-php -S localhost:8000
-```
-
-Then open: `http://localhost:8000`
-
-### 4. Deploy to Production
-
-#### Netlify
+## 📦 Instalación
 
 ```bash
-# Install Netlify CLI
-npm install -g netlify-cli
+# Instalar dependencias
+npm install
 
-# Deploy
-netlify deploy --prod --dir=.
+# Modo desarrollo
+npm run dev
+
+# Build para producción
+npm run build
+
+# Preview de producción estática
+npm start
 ```
 
-#### Vercel
+El servidor de desarrollo estará disponible en `http://localhost:3000`
 
-```bash
-# Install Vercel CLI
-npm install -g vercel
+## 🏗️ Estructura del Proyecto
 
-# Deploy
-vercel --prod
+```
+aigralys.ai/
+├── app/
+│   ├── components/
+│   │   ├── Navbar.tsx           # Navegación con logo y selector de idioma
+│   │   ├── Hero.tsx              # Hero principal con animaciones
+│   │   ├── Consultoria.tsx       # Sección consultoría
+│   │   ├── Workshops.tsx         # Sección workshops
+│   │   ├── CasosSectoriales.tsx  # Casos con imágenes
+│   │   ├── Filosofia.tsx         # Quote principal
+│   │   ├── Contact.tsx           # Formulario de contacto
+│   │   └── Footer.tsx            # Footer con logo
+│   ├── i18n/
+│   │   ├── translations.ts       # Traducciones ES/EN
+│   │   └── LanguageContext.tsx   # Context API para idiomas
+│   ├── globals.css               # Estilos globales
+│   ├── layout.tsx                # Layout principal
+│   └── page.tsx                  # Página home
+├── public/
+│   └── images/
+│       ├── logo.png              # Logo Aigralys
+│       ├── Scenario1.png         # Agro
+│       ├── Scenario2.png         # Finanzas
+│       ├── Scenario3.png         # Turismo
+│       └── Scenario4.png         # Manufactura
+├── tailwind.config.js
+├── next.config.js
+└── package.json
 ```
 
-#### GitHub Pages
+## 🎯 Secciones del Sitio
 
-1. Push files to GitHub repository
-1. Settings → Pages → Source: main branch
-1. Site will be live at `https://username.github.io/repo-name`
+1. **Hero**: Headline principal con animaciones de partículas y CTAs
+2. **Consultoría**: 4 servicios (Gap Analysis, Diseño, Escalamiento, Enablement)
+3. **Workshops**: 2 niveles (C-Level Strategy y Hands-On Técnico)
+4. **Casos Sectoriales**: 4 industrias con imágenes (Agro, Finanzas, Turismo, Manufactura)
+5. **Filosofía**: Declaración de valores y enfoque
+6. **Contacto**: Formulario funcional con validación
+7. **Footer**: Links, logo y redes sociales
 
------
+## 🌐 Internacionalización
 
-## 🌐 Features
+El sistema de i18n está implementado con React Context API:
 
-### Bilingual System
+```typescript
+// Uso en componentes
+import { useLanguage } from '../i18n/LanguageContext'
 
-- **Languages**: Spanish (ES) + English (EN)
-- **Toggle**: Fixed top-right corner, always visible
-- **Persistence**: Uses `localStorage` to remember user preference
-- **Coverage**: All text content with `data-i18n` attributes
-- **Fallback**: Defaults to Spanish if no preference stored
-
-### Pages & Sections
-
-#### index.html
-
-- Hero with value proposition
-- About section (company pillars)
-- Solutions showcase (4 industry scenarios)
-- Industries grid (6 sectors)
-- Technology explanation (Agentic AI features)
-- Contact form
-- Footer with sitemap
-
-#### consultoria.html
-
-- Consulting approach overview
-- 5 core consulting services
-- 5-step work process timeline
-- 3 case studies with metrics
-- CTA section
-
-#### workshops.html
-
-- 6 workshop offerings (intro to executive level)
-- 4 delivery formats
-- Participant testimonials
-- Catalog with detailed modules
-
-### Design System
-
-**Color Palette**:
-
-- Primary Dark: `#1C1C1E`
-- Secondary Dark: `#2D2D3A`
-- Accent Gold: `#FECF4A`
-- Neutral Light: `#E6E6E6`
-
-**Typography**:
-
-- Font: Inter (Google Fonts)
-- Headings: 700 weight, golden color
-- Body: 400 weight, light gray
-
-**Components**:
-
-- Sticky navigation with logo
-- Card-based layouts with hover effects
-- Timeline visualization for processes
-- Grid systems (responsive)
-- Contact forms with validation styling
-- Fixed language toggle (top-right)
-
------
-
-## 🎨 Customization Guide
-
-### Change Colors
-
-Edit CSS variables in `styles.css`:
-
-```css
-:root {
-    --primary-dark: #1C1C1E;
-    --accent-gold: #FECF4A;
-    /* etc. */
+function Component() {
+  const { language, setLanguage, t } = useLanguage()
+  
+  return (
+    <h1>{t.hero.title}</h1>
+  )
 }
 ```
 
-### Add New Pages
+### Agregar nuevas traducciones:
 
-1. Copy structure from existing HTML
-1. Add navigation link in all pages
-1. Include language toggle and main.js
-1. Add translations to `main.js` translations object
+Editar `app/i18n/translations.ts`:
 
-### Modify Translations
+```typescript
+export const translations = {
+  es: {
+    newSection: {
+      title: 'Título en Español',
+    }
+  },
+  en: {
+    newSection: {
+      title: 'Title in English',
+    }
+  }
+}
+```
 
-Edit `main.js` translations object:
+## 🌐 Deploy
+
+### Build para producción:
+
+```bash
+npm run build
+```
+
+Esto generará una carpeta `/out` con el sitio estático listo para deploy.
+
+### Deploy en Netlify:
+
+1. Conecta tu repositorio GitHub
+2. Build command: `npm run build`
+3. Publish directory: `out`
+
+### Deploy en Vercel:
+
+```bash
+vercel
+```
+
+O conecta automáticamente desde GitHub.
+
+## 📝 SEO
+
+El sitio incluye:
+- Meta tags optimizados (ES/EN)
+- Open Graph para redes sociales
+- Twitter Cards
+- Sitemap automático (Next.js)
+- Robots.txt
+
+## 🎨 Personalización
+
+### Colores:
+
+Editar `tailwind.config.js`:
 
 ```javascript
-const translations = {
-  'your.key': { es: 'Texto español', en: 'English text' },
-  // ...
-};
+colors: {
+  grafito: '#1C1C1E',
+  azul: '#0A84FF',
+  cian: '#5DE1E6',
+  humo: '#F7F8FA',
+}
 ```
 
-Then add `data-i18n="your.key"` to HTML elements.
+### Tipografías:
 
-### Update Content
+Editar `app/globals.css` para cambiar las fuentes de Google Fonts.
 
-All text is in `main.js` translation dictionary. Edit there instead of HTML for bilingual consistency.
+## 📱 Responsividad
 
------
+El sitio utiliza breakpoints de Tailwind:
+- **sm**: 640px (móviles grandes)
+- **md**: 768px (tablets)
+- **lg**: 1024px (laptops)
+- **xl**: 1280px (desktops)
 
-## 📱 Responsive Design
+## 📧 Contacto
 
-**Breakpoints**:
+- **LinkedIn**: [Gonzalo Abadía](https://www.linkedin.com/in/gonzalo-abadia/)
+- **Web**: [www.aigralys.ai](https://www.aigralys.ai)
 
-- Desktop: 1200px+ (max-width container)
-- Tablet: 768px - 1199px
-- Mobile: < 768px
+## 📄 Licencia
 
-**Mobile Optimizations**:
+© 2025 Aigralys – IA Agéntica para ecosistemas complejos
 
-- Stacked navigation
-- Single-column grids
-- Reduced font sizes
-- Touch-friendly buttons (min 44px)
-- Simplified layouts
+---
 
------
-
-## ♿ Accessibility
-
-- Semantic HTML5 elements
-- ARIA labels on interactive elements
-- Alt text on images (add when placing files)
-- Keyboard navigation support
-- Color contrast: WCAG AA compliant
-- Focus states on all interactive elements
-- Language attribute set dynamically
-
------
-
-## 🔧 Technical Details
-
-### Browser Support
-
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
-- Mobile browsers (iOS Safari, Chrome Mobile)
-
-### Performance
-
-- **No external dependencies** except Google Fonts
-- Pure vanilla JavaScript (no jQuery, React, etc.)
-- Lazy loading on images (`loading="lazy"`)
-- Optimized CSS (single file, ~15KB)
-- Minimal JavaScript (~10KB)
-
-### SEO Considerations
-
-- Semantic HTML structure
-- Meta descriptions in each page
-- `<title>` tags optimized
-- Language attributes (ES/EN)
-- Clean URL structure
-- Fast load times
-
-**Recommended additions**:
-
-- Add favicon references (already in HTML)
-- Create `robots.txt`
-- Add `sitemap.xml`
-- Implement Open Graph tags
-- Add structured data (Schema.org)
-
------
-
-## 📊 Analytics & Tracking
-
-To add analytics, insert before `</body>`:
-
-```html
-<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'GA_MEASUREMENT_ID');
-</script>
-```
-
------
-
-## 🔒 Security Considerations
-
-- No backend required (static site)
-- No sensitive data storage
-- localStorage only for language preference
-- Form submissions need backend integration
-- Consider adding CSP headers in deployment
-
------
-
-## 🛠️ Maintenance
-
-### Regular Updates
-
-- Review translation accuracy
-- Update case studies and metrics
-- Refresh workshop catalog
-- Optimize images (compression)
-- Update contact information
-
-### Testing Checklist
-
-- [ ] All links work (internal and anchors)
-- [ ] Language toggle functions correctly
-- [ ] Images load properly
-- [ ] Forms display correctly
-- [ ] Mobile responsive on real devices
-- [ ] Cross-browser compatibility
-- [ ] Accessibility with screen readers
-
------
-
-## 📞 Contact Form Integration
-
-The contact form currently has no backend. Options:
-
-1. **Formspree**: Add action to form
-   
-   ```html
-   <form action="https://formspree.io/f/YOUR_ID" method="POST">
-   ```
-1. **Netlify Forms**: Add `netlify` attribute
-   
-   ```html
-   <form netlify>
-   ```
-1. **Custom Backend**: Implement API endpoint and fetch
-
------
-
-## 📚 Additional Resources
-
-- **Font**: [Google Fonts - Inter](https://fonts.google.com/specimen/Inter)
-- **Icons**: Consider [Lucide Icons](https://lucide.dev/) for future additions
-- **Image Optimization**: Use tools like TinyPNG or ImageOptim
-- **Performance Testing**: Google PageSpeed Insights, Lighthouse
-
------
-
-## 🐛 Known Limitations
-
-- Contact form requires backend integration
-- No image fallbacks (ensure all 4 scenarios present)
-- No server-side language detection (client-side only)
-- localStorage not available in private/incognito mode
-
------
-
-## 📄 License & Credits
-
-**Aigralys.ai** © 2025. All rights reserved.
-
-**Technologies Used**:
-
-- HTML5
-- CSS3 (Flexbox, Grid)
-- Vanilla JavaScript (ES6+)
-- Google Fonts (Inter)
-
-**Design Philosophy**:
-Dark elegant theme inspired by modern SaaS and AI platforms with cinematic depth and professional aesthetics.
-
------
-
-## 🎓 Support & Questions
-
-For technical questions or issues with this codebase:
-
-1. Check all files are present and named correctly
-1. Verify images are in correct dimensions (1600x900)
-1. Test in different browsers
-1. Check browser console for JavaScript errors
-1. Ensure web server is serving files correctly
-
------
-
-**Version**: 1.0.0  
-**Last Updated**: October 2025  
-**Status**: Production Ready ✅
+**Desarrollado con ❤️ usando Next.js, TypeScript y TailwindCSS**

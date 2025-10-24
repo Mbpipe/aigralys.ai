@@ -1,0 +1,132 @@
+'use client'
+
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import Image from 'next/image'
+import { useLanguage } from '../i18n/LanguageContext'
+
+export default function Hero() {
+  const { t } = useLanguage()
+
+  return (
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Background gradient */}
+      <div className="absolute inset-0 hero-gradient" />
+      
+      {/* Animated particles/neural network effect */}
+      <div className="absolute inset-0 opacity-30">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-azul rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, -30, 0],
+              opacity: [0.2, 0.8, 0.2],
+              scale: [1, 1.5, 1],
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 section-padding max-w-7xl mx-auto text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          {/* Logo Central Grande - ARRIBA del título */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="flex justify-center items-center mb-8"
+          >
+            <div className="relative w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48">
+              <Image 
+                src="/images/logo.png" 
+                alt="Aigralys Logo" 
+                fill
+                className="object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-300"
+                priority
+              />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            className="mb-8"
+          >
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight px-4">
+              <span className="text-humo">{t.hero.headline}</span>
+              <br />
+              <span className="text-gradient">{t.hero.headlineAccent}</span>
+            </h1>
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.6 }}
+            className="text-lg sm:text-xl md:text-2xl text-humo/80 mb-12 max-w-3xl mx-auto px-4"
+          >
+            {t.hero.subtitle}
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.6 }}
+            className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center px-4"
+          >
+            <Link
+              href="#workshops"
+              className="group relative px-8 py-4 bg-azul hover:bg-azul/90 text-white font-button text-lg rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-azul/50 w-full sm:w-auto min-w-[200px]"
+            >
+              {t.hero.ctaWorkshops}
+              <span className="absolute inset-0 rounded-full bg-gradient-to-r from-azul to-cian opacity-0 group-hover:opacity-20 transition-opacity" />
+            </Link>
+
+            <Link
+              href="#consultoria"
+              className="group px-8 py-4 glass hover:bg-white/10 text-humo font-button text-lg rounded-full transition-all duration-300 hover:scale-105 border border-azul/30 hover:border-azul/60 w-full sm:w-auto min-w-[200px]"
+            >
+              {t.hero.ctaConsultoria}
+            </Link>
+          </motion.div>
+        </motion.div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1, duration: 0.6 }}
+          className="absolute bottom-12 left-1/2 transform -translate-x-1/2 hidden md:block"
+        >
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-6 h-10 border-2 border-azul/50 rounded-full flex items-start justify-center p-2"
+          >
+            <motion.div
+              animate={{ opacity: [0, 1, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="w-1.5 h-1.5 bg-azul rounded-full"
+            />
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
