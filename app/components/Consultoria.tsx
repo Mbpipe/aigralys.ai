@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
 import { useRef } from 'react'
 import { useLanguage } from '../i18n/LanguageContext'
+import TechCarousel from './TechCarousel'
 
 const subsectionsData = [
   { key: 'gapAnalysis' },
@@ -37,6 +38,16 @@ export default function Consultoria() {
           <p className="text-lg sm:text-xl text-humo/70 max-w-3xl mx-auto px-4">
             {t.consultoria.subtitle}
           </p>
+        </motion.div>
+
+        {/* Tech Stack Carousel */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-12"
+        >
+          <TechCarousel />
         </motion.div>
 
         <div className="grid sm:grid-cols-2 gap-6 mb-12">
