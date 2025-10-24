@@ -9,8 +9,8 @@ module.exports = {
     extend: {
       colors: {
         grafito: '#1C1C1E',
-        azul: '#0A84FF',
-        cian: '#5DE1E6',
+        azul: '#2B9AA0',      // Turquesa del logo
+        cian: '#4AC9CF',      // Turquesa claro
         humo: '#F7F8FA',
       },
       fontFamily: {
@@ -20,7 +20,7 @@ module.exports = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-blue': 'linear-gradient(135deg, #0A84FF 0%, #5DE1E6 100%)',
+        'gradient-blue': 'linear-gradient(135deg, #2B9AA0 0%, #4AC9CF 100%)',
         'gradient-dark': 'linear-gradient(180deg, #1C1C1E 0%, #0A1929 100%)',
       },
       animation: {
