@@ -31,7 +31,7 @@ export default function Hero() {
             transition={{ delay: 0.2, duration: 0.6 }}
             className="flex justify-center items-center mb-8"
           >
-            <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-52 md:h-52 lg:w-64 lg:h-64">
+            <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 xl:w-[32rem] xl:h-[32rem]">
               <Image 
                 src="/images/logo.png" 
                 alt="Aigralys Logo" 
