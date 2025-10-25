@@ -29,15 +29,14 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+        <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
           <Image 
             src="/images/logo2.png" 
             alt="Aigralys Logo" 
-            width={40} 
-            height={40}
-            className="w-8 h-8 sm:w-10 sm:h-10"
+            width={80} 
+            height={80}
+            className="w-16 h-16 sm:w-20 sm:h-20"
           />
-          <span className="text-xl sm:text-2xl font-bold text-humo">Aigralys</span>
         </Link>
 
         {/* Desktop Navigation */}
