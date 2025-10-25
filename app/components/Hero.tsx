@@ -5,11 +5,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useLanguage } from '../i18n/LanguageContext'
 import AnimatedBackground from './AnimatedBackground'
-import { useReducedMotion } from '../hooks/useReducedMotion'
 
 export default function Hero() {
   const { t } = useLanguage()
-  const prefersReducedMotion = useReducedMotion()
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -123,29 +121,23 @@ export default function Hero() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.6, ease: 'easeOut' }}
+            transition={{ delay: 0.8, duration: 0.6 }}
             className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center px-4"
           >
-            <motion.div whileHover={!prefersReducedMotion ? { scale: 1.03 } : {}} whileTap={!prefersReducedMotion ? { scale: 0.98 } : {}}>
-              <Link
-                href="#workshops"
-                className="group relative px-8 py-4 bg-azul hover:bg-azul/90 text-white font-button text-lg rounded-full transition-all duration-300 hover:shadow-xl hover:shadow-azul/50 hover:ring-2 hover:ring-azul/30 hover:ring-offset-2 hover:ring-offset-grafito w-full sm:w-auto min-w-[200px] block text-center"
-              >
-                <span className="relative z-10">{t.hero.ctaWorkshops}</span>
-                <span className="absolute inset-0 rounded-full bg-gradient-to-r from-azul via-cian to-azul opacity-0 group-hover:opacity-30 transition-all duration-500 blur-sm" />
-                <span className="absolute inset-0 rounded-full bg-gradient-to-r from-azul to-cian opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
-              </Link>
-            </motion.div>
+            <Link
+              href="#workshops"
+              className="group relative px-8 py-4 bg-azul hover:bg-azul/90 text-white font-button text-lg rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-azul/50 w-full sm:w-auto min-w-[200px]"
+            >
+              {t.hero.ctaWorkshops}
+              <span className="absolute inset-0 rounded-full bg-gradient-to-r from-azul to-cian opacity-0 group-hover:opacity-20 transition-opacity" />
+            </Link>
 
-            <motion.div whileHover={!prefersReducedMotion ? { scale: 1.03 } : {}} whileTap={!prefersReducedMotion ? { scale: 0.98 } : {}}>
-              <Link
-                href="#consultoria"
-                className="group relative px-8 py-4 glass hover:bg-white/10 text-humo font-button text-lg rounded-full transition-all duration-300 hover:shadow-xl hover:shadow-cian/30 border border-azul/30 hover:border-cian/60 hover:ring-2 hover:ring-cian/20 hover:ring-offset-2 hover:ring-offset-grafito w-full sm:w-auto min-w-[200px] block text-center"
-              >
-                <span className="relative z-10">{t.hero.ctaConsultoria}</span>
-                <span className="absolute inset-0 rounded-full bg-cian/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </Link>
-            </motion.div>
+            <Link
+              href="#consultoria"
+              className="group px-8 py-4 glass hover:bg-white/10 text-humo font-button text-lg rounded-full transition-all duration-300 hover:scale-105 border border-azul/30 hover:border-azul/60 w-full sm:w-auto min-w-[200px]"
+            >
+              {t.hero.ctaConsultoria}
+            </Link>
           </motion.div>
         </motion.div>
 

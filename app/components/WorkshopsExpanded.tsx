@@ -66,12 +66,8 @@ export default function WorkshopsExpanded() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="relative inline-flex items-center gap-2 px-4 py-2 glass rounded-full mb-6">
-            <div className="relative w-2 h-2 bg-cian rounded-full">
-              {/* Pulsing glow */}
-              <div className="absolute inset-0 bg-cian rounded-full animate-ping opacity-75" />
-              <div className="absolute inset-0 bg-cian rounded-full" />
-            </div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 glass rounded-full mb-6">
+            <div className="w-2 h-2 bg-cian rounded-full animate-pulse" />
             <span className="text-cian text-sm font-medium">{t.workshops.badge}</span>
           </div>
           

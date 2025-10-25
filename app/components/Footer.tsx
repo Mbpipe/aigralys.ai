@@ -3,16 +3,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useLanguage } from '../i18n/LanguageContext'
-import FooterGlow from './FooterGlow'
 
 export default function Footer() {
   const { t } = useLanguage()
 
   return (
     <footer className="relative border-t border-white/10 bg-grafito">
-      {/* Animated glow line */}
-      <FooterGlow />
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-12">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo and tagline */}
