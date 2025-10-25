@@ -20,6 +20,7 @@ export default function Footer() {
                 width={32} 
                 height={32}
                 className="w-8 h-8"
+                loading="lazy"
               />
               <span className="text-2xl font-bold text-humo">Aigralys</span>
             </Link>

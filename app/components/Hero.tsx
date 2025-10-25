@@ -56,8 +56,10 @@ export default function Hero() {
                 src="/images/logo2.png" 
                 alt="Aigralys Logo" 
                 fill
+                sizes="(max-width: 640px) 192px, (max-width: 768px) 256px, (max-width: 1024px) 320px, (max-width: 1280px) 384px, 512px"
                 className="object-contain drop-shadow-2xl"
                 priority
+                quality={95}
               />
             </div>
             

@@ -36,6 +36,8 @@ export default function Navbar() {
             width={80} 
             height={80}
             className="w-16 h-16 sm:w-20 sm:h-20"
+            priority
+            quality={90}
           />
         </Link>
 

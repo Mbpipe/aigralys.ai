@@ -76,6 +76,8 @@ export default function CasosSectoriales() {
                       src={industry.image} 
                       alt={data.title}
                       fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      loading="lazy"
                       className="object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                     />
                   </div>
