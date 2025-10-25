@@ -31,7 +31,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <Image 
-            src="/images/logo.png" 
+            src="/images/logo2.png" 
             alt="Aigralys Logo" 
             width={40} 
             height={40}

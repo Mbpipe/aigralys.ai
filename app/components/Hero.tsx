@@ -53,7 +53,7 @@ export default function Hero() {
             {/* Logo estático */}
             <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 xl:w-[32rem] xl:h-[32rem]">
               <Image 
-                src="/images/logo.png" 
+                src="/images/logo2.png" 
                 alt="Aigralys Logo" 
                 fill
                 className="object-contain drop-shadow-2xl"

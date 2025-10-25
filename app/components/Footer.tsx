@@ -15,7 +15,7 @@ export default function Footer() {
           <div className="text-center md:text-left">
             <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity justify-center md:justify-start mb-2">
               <Image 
-                src="/images/logo.png" 
+                src="/images/logo2.png" 
                 alt="Aigralys Logo" 
                 width={32} 
                 height={32}
