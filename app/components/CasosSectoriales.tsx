@@ -5,6 +5,7 @@ import { useInView } from 'framer-motion'
 import { useRef } from 'react'
 import Image from 'next/image'
 import { useLanguage } from '../i18n/LanguageContext'
+import { useReducedMotion } from '../hooks/useReducedMotion'
 
 const industries = [
   {
@@ -33,6 +34,7 @@ export default function CasosSectoriales() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
   const { t } = useLanguage()
+  const prefersReducedMotion = useReducedMotion()
 
   return (
     <section id="casos" className="relative section-padding bg-gradient-dark" ref={ref}>
@@ -43,8 +45,12 @@ export default function CasosSectoriales() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 glass rounded-full mb-6">
-            <div className="w-2 h-2 bg-azul rounded-full animate-pulse" />
+          <div className="relative inline-flex items-center gap-2 px-4 py-2 glass rounded-full mb-6">
+            <div className="relative w-2 h-2 bg-azul rounded-full">
+              {/* Pulsing glow */}
+              <div className="absolute inset-0 bg-azul rounded-full animate-ping opacity-75" />
+              <div className="absolute inset-0 bg-azul rounded-full" />
+            </div>
             <span className="text-azul text-sm font-medium">{t.casos.badge}</span>
           </div>
           
@@ -64,11 +70,18 @@ export default function CasosSectoriales() {
                 key={industry.key}
                 initial={{ opacity: 0, y: 30 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="group relative glass hover:bg-white/10 p-6 sm:p-8 rounded-2xl transition-all duration-300 hover:scale-105 overflow-hidden"
+                transition={{ duration: 0.5, delay: index * 0.08, ease: 'easeOut' }}
+                whileHover={!prefersReducedMotion ? { 
+                  y: -4,
+                  transition: { duration: 0.2 }
+                } : {}}
+                className="group relative glass hover:bg-white/10 p-6 sm:p-8 rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-azul/20 overflow-hidden"
               >
                 {/* Gradient background on hover */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${industry.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                
+                {/* Accent border on hover */}
+                <div className="absolute inset-0 border border-transparent group-hover:border-azul/30 rounded-2xl transition-colors duration-300" />
                 
                 <div className="relative z-10">
                   <div className="mb-6 relative w-full h-32 sm:h-40 rounded-lg overflow-hidden bg-white/5">

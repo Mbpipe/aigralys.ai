@@ -5,6 +5,7 @@ import { useInView } from 'framer-motion'
 import { useRef } from 'react'
 import { useLanguage } from '../i18n/LanguageContext'
 import TechCarousel from './TechCarousel'
+import AnimatedTimeline from './AnimatedTimeline'
 
 const subsectionsData = [
   { key: 'gapAnalysis' },
@@ -27,8 +28,12 @@ export default function Consultoria() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 glass rounded-full mb-6">
-            <div className="w-2 h-2 bg-azul rounded-full animate-pulse" />
+          <div className="relative inline-flex items-center gap-2 px-4 py-2 glass rounded-full mb-6">
+            <div className="relative w-2 h-2 bg-azul rounded-full">
+              {/* Pulsing glow */}
+              <div className="absolute inset-0 bg-azul rounded-full animate-ping opacity-75" />
+              <div className="absolute inset-0 bg-azul rounded-full" />
+            </div>
             <span className="text-azul text-sm font-medium">{t.consultoria.badge}</span>
           </div>
           
@@ -45,32 +50,22 @@ export default function Consultoria() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-12"
+          className="mb-16"
         >
           <TechCarousel />
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 gap-6 mb-12">
-          {subsectionsData.map((item, index) => {
+        {/* Animated Timeline */}
+        <AnimatedTimeline
+          steps={subsectionsData.map((item) => {
             const data = t.consultoria[item.key as keyof typeof t.consultoria] as any
-            return (
-              <motion.div
-                key={item.key}
-                initial={{ opacity: 0, y: 30 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="group glass hover:bg-white/10 p-6 sm:p-8 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-azul/10"
-              >
-                <h3 className="text-xl sm:text-2xl font-bold text-humo mb-3 group-hover:text-gradient transition-all">
-                  {data.title}
-                </h3>
-                <p className="text-sm sm:text-base text-humo/70 leading-relaxed">
-                  {data.description}
-                </p>
-              </motion.div>
-            )
+            return {
+              title: data.title,
+              description: data.description,
+            }
           })}
-        </div>
+          isInView={isInView}
+        />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
