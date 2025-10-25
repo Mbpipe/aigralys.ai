@@ -29,7 +29,7 @@ export default function Hero() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
-            className="flex justify-center items-center mb-2 -mt-8 relative"
+            className="flex justify-center items-center mb-4 relative"
           >
             {/* Glow animado de fondo */}
             <motion.div
@@ -50,8 +50,8 @@ export default function Hero() {
               }}
             />
             
-            {/* Logo estático - x3 más grande */}
-            <div className="relative w-[36rem] h-[36rem] sm:w-[48rem] sm:h-[48rem] md:w-[60rem] md:h-[60rem] lg:w-[72rem] lg:h-[72rem] xl:w-[96rem] xl:h-[96rem]">
+            {/* Logo estático */}
+            <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 xl:w-[32rem] xl:h-[32rem]">
               <Image 
                 src="/images/logo2.png" 
                 alt="Aigralys Logo" 
