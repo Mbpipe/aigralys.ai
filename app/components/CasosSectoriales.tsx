@@ -2,9 +2,14 @@
 
 import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import Image from 'next/image'
 import { useLanguage } from '../i18n/LanguageContext'
+import Modal from './Modal'
+import FlowTurismo from './FlowTurismo'
+import FlowAgro from './FlowAgro'
+import FlowEnergia from './FlowEnergia'
+import FlowLogistica from './FlowLogistica'
 
 const industries = [
   {
@@ -33,6 +38,30 @@ export default function CasosSectoriales() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
   const { t } = useLanguage()
+  const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null)
+
+  const handleIndustryClick = (key: string) => {
+    setSelectedIndustry(key)
+  }
+
+  const handleCloseModal = () => {
+    setSelectedIndustry(null)
+  }
+
+  const renderFlowComponent = () => {
+    switch (selectedIndustry) {
+      case 'turismo':
+        return <FlowTurismo />
+      case 'agro':
+        return <FlowAgro />
+      case 'energia':
+        return <FlowEnergia />
+      case 'logistica':
+        return <FlowLogistica />
+      default:
+        return null
+    }
+  }
 
   return (
     <section id="casos" className="relative section-padding bg-gradient-dark" ref={ref}>
@@ -65,7 +94,8 @@ export default function CasosSectoriales() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="group relative glass hover:bg-white/10 p-6 sm:p-8 rounded-2xl transition-all duration-300 hover:scale-105 overflow-hidden"
+                onClick={() => handleIndustryClick(industry.key)}
+                className="group relative glass hover:bg-white/10 p-6 sm:p-8 rounded-2xl transition-all duration-300 hover:scale-105 overflow-hidden cursor-pointer"
               >
                 {/* Gradient background on hover */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${industry.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
@@ -93,6 +123,11 @@ export default function CasosSectoriales() {
           })}
         </div>
       </div>
+
+      {/* Modal for flow diagrams */}
+      <Modal isOpen={selectedIndustry !== null} onClose={handleCloseModal}>
+        {renderFlowComponent()}
+      </Modal>
     </section>
   )
 }
