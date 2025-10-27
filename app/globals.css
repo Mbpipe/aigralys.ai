@@ -78,3 +78,17 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Flow diagrams: hide complex absolute layouts on mobile, show horizontal scroll instead */
+@media (max-width: 768px) {
+  /* Allow horizontal scrolling on mobile for flow diagrams */
+  section {
+    overflow-x: auto !important;
+    scroll-snap-type: x proximity;
+  }
+  
+  /* Make flow diagrams scrollable horizontally on mobile */
+  section > div:first-child {
+    min-width: 600px;
+  }
+}

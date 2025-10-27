@@ -126,15 +126,16 @@ export default function FlowAgro() {
 
       {/* Diagram area */}
       <div
+        className="overflow-x-auto md:overflow-visible"
         style={{
           position: "relative",
           minHeight: "clamp(500px, 60vh, 700px)",
+          minWidth: "600px",
           borderRadius: "1rem",
           background:
             "radial-gradient(circle at 50% 50%, rgba(34,197,94,0.07) 0%, rgba(0,0,0,0) 70%)",
           boxShadow:
             "inset 0 0 40px rgba(34,197,94,0.12),0 0 120px rgba(34,197,94,0.12)",
-          overflow: "visible",
           zIndex: 1,
         }}
       >

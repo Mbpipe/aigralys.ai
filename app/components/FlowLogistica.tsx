@@ -72,7 +72,6 @@ export default function FlowLogistica() {
         boxShadow:
           "0 30px 120px rgba(168,85,247,0.08),0 0 200px rgba(168,85,247,0.08)",
         position: "relative",
-        overflow: "visible",
         fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
@@ -125,15 +124,16 @@ export default function FlowLogistica() {
 
       {/* Diagram area */}
       <div
+        className="overflow-x-auto md:overflow-visible"
         style={{
           position: "relative",
           minHeight: "clamp(500px, 60vh, 700px)",
+          minWidth: "600px",
           borderRadius: "1rem",
           background:
             "radial-gradient(circle at 50% 50%, rgba(168,85,247,0.07) 0%, rgba(0,0,0,0) 70%)",
           boxShadow:
             "inset 0 0 40px rgba(168,85,247,0.12),0 0 120px rgba(168,85,247,0.12)",
-          overflow: "visible",
           zIndex: 1,
         }}
       >
@@ -176,7 +176,7 @@ export default function FlowLogistica() {
               bottom: "20%",
               width: "80px",
               height: "60px",
-              overflow: "visible",
+              zIndex: 1,
               pointerEvents: "none",
             }}
           >
@@ -276,7 +276,7 @@ export default function FlowLogistica() {
               top: "20%",
               width: "80px",
               height: "80px",
-              overflow: "visible",
+              zIndex: 1,
               pointerEvents: "none",
             }}
           >
@@ -343,7 +343,7 @@ export default function FlowLogistica() {
               bottom: "20%",
               width: "80px",
               height: "80px",
-              overflow: "visible",
+              zIndex: 1,
               pointerEvents: "none",
             }}
           >

@@ -72,7 +72,7 @@ export default function FlowTurismo() {
         boxShadow:
           "0 30px 120px rgba(0,255,200,0.08),0 0 200px rgba(255,0,180,0.08)",
         position: "relative",
-        overflow: "visible",
+        overflow: "auto",
         fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
@@ -125,15 +125,16 @@ export default function FlowTurismo() {
 
       {/* Diagram area */}
       <div
+        className="overflow-x-auto md:overflow-visible"
         style={{
           position: "relative",
           minHeight: "clamp(500px, 60vh, 700px)",
+          minWidth: "600px",
           borderRadius: "1rem",
           background:
             "radial-gradient(circle at 50% 50%, rgba(0,255,200,0.07) 0%, rgba(0,0,0,0) 70%)",
           boxShadow:
             "inset 0 0 40px rgba(0,255,200,0.12),0 0 120px rgba(255,0,180,0.12)",
-          overflow: "visible",
           zIndex: 1,
         }}
       >
@@ -174,7 +175,7 @@ export default function FlowTurismo() {
               top: "30%",
               width: "80px",
               height: "60px",
-              overflow: "visible",
+              overflow: "auto",
               pointerEvents: "none",
             }}
           >
@@ -274,7 +275,7 @@ export default function FlowTurismo() {
               top: "10%",
               width: "80px",
               height: "80px",
-              overflow: "visible",
+              overflow: "auto",
               pointerEvents: "none",
             }}
           >
@@ -341,7 +342,7 @@ export default function FlowTurismo() {
               bottom: "10%",
               width: "80px",
               height: "80px",
-              overflow: "visible",
+              overflow: "auto",
               pointerEvents: "none",
             }}
           >

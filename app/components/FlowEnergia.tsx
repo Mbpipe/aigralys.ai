@@ -72,7 +72,6 @@ export default function FlowEnergia() {
         boxShadow:
           "0 30px 120px rgba(234,179,8,0.08),0 0 200px rgba(234,179,8,0.08)",
         position: "relative",
-        overflow: "visible",
         fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
@@ -125,15 +124,16 @@ export default function FlowEnergia() {
 
       {/* Diagram area */}
       <div
+        className="overflow-x-auto md:overflow-visible"
         style={{
           position: "relative",
           minHeight: "clamp(500px, 60vh, 700px)",
+          minWidth: "600px",
           borderRadius: "1rem",
           background:
             "radial-gradient(circle at 50% 50%, rgba(234,179,8,0.07) 0%, rgba(0,0,0,0) 70%)",
           boxShadow:
             "inset 0 0 40px rgba(234,179,8,0.12),0 0 120px rgba(234,179,8,0.12)",
-          overflow: "visible",
           zIndex: 1,
         }}
       >
@@ -175,7 +175,7 @@ export default function FlowEnergia() {
               bottom: "20%",
               width: "80px",
               height: "60px",
-              overflow: "visible",
+              zIndex: 1,
               pointerEvents: "none",
             }}
           >
@@ -275,7 +275,7 @@ export default function FlowEnergia() {
               top: "20%",
               width: "80px",
               height: "80px",
-              overflow: "visible",
+              zIndex: 1,
               pointerEvents: "none",
             }}
           >
@@ -342,7 +342,7 @@ export default function FlowEnergia() {
               bottom: "20%",
               width: "80px",
               height: "80px",
-              overflow: "visible",
+              zIndex: 1,
               pointerEvents: "none",
             }}
           >
