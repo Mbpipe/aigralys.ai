@@ -55,18 +55,18 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="relative w-full max-w-7xl bg-oscuro/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-azul/20"
+            className="relative w-full max-w-xs sm:max-w-2xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl bg-oscuro/95 backdrop-blur-xl rounded-xl sm:rounded-2xl shadow-2xl border border-azul/20"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 z-50 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-humo hover:text-white transition-all duration-200"
+              className="absolute top-2 right-2 sm:top-4 sm:right-4 z-50 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-humo hover:text-white transition-all duration-200"
               aria-label="Close modal"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
+                className="h-5 w-5 sm:h-6 sm:w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -81,7 +81,7 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
             </button>
 
             {/* Content */}
-            <div className="p-8">
+            <div className="p-4 sm:p-6 md:p-8 overflow-x-auto">
               {children}
             </div>
           </motion.div>
