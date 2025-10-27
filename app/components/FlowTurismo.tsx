@@ -67,7 +67,7 @@ export default function FlowTurismo() {
         background:
           "radial-gradient(circle at 20% 20%, rgba(0,255,200,0.07) 0%, rgba(0,0,0,0) 70%), #0b0e16",
         borderRadius: "1rem",
-        padding: "2rem",
+        padding: "clamp(1rem, 3vw, 2rem)",
         color: "#fff",
         boxShadow:
           "0 30px 120px rgba(0,255,200,0.08),0 0 200px rgba(255,0,180,0.08)",
@@ -127,7 +127,7 @@ export default function FlowTurismo() {
       <div
         style={{
           position: "relative",
-          minHeight: 320,
+          minHeight: "clamp(500px, 60vh, 700px)",
           borderRadius: "1rem",
           background:
             "radial-gradient(circle at 50% 50%, rgba(0,255,200,0.07) 0%, rgba(0,0,0,0) 70%)",

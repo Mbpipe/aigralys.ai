@@ -67,7 +67,7 @@ export default function FlowLogistica() {
         background:
           "radial-gradient(circle at 20% 20%, rgba(168,85,247,0.07) 0%, rgba(0,0,0,0) 70%), #0b0e16",
         borderRadius: "1rem",
-        padding: "2rem",
+        padding: "clamp(1rem, 3vw, 2rem)",
         color: "#fff",
         boxShadow:
           "0 30px 120px rgba(168,85,247,0.08),0 0 200px rgba(168,85,247,0.08)",
@@ -127,7 +127,7 @@ export default function FlowLogistica() {
       <div
         style={{
           position: "relative",
-          minHeight: 320,
+          minHeight: "clamp(500px, 60vh, 700px)",
           borderRadius: "1rem",
           background:
             "radial-gradient(circle at 50% 50%, rgba(168,85,247,0.07) 0%, rgba(0,0,0,0) 70%)",

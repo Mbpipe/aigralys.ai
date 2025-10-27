@@ -63,11 +63,12 @@ export default function FlowAgro() {
 
   return (
     <section
+      className="overflow-x-hidden"
       style={{
         background:
           "radial-gradient(circle at 20% 20%, rgba(34,197,94,0.07) 0%, rgba(0,0,0,0) 70%), #0b0e16",
         borderRadius: "1rem",
-        padding: "2rem",
+        padding: "clamp(1rem, 3vw, 2rem)",
         color: "#fff",
         boxShadow:
           "0 30px 120px rgba(34,197,94,0.08),0 0 200px rgba(34,197,94,0.08)",
@@ -127,7 +128,7 @@ export default function FlowAgro() {
       <div
         style={{
           position: "relative",
-          minHeight: 320,
+          minHeight: "clamp(500px, 60vh, 700px)",
           borderRadius: "1rem",
           background:
             "radial-gradient(circle at 50% 50%, rgba(34,197,94,0.07) 0%, rgba(0,0,0,0) 70%)",
@@ -140,13 +141,14 @@ export default function FlowAgro() {
         {/* Aerial Image node */}
         <div
           ref={imageRef}
+          className="hover:scale-105 transition-transform"
           style={{
             position: "absolute",
             top: "20%",
             left: "8%",
-            width: 220,
+            width: "clamp(160px, 15vw, 220px)",
             borderRadius: "1rem",
-            padding: "1rem",
+            padding: "clamp(0.5rem, 1.5vw, 1rem)",
             background:
               "linear-gradient(160deg, rgba(35,40,55,0.9) 0%, rgba(20,22,30,0.9) 60%)",
             border: "1px solid rgba(34,197,94,0.3)",
@@ -242,7 +244,7 @@ export default function FlowAgro() {
             position: "absolute",
             top: "40%",
             left: "35%",
-            width: 240,
+            width: "clamp(180px, 17vw, 240px)",
             borderRadius: "1rem",
             padding: "1rem",
             background:
@@ -409,7 +411,7 @@ export default function FlowAgro() {
             position: "absolute",
             top: "10%",
             left: "70%",
-            width: 200,
+            width: "clamp(150px, 14vw, 200px)",
             borderRadius: "1rem",
             padding: "1rem",
             background:
@@ -440,7 +442,7 @@ export default function FlowAgro() {
             position: "absolute",
             top: "60%",
             left: "70%",
-            width: 200,
+            width: "clamp(150px, 14vw, 200px)",
             borderRadius: "1rem",
             padding: "1rem",
             background:
