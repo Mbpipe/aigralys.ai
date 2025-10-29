@@ -242,7 +242,8 @@
     overlay.height= cam.clientHeight * devicePixelRatio;
     
     // Position glasses frame in center-upper area of the screen
-    const frameDisplayWidth = overlay.width * 0.35;
+    // Reduced from 0.35 to 0.25 to make it smaller (about 25% of screen width instead of 35%)
+    const frameDisplayWidth = overlay.width * 0.25;
     const frameDisplayHeight = frameDisplayWidth / (200/100); // maintain aspect ratio of 2:1
     glassesFrame.style.width = frameDisplayWidth + 'px';
     glassesFrame.style.height = frameDisplayHeight + 'px';
@@ -263,7 +264,8 @@
     ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(0,0,w,h);
     
     // Clear area for glasses frame
-    const frameW = Math.round(w * 0.35);
+    // Match the smaller size used in layout function (0.25 instead of 0.35)
+    const frameW = Math.round(w * 0.25);
     const frameH = Math.round(frameW / (200/100));
     const fx = Math.round((w - frameW) / 2);
     const fy = Math.round(h * 0.30 - frameH / 2);
