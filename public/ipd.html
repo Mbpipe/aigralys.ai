@@ -455,10 +455,27 @@
       console.log('    In display pixels:', Math.round(cam.clientWidth * 0.25));
       console.log('    In camera pixels:', Math.round(cw * (cam.clientWidth * 0.25) / cam.clientWidth));
       
-      // Use the glasses overlay calibration stored in lastPxPerMm
-      ipd_mm = di_px / lastPxPerMm;
+      // Try inverted conversion: if result is ~200mm but should be ~55mm, try multiplying instead
+      const ipd_divided = di_px / lastPxPerMm;
+      const ipd_multiplied = di_px * lastPxPerMm;
+      
+      console.log('  IPD (divided approach):', ipd_divided.toFixed(2), 'mm');
+      console.log('  IPD (multiplied approach):', ipd_multiplied.toFixed(2), 'mm');
+      
+      // Check which one is closer to reasonable IPD (50-75mm range)
+      const reasonableRange = { min: 50, max: 75 };
+      const divInRange = ipd_divided >= reasonableRange.min && ipd_divided <= reasonableRange.max;
+      const mulInRange = ipd_multiplied >= reasonableRange.min && ipd_multiplied <= reasonableRange.max;
+      
+      if (mulInRange && !divInRange) {
+        ipd_mm = ipd_multiplied;
+        console.log('  Using MULTIPLICATION (pxPerMm seems inverted)');
+      } else {
+        ipd_mm = ipd_divided;
+        console.log('  Using DIVISION (standard)');
+      }
+      
       console.log('  IPD result:', ipd_mm.toFixed(2), 'mm');
-      console.log('  Expected IPD range: 50-75mm (if result is ~200mm, conversion is inverted)');
     }
 
     // Annotate image
