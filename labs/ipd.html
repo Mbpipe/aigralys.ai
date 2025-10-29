@@ -203,6 +203,8 @@
     deviceDpi = displayMetrics.dpi;
     console.log('Display metrics:', displayMetrics);
     console.log('Device DPI detected:', deviceDpi);
+    console.log('CSS Pixels per Inch:', displayMetrics.cssPixelsPerInch);
+    console.log('Device Pixel Ratio:', displayMetrics.dpr);
     
     // Update UI with device info
     if(deviceInfo) deviceInfo.textContent = displayMetrics.platform;
@@ -219,7 +221,8 @@
   
   // Demo conversions for 142mm
   console.log('Demo: Conversions for 142mm:');
-  demoConversions(142);
+  const demoResults = demoConversions(142);
+  console.log('Expected: 142mm should be approximately', Math.round(demoResults.px), 'pixels on this device');
 
   // Frame width slider
   frameWidth.addEventListener('input', (e)=>{
@@ -315,15 +318,34 @@
 
     // Don't draw any border - let the glasses overlay be the only visual reference
 
-    // Calculate pixel-to-mm conversion based on frame width
-    // Using actual DPI detection for accurate conversion
+    // Calculate pixel-to-mm conversion for camera pixels
+    // Note: Camera pixels are NOT the same as screen pixels!
+    // We need to account for camera resolution vs screen DPI
     let pxPerMm;
-    if (deviceDpi > 0) {
-      // Use DPI-based conversion: 1mm = deviceDpi * (1/25.4) pixels
+    
+    // Get camera dimensions
+    const cameraWidthPx = cam.videoWidth || 0;
+    const cameraHeightPx = cam.videoHeight || 0;
+    
+    if (cameraWidthPx > 0 && deviceDpi > 0) {
+      // Estimate camera sensor size based on typical phone cameras
+      // Typical phone camera sensor is ~3-4mm wide (varies by model)
+      // Use wider FOV estimation: ~70-80 degrees horizontal FOV
+      // At 30cm distance, FOV width ≈ 2 * distance * tan(angle/2)
+      // For 70 deg FOV at 30cm: 2 * 300mm * tan(35°) ≈ 2 * 300 * 0.7 ≈ 420mm
+      const estimatedFovWidthMm = 400; // mm, approximate at normal viewing distance
+      pxPerMm = cameraWidthPx / estimatedFovWidthMm;
+      
+      console.log('Camera-based conversion:', {
+        cameraWidth: cameraWidthPx,
+        estimatedFovMm: estimatedFovWidthMm,
+        pxPerMm: pxPerMm.toFixed(3)
+      });
+    } else if (deviceDpi > 0) {
+      // Use DPI-based conversion as fallback
       pxPerMm = deviceDpi / 25.4;
     } else {
-      // Fallback: use frame-based measurement
-      // The glasses frame SVG is 200px wide and represents currentFrameWidth mm
+      // Last resort: use frame-based measurement
       pxPerMm = frameW / currentFrameWidth;
     }
 
@@ -418,18 +440,13 @@
       console.log('  Left pupil:', pupils.left);
       console.log('  Right pupil:', pupils.right);
       console.log('  Distance in pixels:', di_px.toFixed(2));
-      console.log('  lastPxPerMm:', lastPxPerMm);
-      console.log('  deviceDpi:', deviceDpi);
+      console.log('  Camera width:', cw, 'px');
+      console.log('  lastPxPerMm (from camera FOV):', lastPxPerMm);
       
-      // Use DPI-based conversion directly instead of lastPxPerMm
-      if (deviceDpi > 0) {
-        // Convert pixels to mm using actual DPI
-        ipd_mm = di_px / (deviceDpi / 25.4);
-        console.log('  IPD calculation using DPI:', ipd_mm.toFixed(2), 'mm');
-      } else {
-        ipd_mm = di_px / (lastPxPerMm||1);
-        console.log('  IPD calculation using px/mm:', ipd_mm.toFixed(2), 'mm');
-      }
+      // Use the camera FOV-based conversion stored in lastPxPerMm
+      // This was calculated based on estimated camera field of view
+      ipd_mm = di_px / lastPxPerMm;
+      console.log('  IPD result:', ipd_mm.toFixed(2), 'mm');
     }
 
     // Annotate image
