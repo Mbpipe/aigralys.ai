@@ -334,6 +334,12 @@
     lastPxPerMm = pxPerMm;
     pxmmEl.textContent = pxPerMm.toFixed(3);
     framePxEl.textContent = Math.round(frameW) + 'px';
+    
+    // Debug: Show expected IPD range for reference
+    if (typeof window !== 'undefined' && window.console && Math.random() < 0.01) { // log occasionally to avoid spam
+      console.log('Scale info: pxPerMm=', pxPerMm.toFixed(3), ', deviceDpi=', deviceDpi, 
+                  ', Expected 142mm =', (142 * pxPerMm).toFixed(1), 'px');
+    }
 
     // Auto-capture when good conditions
     if(autoCap.checked && score>=0.70){
@@ -407,7 +413,23 @@
     if(pupils){
       const dx=pupils.right.x-pupils.left.x, dy=pupils.right.y-pupils.left.y;
       const di_px = Math.hypot(dx,dy);
-      ipd_mm = di_px / (lastPxPerMm||1);
+      
+      console.log('Pupil detection:');
+      console.log('  Left pupil:', pupils.left);
+      console.log('  Right pupil:', pupils.right);
+      console.log('  Distance in pixels:', di_px.toFixed(2));
+      console.log('  lastPxPerMm:', lastPxPerMm);
+      console.log('  deviceDpi:', deviceDpi);
+      
+      // Use DPI-based conversion directly instead of lastPxPerMm
+      if (deviceDpi > 0) {
+        // Convert pixels to mm using actual DPI
+        ipd_mm = di_px / (deviceDpi / 25.4);
+        console.log('  IPD calculation using DPI:', ipd_mm.toFixed(2), 'mm');
+      } else {
+        ipd_mm = di_px / (lastPxPerMm||1);
+        console.log('  IPD calculation using px/mm:', ipd_mm.toFixed(2), 'mm');
+      }
     }
 
     // Annotate image
