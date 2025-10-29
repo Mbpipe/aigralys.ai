@@ -318,36 +318,37 @@
 
     // Don't draw any border - let the glasses overlay be the only visual reference
 
-    // Calculate pixel-to-mm conversion for camera pixels
-    // Note: Camera pixels are NOT the same as screen pixels!
-    // We need to account for camera resolution vs screen DPI
+    // Calculate pixel-to-mm conversion based on the glasses overlay
+    // The glasses frame overlay should fit the user's face and represents currentFrameWidth mm (default 142mm)
+    // We need to measure how many camera pixels the glasses frame occupies
     let pxPerMm;
     
     // Get camera dimensions
     const cameraWidthPx = cam.videoWidth || 0;
-    const cameraHeightPx = cam.videoHeight || 0;
     
-    if (cameraWidthPx > 0 && deviceDpi > 0) {
-      // Estimate camera sensor size based on typical phone cameras
-      // Typical phone camera sensor is ~3-4mm wide (varies by model)
-      // Use wider FOV estimation: ~70-80 degrees horizontal FOV
-      // At 30cm distance, FOV width ≈ 2 * distance * tan(angle/2)
-      // For 70 deg FOV at 30cm: 2 * 300mm * tan(35°) ≈ 2 * 300 * 0.7 ≈ 420mm
-      const estimatedFovWidthMm = 400; // mm, approximate at normal viewing distance
-      pxPerMm = cameraWidthPx / estimatedFovWidthMm;
-      
-      console.log('Camera-based conversion:', {
-        cameraWidth: cameraWidthPx,
-        estimatedFovMm: estimatedFovWidthMm,
-        pxPerMm: pxPerMm.toFixed(3)
-      });
-    } else if (deviceDpi > 0) {
-      // Use DPI-based conversion as fallback
-      pxPerMm = deviceDpi / 25.4;
-    } else {
-      // Last resort: use frame-based measurement
-      pxPerMm = frameW / currentFrameWidth;
-    }
+    // The glasses overlay is shown at 25% of the overlay width
+    // We need to determine the scale factor from overlay pixels to camera pixels
+    const overlayWidthPx = w; // This is overlay.width (scaled by devicePixelRatio)
+    const glassesOverlayPx = overlayWidthPx * 0.25; // Glasses are 25% of overlay width
+    
+    // Scale factor from overlay pixels to camera pixels
+    const scaleFactor = cameraWidthPx / overlayWidthPx;
+    
+    // Glasses frame size in camera pixels
+    const glassesFrameInCameraPx = glassesOverlayPx * scaleFactor;
+    
+    // Conversion: glassesFrameInCameraPx pixels = currentFrameWidth mm
+    pxPerMm = glassesFrameInCameraPx / currentFrameWidth;
+    
+    console.log('Glasses overlay calibration:', {
+      overlayWidthPx: overlayWidthPx,
+      cameraWidthPx: cameraWidthPx,
+      scaleFactor: scaleFactor.toFixed(3),
+      glassesFrameInCameraPx: Math.round(glassesFrameInCameraPx),
+      frameWidthMm: currentFrameWidth,
+      pxPerMm: pxPerMm.toFixed(3),
+      expected142mmInPixels: Math.round(142 * pxPerMm)
+    });
 
     // Fine adjustment ±10%
     const adj = parseInt(fineSlider.value||'0',10)/100;
