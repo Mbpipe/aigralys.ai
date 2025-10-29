@@ -320,35 +320,42 @@
 
     // Calculate pixel-to-mm conversion based on the glasses overlay
     // The glasses frame overlay should fit the user's face and represents currentFrameWidth mm (default 142mm)
-    // We need to measure how many camera pixels the glasses frame occupies
+    // Key insight: The glasses overlay is a visual guide - when user positions their face to match it,
+    // the distance from camera determines the actual pixel-to-mm ratio
     let pxPerMm;
     
     // Get camera dimensions
     const cameraWidthPx = cam.videoWidth || 0;
     
-    // The glasses overlay is shown at 25% of the overlay width
-    // We need to determine the scale factor from overlay pixels to camera pixels
-    const overlayWidthPx = w; // This is overlay.width (scaled by devicePixelRatio)
-    const glassesOverlayPx = overlayWidthPx * 0.25; // Glasses are 25% of overlay width
+    // The actual display dimensions (what user sees)
+    const displayWidthPx = cam.clientWidth || cameraWidthPx;
     
-    // Scale factor from overlay pixels to camera pixels
-    const scaleFactor = cameraWidthPx / overlayWidthPx;
+    // The glasses overlay is 25% of the display width
+    const glassesDisplayPx = displayWidthPx * 0.25;
     
-    // Glasses frame size in camera pixels
-    const glassesFrameInCameraPx = glassesOverlayPx * scaleFactor;
+    // Scale from display pixels to camera pixels
+    const cameraToDisplayRatio = cameraWidthPx / displayWidthPx;
     
-    // Conversion: glassesFrameInCameraPx pixels = currentFrameWidth mm
-    pxPerMm = glassesFrameInCameraPx / currentFrameWidth;
+    // Glasses frame in camera pixels
+    const glassesCameraPx = glassesDisplayPx * cameraToDisplayRatio;
     
-    console.log('Glasses overlay calibration:', {
-      overlayWidthPx: overlayWidthPx,
-      cameraWidthPx: cameraWidthPx,
-      scaleFactor: scaleFactor.toFixed(3),
-      glassesFrameInCameraPx: Math.round(glassesFrameInCameraPx),
-      frameWidthMm: currentFrameWidth,
-      pxPerMm: pxPerMm.toFixed(3),
-      expected142mmInPixels: Math.round(142 * pxPerMm)
-    });
+    // Conversion: glassesCameraPx pixels represent currentFrameWidth mm
+    // So: pxPerMm = glassesCameraPx / currentFrameWidth
+    pxPerMm = glassesCameraPx / currentFrameWidth;
+    
+    // Debug: log all the conversion details
+    if (typeof window !== 'undefined' && window.console && Math.random() < 0.01) {
+      console.log('Glasses overlay calibration:', {
+        displayWidthPx: displayWidthPx,
+        cameraWidthPx: cameraWidthPx,
+        cameraToDisplayRatio: cameraToDisplayRatio.toFixed(3),
+        glassesDisplayPx: Math.round(glassesDisplayPx),
+        glassesCameraPx: Math.round(glassesCameraPx),
+        frameWidthMm: currentFrameWidth,
+        pxPerMm: pxPerMm.toFixed(3),
+        'Expected 142mm in pixels': Math.round(142 * pxPerMm)
+      });
+    }
 
     // Fine adjustment ±10%
     const adj = parseInt(fineSlider.value||'0',10)/100;
@@ -442,12 +449,16 @@
       console.log('  Right pupil:', pupils.right);
       console.log('  Distance in pixels:', di_px.toFixed(2));
       console.log('  Camera width:', cw, 'px');
-      console.log('  lastPxPerMm (from camera FOV):', lastPxPerMm);
+      console.log('  Display width:', cam.clientWidth, 'px');
+      console.log('  pxPerMm:', lastPxPerMm.toFixed(3));
+      console.log('  Glasses overlay (should be 142mm):');
+      console.log('    In display pixels:', Math.round(cam.clientWidth * 0.25));
+      console.log('    In camera pixels:', Math.round(cw * (cam.clientWidth * 0.25) / cam.clientWidth));
       
-      // Use the camera FOV-based conversion stored in lastPxPerMm
-      // This was calculated based on estimated camera field of view
+      // Use the glasses overlay calibration stored in lastPxPerMm
       ipd_mm = di_px / lastPxPerMm;
       console.log('  IPD result:', ipd_mm.toFixed(2), 'mm');
+      console.log('  Expected IPD range: 50-75mm (if result is ~200mm, conversion is inverted)');
     }
 
     // Annotate image
