@@ -150,6 +150,7 @@
   const glassesFrame = document.getElementById('glassesFrame');
 
   const capBtn = document.getElementById('capBtn');
+  if(!capBtn) console.error('capBtn not found');
 
   const autoCap  = document.getElementById('autoCap');
   const scoreTag = document.getElementById('scoreTag');
@@ -361,14 +362,26 @@
   }
 
   // --- Capture (button or auto) ---
-  capBtn.addEventListener('click', (e)=>{
-    e.preventDefault();
-    captureFrame(false);
-  });
+  if(capBtn){
+    capBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('Capture button clicked');
+      captureFrame(false);
+    });
+  } else {
+    console.error('Cannot attach click handler: capBtn is null');
+  }
 
   async function captureFrame(requirePupils){
-    if(!videoReady()){ setErr('La cámara aún no está lista'); return; }
+    console.log('captureFrame called');
+    if(!videoReady()){ 
+      console.log('Video not ready');
+      setErr('La cámara aún no está lista'); 
+      return; 
+    }
     clearErr();
+    console.log('Starting capture...');
 
     // Capture a non-mirrored frame for analysis
     const cw = cam.videoWidth, ch = cam.videoHeight;
@@ -429,11 +442,13 @@
     }
 
     // Show results
+    console.log('Showing results, IPD:', ipd_mm);
     resultBox.classList.remove('hidden');
     if(ipd_mm!=null) ipdVal.textContent = ipd_mm.toFixed(1)+' mm';
     else ipdVal.textContent = '—';
     scaleVal.textContent = (lastPxPerMm? lastPxPerMm.toFixed(3):'—') + ' px/mm';
     annotImg.src = a.toDataURL('image/png');
+    console.log('Capture complete');
   }
 
   // Controls
