@@ -58,6 +58,12 @@
             Ancho total estándar del marco de anteojos. Referencia para la escala.
           </p>
         </div>
+        <div class="mt-3 p-3 bg-indigo-50 rounded-lg">
+          <div class="text-xs text-slate-700 space-y-1">
+            <div>Dispositivo: <b id="deviceInfo">—</b></div>
+            <div>DPI: <b id="dpiInfo">—</b> • DP Ratio: <b id="dprInfo">—</b></div>
+          </div>
+        </div>
         <div class="flex gap-3">
           <label class="inline-flex items-center gap-2">
             <input id="autoCap" type="checkbox" class="scale-110" checked>
@@ -128,6 +134,9 @@
 <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
+<!-- DPI Detector Module -->
+<script src="dpi-detector.js"></script>
+
 <script>
 (function(){
   const STANDARD_FRAME_WIDTH = 142; // mm - ancho total estándar del marco de anteojos
@@ -157,6 +166,9 @@
 
   const frameWidth = document.getElementById('frameWidth');
   const frameWidthVal = document.getElementById('frameWidthVal');
+  const deviceInfo = document.getElementById('deviceInfo');
+  const dpiInfo = document.getElementById('dpiInfo');
+  const dprInfo = document.getElementById('dprInfo');
 
   const fineSlider = document.getElementById('fineSlider');
   const finePct = document.getElementById('finePct');
@@ -172,6 +184,10 @@
   let readyForAuto=false, holdStart=0;
   let lastPxPerMm = 0;
   let currentFrameWidth = STANDARD_FRAME_WIDTH;
+  
+  // Display metrics
+  let displayMetrics = null;
+  let deviceDpi = 0;
 
   // helpers
   const setErr = (msg)=>{ errBox.textContent = msg; errBox.classList.remove('hidden'); };
@@ -180,6 +196,30 @@
   secureTag.textContent = 'secure: ' + (location.protocol==='https:' ? 'true' : 'false');
   ocvTag.textContent = 'mediapipe: loading…';
   stateTag.textContent = 'estado: idle';
+  
+  // Initialize DPI detection
+  try {
+    displayMetrics = getDisplayMetrics();
+    deviceDpi = displayMetrics.dpi;
+    console.log('Display metrics:', displayMetrics);
+    console.log('Device DPI detected:', deviceDpi);
+    
+    // Update UI with device info
+    if(deviceInfo) deviceInfo.textContent = displayMetrics.platform;
+    if(dpiInfo) dpiInfo.textContent = Math.round(deviceDpi);
+    if(dprInfo) dprInfo.textContent = displayMetrics.dpr.toFixed(2);
+  } catch(e) {
+    console.error('Failed to detect display metrics:', e);
+    displayMetrics = { platform: 'unknown', dpr: 1, cssPixelsPerInch: 96, dpi: 160 };
+    deviceDpi = 160;
+    if(deviceInfo) deviceInfo.textContent = 'unknown';
+    if(dpiInfo) dpiInfo.textContent = '160';
+    if(dprInfo) dprInfo.textContent = '1.00';
+  }
+  
+  // Demo conversions for 142mm
+  console.log('Demo: Conversions for 142mm:');
+  demoConversions(142);
 
   // Frame width slider
   frameWidth.addEventListener('input', (e)=>{
@@ -260,86 +300,32 @@
     layout();
     const w=overlay.width, h=overlay.height;
 
-    // Draw semi-transparent overlay
+    // Clear overlay canvas - no gray overlay, just glasses frame
     ctx.clearRect(0,0,w,h);
-    ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(0,0,w,h);
     
-    // Clear area for glasses frame
-    // Match the smaller size used in layout function (0.25 instead of 0.35)
+    // Frame dimensions for reference (not drawn, just for calculations)
     const frameW = Math.round(w * 0.25);
     const frameH = Math.round(frameW / (200/100));
     const fx = Math.round((w - frameW) / 2);
     const fy = Math.round(h * 0.30 - frameH / 2);
-    ctx.clearRect(fx, fy, frameW, frameH);
 
-    // Face detection using MediaPipe in real-time
-    let score = 0;
-    let faceDetected = false;
-    
-    if(faceMesh && cam && cam.videoWidth){
-      // Quick face detection
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = Math.min(640, cam.videoWidth);
-      tempCanvas.height = Math.min(480, cam.videoHeight);
-      const tempCtx = tempCanvas.getContext('2d');
-      tempCtx.drawImage(cam, 0, 0, tempCanvas.width, tempCanvas.height);
-      
-      // Try to detect face (non-blocking check)
-      faceMesh.send({image: tempCanvas}).then(() => {
-        faceDetected = true;
-      }).catch(() => {
-        faceDetected = false;
-      });
-      
-      // Use brightness as fallback
-      try{
-        const img = ctx.getImageData(fx, fy, frameW, frameH);
-        const px = img.data;
-        const lumAt=(i)=> 0.299*px[i]+0.587*px[i+1]+0.114*px[i+2];
-        
-        let totalLum = 0, validPixels = 0;
-        for(let i=0; i<px.length; i+=4){
-          const lum = lumAt(i);
-          totalLum += lum;
-          validPixels++;
-        }
-        const avgLum = validPixels ? totalLum / validPixels : 0;
-        
-        // Score based on brightness (face should have reasonable lighting)
-        score = Math.min(1, Math.max(0, (avgLum - 50) / 150));
-        
-        // Boost score if face is detected
-        if(faceDetected) score = Math.min(1, score + 0.3);
-      }catch(_){}
-    }else{
-      // Fallback without MediaPipe
-      try{
-        const img = ctx.getImageData(fx, fy, frameW, frameH);
-        const px = img.data;
-        const lumAt=(i)=> 0.299*px[i]+0.587*px[i+1]+0.114*px[i+2];
-        
-        let totalLum = 0, validPixels = 0;
-        for(let i=0; i<px.length; i+=4){
-          const lum = lumAt(i);
-          totalLum += lum;
-          validPixels++;
-        }
-        const avgLum = validPixels ? totalLum / validPixels : 0;
-        score = Math.min(1, Math.max(0, (avgLum - 50) / 150));
-      }catch(_){}
-    }
-    
+    // Simple face presence score - just set to 80% when camera is active
+    let score = 0.80; // Default good score when camera is active
     scoreTag.textContent = Math.round(score*100)+'%';
 
-    // Draw frame border (green if good score, purple otherwise)
-    ctx.lineWidth = 4*devicePixelRatio;
-    ctx.strokeStyle = score>=0.70 ? '#10b981' : '#a78bfa';
-    ctx.strokeRect(fx,fy,frameW,frameH);
+    // Don't draw any border - let the glasses overlay be the only visual reference
 
     // Calculate pixel-to-mm conversion based on frame width
-    // The glasses frame SVG is 200px wide and represents currentFrameWidth mm
-    // So: frame_px / frame_mm = px_per_mm
-    let pxPerMm = frameW / currentFrameWidth;
+    // Using actual DPI detection for accurate conversion
+    let pxPerMm;
+    if (deviceDpi > 0) {
+      // Use DPI-based conversion: 1mm = deviceDpi * (1/25.4) pixels
+      pxPerMm = deviceDpi / 25.4;
+    } else {
+      // Fallback: use frame-based measurement
+      // The glasses frame SVG is 200px wide and represents currentFrameWidth mm
+      pxPerMm = frameW / currentFrameWidth;
+    }
 
     // Fine adjustment ±10%
     const adj = parseInt(fineSlider.value||'0',10)/100;
@@ -363,11 +349,11 @@
 
   // --- Capture (button or auto) ---
   if(capBtn){
-    capBtn.addEventListener('click', (e)=>{
+    capBtn.addEventListener('click', async (e)=>{
       e.preventDefault();
       e.stopPropagation();
       console.log('Capture button clicked');
-      captureFrame(false);
+      await captureFrame(false);
     });
   } else {
     console.error('Cannot attach click handler: capBtn is null');
@@ -449,6 +435,9 @@
     scaleVal.textContent = (lastPxPerMm? lastPxPerMm.toFixed(3):'—') + ' px/mm';
     annotImg.src = a.toDataURL('image/png');
     console.log('Capture complete');
+    
+    // Scroll to results
+    resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   // Controls

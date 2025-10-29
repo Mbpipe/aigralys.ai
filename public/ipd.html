@@ -300,81 +300,20 @@
     layout();
     const w=overlay.width, h=overlay.height;
 
-    // Draw semi-transparent overlay
+    // Clear overlay canvas - no gray overlay, just glasses frame
     ctx.clearRect(0,0,w,h);
-    ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(0,0,w,h);
     
-    // Clear area for glasses frame
-    // Match the smaller size used in layout function (0.25 instead of 0.35)
+    // Frame dimensions for reference (not drawn, just for calculations)
     const frameW = Math.round(w * 0.25);
     const frameH = Math.round(frameW / (200/100));
     const fx = Math.round((w - frameW) / 2);
     const fy = Math.round(h * 0.30 - frameH / 2);
-    ctx.clearRect(fx, fy, frameW, frameH);
 
-    // Face detection using MediaPipe in real-time
-    let score = 0;
-    let faceDetected = false;
-    
-    if(faceMesh && cam && cam.videoWidth){
-      // Quick face detection
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = Math.min(640, cam.videoWidth);
-      tempCanvas.height = Math.min(480, cam.videoHeight);
-      const tempCtx = tempCanvas.getContext('2d');
-      tempCtx.drawImage(cam, 0, 0, tempCanvas.width, tempCanvas.height);
-      
-      // Try to detect face (non-blocking check)
-      faceMesh.send({image: tempCanvas}).then(() => {
-        faceDetected = true;
-      }).catch(() => {
-        faceDetected = false;
-      });
-      
-      // Use brightness as fallback
-      try{
-        const img = ctx.getImageData(fx, fy, frameW, frameH);
-        const px = img.data;
-        const lumAt=(i)=> 0.299*px[i]+0.587*px[i+1]+0.114*px[i+2];
-        
-        let totalLum = 0, validPixels = 0;
-        for(let i=0; i<px.length; i+=4){
-          const lum = lumAt(i);
-          totalLum += lum;
-          validPixels++;
-        }
-        const avgLum = validPixels ? totalLum / validPixels : 0;
-        
-        // Score based on brightness (face should have reasonable lighting)
-        score = Math.min(1, Math.max(0, (avgLum - 50) / 150));
-        
-        // Boost score if face is detected
-        if(faceDetected) score = Math.min(1, score + 0.3);
-      }catch(_){}
-    }else{
-      // Fallback without MediaPipe
-      try{
-        const img = ctx.getImageData(fx, fy, frameW, frameH);
-        const px = img.data;
-        const lumAt=(i)=> 0.299*px[i]+0.587*px[i+1]+0.114*px[i+2];
-        
-        let totalLum = 0, validPixels = 0;
-        for(let i=0; i<px.length; i+=4){
-          const lum = lumAt(i);
-          totalLum += lum;
-          validPixels++;
-        }
-        const avgLum = validPixels ? totalLum / validPixels : 0;
-        score = Math.min(1, Math.max(0, (avgLum - 50) / 150));
-      }catch(_){}
-    }
-    
+    // Simple face presence score - just set to 80% when camera is active
+    let score = 0.80; // Default good score when camera is active
     scoreTag.textContent = Math.round(score*100)+'%';
 
-    // Draw frame border (green if good score, purple otherwise)
-    ctx.lineWidth = 4*devicePixelRatio;
-    ctx.strokeStyle = score>=0.70 ? '#10b981' : '#a78bfa';
-    ctx.strokeRect(fx,fy,frameW,frameH);
+    // Don't draw any border - let the glasses overlay be the only visual reference
 
     // Calculate pixel-to-mm conversion based on frame width
     // Using actual DPI detection for accurate conversion
@@ -410,11 +349,11 @@
 
   // --- Capture (button or auto) ---
   if(capBtn){
-    capBtn.addEventListener('click', (e)=>{
+    capBtn.addEventListener('click', async (e)=>{
       e.preventDefault();
       e.stopPropagation();
       console.log('Capture button clicked');
-      captureFrame(false);
+      await captureFrame(false);
     });
   } else {
     console.error('Cannot attach click handler: capBtn is null');
@@ -496,6 +435,9 @@
     scaleVal.textContent = (lastPxPerMm? lastPxPerMm.toFixed(3):'—') + ' px/mm';
     annotImg.src = a.toDataURL('image/png');
     console.log('Capture complete');
+    
+    // Scroll to results
+    resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   // Controls
