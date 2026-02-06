@@ -1,0 +1,51 @@
+name: Deploy Dignitas to /dignitas path
+
+on:
+  push:
+    branches:
+      - dignitas
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dignitas branch
+        uses: actions/checkout@v4
+        with:
+          ref: dignitas
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Dignitas
+        run: npm run build
+
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy Dignitas build to /dignitas folder
+        run: |
+          mkdir -p gh-pages/dignitas
+          rm -rf gh-pages/dignitas/*
+          cp -r out/* gh-pages/dignitas/
+
+      - name: Commit and push to gh-pages
+        run: |
+          cd gh-pages
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add dignitas/
+          git commit -m "Deploy Dignitas to /dignitas path" || echo "No changes to commit"
+          git push origin gh-pages
