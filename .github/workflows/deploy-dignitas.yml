@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build-and-deploy:
@@ -29,23 +31,22 @@ jobs:
       - name: Build Dignitas
         run: npm run build
 
-      - name: Checkout gh-pages branch
-        uses: actions/checkout@v4
-        with:
-          ref: gh-pages
-          path: gh-pages
+      - name: Checkout gh-pages branch (or create if doesn't exist)
+        run: |
+          git fetch origin gh-pages:gh-pages || git checkout --orphan gh-pages && git rm -rf . && git checkout dignitas -- .gitignore && git commit --allow-empty -m "Initialize gh-pages"
+          git checkout gh-pages
+          git pull origin gh-pages || true
 
       - name: Copy Dignitas build to /dignitas folder
         run: |
-          mkdir -p gh-pages/dignitas
-          rm -rf gh-pages/dignitas/*
-          cp -r out/* gh-pages/dignitas/
+          mkdir -p dignitas
+          rm -rf dignitas/*
+          cp -r out/* dignitas/
 
       - name: Commit and push to gh-pages
         run: |
-          cd gh-pages
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add dignitas/
-          git commit -m "Deploy Dignitas to /dignitas path" || echo "No changes to commit"
+          git diff --staged --quiet || git commit -m "🎩 Deploy Dignitas to /dignitas path [$(date +'%Y-%m-%d %H:%M:%S')]"
           git push origin gh-pages
