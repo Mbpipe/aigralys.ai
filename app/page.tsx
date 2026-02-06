@@ -30,7 +30,7 @@ export default function HomePage() {
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage: 'url(https://images.unsplash.com/photo-1602524206875-682b069a665b?w=1920&q=80)',
+              backgroundImage: 'url(/assets/editorial/hero-background.jpg)',
             }}
           />
           {/* Darker, more atmospheric overlay */}
@@ -159,7 +159,7 @@ export default function HomePage() {
           <EditorialSection
             title="El ritual del fuego"
             description="Siete años de reposo. Tierra volcánica. La lenta combustión de la contemplación. Esto no es fumar—es ceremonia."
-            imageSrc="https://images.unsplash.com/photo-1556139951-d8f1dcb0fd7b?w=1920&q=80"
+            imageSrc="/assets/editorial/hero-puros.jpg"
             imagePosition="left"
             link="/shop?category=cigars"
             linkText="Descubrir puros"
@@ -171,7 +171,7 @@ export default function HomePage() {
           <EditorialSection
             title="El latido mecánico"
             description="El tiempo debe sentirse, no solo verse. Precisión suiza. Artesanía japonesa. Cada tic, un recordatorio de que lo fino se mueve despacio."
-            imageSrc="https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=1920&q=80"
+            imageSrc="/assets/editorial/hero-relojes.jpg"
             imagePosition="right"
             link="/shop?category=watches"
             linkText="Explorar relojes"
@@ -183,7 +183,7 @@ export default function HomePage() {
           <EditorialSection
             title="La memoria del aroma"
             description="Oud de Assam. Tabaco de París. Una gota detrás de la oreja. El aroma se revela lentamente—como la confianza."
-            imageSrc="https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=1920&q=80"
+            imageSrc="/assets/editorial/hero-perfumes.jpg"
             imagePosition="left"
             link="/shop?category=perfumes"
             linkText="Descubrir fragancias"
