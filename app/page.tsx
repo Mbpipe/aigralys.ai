@@ -30,7 +30,7 @@ export default function HomePage() {
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage: 'url(/assets/editorial/hero-background.jpg)',
+              backgroundImage: `url(${process.env.NODE_ENV === 'production' ? '/dignitas' : ''}/assets/editorial/hero-background.jpg)`,
             }}
           />
           {/* Darker, more atmospheric overlay */}

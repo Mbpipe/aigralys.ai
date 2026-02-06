@@ -25,6 +25,11 @@ export default function EditorialSection({
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   const isLeft = imagePosition === 'left';
+  
+  // Add basePath for GitHub Pages deployment
+  const fullImageSrc = process.env.NODE_ENV === 'production' 
+    ? `/dignitas${imageSrc}` 
+    : imageSrc;
 
   return (
     <div
@@ -40,7 +45,7 @@ export default function EditorialSection({
       >
         <div
           className="w-full h-full bg-cover bg-center"
-          style={{ backgroundImage: `url(${imageSrc})` }}
+          style={{ backgroundImage: `url(${fullImageSrc})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal/20 to-transparent" />
       </motion.div>
