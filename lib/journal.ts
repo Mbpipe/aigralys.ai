@@ -26,7 +26,7 @@ export const ARTICLES: Article[] = [
       
       <p>The cigar will last an hour, maybe two. That is the point. You cannot rush it. You must be present.</p>
     `,
-    imageSrc: 'https://images.unsplash.com/photo-1556139943-4a4634d5dd62?w=1920&q=80',
+    imageSrc: '/assets/journal/cigar-selection.jpg',
     readTime: '6 min',
     publishedAt: '2026-01-15',
   },
@@ -46,7 +46,7 @@ export const ARTICLES: Article[] = [
       
       <p>A Grand Seiko Spring Drive. An Audemars Piguet Royal Oak. These are not purchases. They are inheritances-in-waiting. Objects that will outlive you, carrying your story forward.</p>
     `,
-    imageSrc: 'https://images.unsplash.com/photo-1594534475808-b18fc33b045e?w=1920&q=80',
+    imageSrc: '/assets/journal/mechanical-watches.jpg',
     readTime: '5 min',
     publishedAt: '2026-01-08',
   },
@@ -66,7 +66,7 @@ export const ARTICLES: Article[] = [
       
       <p>One drop behind the ear. That is all you need. Oud announces itself slowly. It does not scream. It whispers—and people lean in to listen.</p>
     `,
-    imageSrc: 'https://images.unsplash.com/photo-1615634260167-c8cdede054de?w=1920&q=80',
+    imageSrc: '/assets/journal/oud-guide.jpg',
     readTime: '7 min',
     publishedAt: '2025-12-20',
   },
@@ -86,7 +86,7 @@ export const ARTICLES: Article[] = [
       
       <p>The morning is yours. The world has not yet made its demands. Use that time to decide who you want to be today.</p>
     `,
-    imageSrc: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1920&q=80',
+    imageSrc: '/assets/journal/morning-ritual.jpg',
     readTime: '4 min',
     publishedAt: '2025-12-10',
   },
