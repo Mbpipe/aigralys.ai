@@ -43,5 +43,6 @@ export function getImageSrc(filename: string): string {
   const localPath = `/assets/${filename}`;
   
   // Fallback to placeholder
-  return PLACEHOLDER_IMAGES[filename] || localPath;
+  const placeholder = PLACEHOLDER_IMAGES[filename as keyof typeof PLACEHOLDER_IMAGES];
+  return placeholder || localPath;
 }
