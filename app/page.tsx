@@ -189,6 +189,18 @@ export default function HomePage() {
             linkText="Descubrir fragancias"
           />
         </div>
+
+        {/* Destilados - Ritual of Spirit */}
+        <div className="mb-40">
+          <EditorialSection
+            title="El espíritu destilado"
+            description="Dieciséis años en barrica. Cincuenta y cuatro meses sobre lías. Celebración silenciosa. El tiempo se saborea, no se apresura."
+            imageSrc="/assets/destilados/whisky-hero-01.jpg"
+            imagePosition="right"
+            link="/shop?category=destilados"
+            linkText="Explorar destilados"
+          />
+        </div>
       </section>
 
       {/* PRINCIPLES - The Code */}

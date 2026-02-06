@@ -11,10 +11,11 @@ const CATEGORIES_ES = {
   cigars: 'Puros',
   watches: 'Relojes',
   perfumes: 'Perfumes',
+  destilados: 'Destilados',
   accessories: 'Accesorios',
 };
 
-const CATEGORIES = ['all', 'cigars', 'watches', 'perfumes', 'accessories'];
+const CATEGORIES = ['all', 'cigars', 'watches', 'perfumes', 'destilados', 'accessories'];
 
 export default function ShopPage() {
   const [activeCategory, setActiveCategory] = useState('all');

@@ -3,7 +3,8 @@ export interface Product {
   id: string;
   name: string;
   nameEs: string;
-  category: 'cigars' | 'watches' | 'perfumes' | 'accessories';
+  category: 'cigars' | 'watches' | 'perfumes' | 'accessories' | 'destilados';
+  subcategory?: 'single-malt' | 'cava';
   price: number;
   currency: string;
   story: string;
@@ -16,6 +17,32 @@ export interface Product {
   specifications: { label: string; labelEs: string; value: string }[];
   limited?: boolean;
   inStock: boolean;
+  
+  // DESTILADOS - Single Malt fields
+  region?: string;
+  age?: number;
+  abv?: number;
+  peatLevel?: 'light' | 'medium' | 'heavy';
+  caskInfluence?: string;
+  tastingNotes?: {
+    nose: string;
+    palate: string;
+    finish: string;
+  };
+  tastingNotesEs?: {
+    nose: string;
+    palate: string;
+    finish: string;
+  };
+  pairingSuggestion?: string;
+  pairingSuggestionEs?: string;
+  
+  // DESTILADOS - Cava fields
+  style?: string;
+  agingClass?: string;
+  grapes?: string;
+  servingSuggestion?: string;
+  servingSuggestionEs?: string;
 }
 
 export const PRODUCTS: Product[] = [
@@ -212,6 +239,269 @@ export const PRODUCTS: Product[] = [
       { label: 'Weight', labelEs: 'Peso', value: '180g' },
       { label: 'Finish', labelEs: 'Acabado', value: 'Pulido a mano' },
     ],
+    inStock: true,
+  },
+
+  // DESTILADOS - SINGLE MALT WHISKY
+  {
+    id: 'whisky-lagavulin-16',
+    name: 'Lagavulin 16 Year Old',
+    nameEs: 'Lagavulin 16 Años',
+    category: 'destilados',
+    subcategory: 'single-malt',
+    price: 185,
+    currency: 'USD',
+    story: 'Time, distilled. Sixteen years in oak casks. Islay peat smoke captured in amber liquid.',
+    storyEs: 'El tiempo, destilado. Dieciséis años en barricas de roble. Humo de turba de Islay capturado en líquido ámbar.',
+    origin: 'Islay, Scotland',
+    originEs: 'Islay, Escocia',
+    ritual: 'Pour. Add a single drop of water. Wait. Let the whisky breathe. The first sip is ceremony.',
+    ritualEs: 'Sirve. Añade una sola gota de agua. Espera. Deja que el whisky respire. El primer sorbo es ceremonia.',
+    images: [
+      '/assets/destilados/whisky-hero-01.jpg',
+      '/assets/destilados/whisky-glass-warm.jpg'
+    ],
+    specifications: [
+      { label: 'Age', labelEs: 'Edad', value: '16 años' },
+      { label: 'ABV', labelEs: 'Graduación', value: '43%' },
+      { label: 'Volume', labelEs: 'Volumen', value: '700ml' },
+      { label: 'Cask', labelEs: 'Barrica', value: 'Ex-Bourbon / Sherry' },
+    ],
+    region: 'Islay',
+    age: 16,
+    abv: 43,
+    peatLevel: 'heavy',
+    caskInfluence: 'Ex-Bourbon, Sherry Casks',
+    tastingNotes: {
+      nose: 'Intense peat smoke, seaweed, dark chocolate',
+      palate: 'Rich fruit cake, sea salt, dark toffee',
+      finish: 'Long, warming, maritime smoke'
+    },
+    tastingNotesEs: {
+      nose: 'Intenso humo de turba, algas, chocolate oscuro',
+      palate: 'Pastel de frutas intenso, sal marina, caramelo oscuro',
+      finish: 'Largo, cálido, humo marítimo'
+    },
+    pairingSuggestion: 'Cohiba Reserva after dinner',
+    pairingSuggestionEs: 'Cohiba Reserva después de la cena',
+    limited: true,
+    inStock: true,
+  },
+  {
+    id: 'whisky-yamazaki-18',
+    name: 'Yamazaki 18 Year Old',
+    nameEs: 'Yamazaki 18 Años',
+    category: 'destilados',
+    subcategory: 'single-malt',
+    price: 650,
+    currency: 'USD',
+    story: 'Japanese precision meets whisky tradition. Eighteen years in Mizunara oak. A pause worth keeping.',
+    storyEs: 'Precisión japonesa encuentra tradición del whisky. Dieciocho años en roble Mizunara. Una pausa que vale la pena guardar.',
+    origin: 'Yamazaki, Japan',
+    originEs: 'Yamazaki, Japón',
+    ritual: 'Silence phone. Pour neat. Small sips. This is contemplation, not consumption.',
+    ritualEs: 'Silencia el teléfono. Sirve puro. Sorbos pequeños. Esto es contemplación, no consumo.',
+    images: [
+      '/assets/destilados/whisky-bottle-dark.jpg',
+      '/assets/destilados/whisky-tumbler-wood.jpg'
+    ],
+    specifications: [
+      { label: 'Age', labelEs: 'Edad', value: '18 años' },
+      { label: 'ABV', labelEs: 'Graduación', value: '43%' },
+      { label: 'Volume', labelEs: 'Volumen', value: '700ml' },
+      { label: 'Cask', labelEs: 'Barrica', value: 'Mizunara Oak' },
+    ],
+    region: 'Japan',
+    age: 18,
+    abv: 43,
+    peatLevel: 'light',
+    caskInfluence: 'Mizunara Oak, American Oak, Sherry',
+    tastingNotes: {
+      nose: 'Sandalwood, coconut, dried fruit, incense',
+      palate: 'Honeyed sweetness, mizunara spice, stone fruit',
+      finish: 'Long, elegant, subtle smoke'
+    },
+    tastingNotesEs: {
+      nose: 'Sándalo, coco, fruta seca, incienso',
+      palate: 'Dulzor de miel, especias mizunara, fruta de hueso',
+      finish: 'Largo, elegante, humo sutil'
+    },
+    pairingSuggestion: 'Quiet evening, leather-bound book',
+    pairingSuggestionEs: 'Velada tranquila, libro encuadernado en cuero',
+    limited: true,
+    inStock: true,
+  },
+  {
+    id: 'whisky-glenfiddich-21',
+    name: 'Glenfiddich 21 Year Old',
+    nameEs: 'Glenfiddich 21 Años',
+    category: 'destilados',
+    subcategory: 'single-malt',
+    price: 285,
+    currency: 'USD',
+    story: 'Speyside elegance. Twenty-one years of patience rewarded in every pour.',
+    storyEs: 'Elegancia de Speyside. Veintiún años de paciencia recompensados en cada vertido.',
+    origin: 'Speyside, Scotland',
+    originEs: 'Speyside, Escocia',
+    ritual: 'Late evening. Dim lights. This whisky deserves your full attention.',
+    ritualEs: 'Noche avanzada. Luces tenues. Este whisky merece tu plena atención.',
+    images: [
+      '/assets/destilados/whisky-tumbler-wood.jpg',
+      '/assets/destilados/whisky-close-up.jpg'
+    ],
+    specifications: [
+      { label: 'Age', labelEs: 'Edad', value: '21 años' },
+      { label: 'ABV', labelEs: 'Graduación', value: '40%' },
+      { label: 'Volume', labelEs: 'Volumen', value: '700ml' },
+      { label: 'Cask', labelEs: 'Barrica', value: 'Caribbean Rum' },
+    ],
+    region: 'Speyside',
+    age: 21,
+    abv: 40,
+    peatLevel: 'light',
+    caskInfluence: 'Caribbean Rum Cask Finish',
+    tastingNotes: {
+      nose: 'Banana, vanilla, toffee, subtle fig',
+      palate: 'Creamy, lime, ginger, oak spice',
+      finish: 'Smooth, warm, lingering sweetness'
+    },
+    tastingNotesEs: {
+      nose: 'Plátano, vainilla, caramelo, higo sutil',
+      palate: 'Cremoso, lima, jengibre, especias de roble',
+      finish: 'Suave, cálido, dulzor persistente'
+    },
+    pairingSuggestion: 'Dark chocolate, 70% cacao minimum',
+    pairingSuggestionEs: 'Chocolate oscuro, 70% cacao mínimo',
+    inStock: true,
+  },
+
+  // DESTILADOS - VINOS DE CAVA
+  {
+    id: 'cava-recaredo-reserva',
+    name: 'Recaredo Terrers Reserva Particular',
+    nameEs: 'Recaredo Terrers Reserva Particular',
+    category: 'destilados',
+    subcategory: 'cava',
+    price: 95,
+    currency: 'USD',
+    story: 'Quiet celebration. Fifty-four months on lees. Biodynamic viticulture. Catalan precision.',
+    storyEs: 'Celebración silenciosa. Cincuenta y cuatro meses sobre lías. Viticultura biodinámica. Precisión catalana.',
+    origin: 'Alt Penedès, Catalonia',
+    originEs: 'Alt Penedès, Cataluña',
+    ritual: 'Chill to 8°C. Pour slowly. The bubbles tell a story of patience.',
+    ritualEs: 'Enfría a 8°C. Vierte lentamente. Las burbujas cuentan una historia de paciencia.',
+    images: [
+      '/assets/destilados/cava-hero-01.jpg',
+      '/assets/destilados/cava-bottle-dark.jpg'
+    ],
+    specifications: [
+      { label: 'Style', labelEs: 'Estilo', value: 'Brut Nature' },
+      { label: 'Aging', labelEs: 'Crianza', value: 'Reserva Particular' },
+      { label: 'Volume', labelEs: 'Volumen', value: '750ml' },
+      { label: 'ABV', labelEs: 'Graduación', value: '12%' },
+    ],
+    style: 'Brut Nature',
+    agingClass: 'Reserva Particular (54 months)',
+    grapes: 'Xarel·lo, Macabeu, Parellada',
+    abv: 12,
+    tastingNotes: {
+      nose: 'Brioche, white flowers, almond, subtle minerality',
+      palate: 'Crisp apple, citrus zest, toasted hazelnut',
+      finish: 'Long, clean, saline'
+    },
+    tastingNotesEs: {
+      nose: 'Brioche, flores blancas, almendra, mineralidad sutil',
+      palate: 'Manzana crujiente, cáscara de cítricos, avellana tostada',
+      finish: 'Largo, limpio, salino'
+    },
+    servingSuggestion: 'Serve at 8°C in white wine glass',
+    servingSuggestionEs: 'Servir a 8°C en copa de vino blanco',
+    limited: true,
+    inStock: true,
+  },
+  {
+    id: 'cava-gramona-imperial',
+    name: 'Gramona Imperial Gran Reserva',
+    nameEs: 'Gramona Imperial Gran Reserva',
+    category: 'destilados',
+    subcategory: 'cava',
+    price: 68,
+    currency: 'USD',
+    story: 'Six years of aging. A cava that understands time. Elegance in every bubble.',
+    storyEs: 'Seis años de crianza. Un cava que entiende el tiempo. Elegancia en cada burbuja.',
+    origin: 'Penedès, Catalonia',
+    originEs: 'Penedès, Cataluña',
+    ritual: 'Open. Let breathe for 10 minutes. Pour. Celebrate the moment, not the occasion.',
+    ritualEs: 'Abre. Deja respirar 10 minutos. Vierte. Celebra el momento, no la ocasión.',
+    images: [
+      '/assets/destilados/cava-pour-cinematic.jpg',
+      '/assets/destilados/cava-flute-elegant.jpg'
+    ],
+    specifications: [
+      { label: 'Style', labelEs: 'Estilo', value: 'Brut' },
+      { label: 'Aging', labelEs: 'Crianza', value: 'Gran Reserva' },
+      { label: 'Volume', labelEs: 'Volumen', value: '750ml' },
+      { label: 'ABV', labelEs: 'Graduación', value: '12%' },
+    ],
+    style: 'Brut',
+    agingClass: 'Gran Reserva (72 months)',
+    grapes: 'Xarel·lo, Macabeu, Chardonnay',
+    abv: 12,
+    tastingNotes: {
+      nose: 'Ripe pear, honey, pastry, subtle oak',
+      palate: 'Creamy mousse, green apple, brioche, citrus',
+      finish: 'Balanced, persistent, elegant'
+    },
+    tastingNotesEs: {
+      nose: 'Pera madura, miel, pastelería, roble sutil',
+      palate: 'Mousse cremosa, manzana verde, brioche, cítricos',
+      finish: 'Equilibrado, persistente, elegante'
+    },
+    servingSuggestion: 'Pair with oysters or aged cheese',
+    servingSuggestionEs: 'Maridar con ostras o queso añejo',
+    inStock: true,
+  },
+  {
+    id: 'cava-mestres-clos-damiana',
+    name: 'Mestres Clos Damiana Gran Reserva',
+    nameEs: 'Mestres Clos Damiana Gran Reserva',
+    category: 'destilados',
+    subcategory: 'cava',
+    price: 125,
+    currency: 'USD',
+    story: 'Fifteen years in bottle. The rarest cava in Catalonia. A liquid monument to patience.',
+    storyEs: 'Quince años en botella. El cava más raro de Cataluña. Un monumento líquido a la paciencia.',
+    origin: 'Penedès, Catalonia',
+    originEs: 'Penedès, Cataluña',
+    ritual: 'Reserve for moments that matter. This is not a toast—it is a statement.',
+    ritualEs: 'Reserva para momentos que importan. Esto no es un brindis—es una declaración.',
+    images: [
+      '/assets/destilados/cava-cellar-barrel.jpg',
+      '/assets/destilados/cava-bottle-cork.jpg'
+    ],
+    specifications: [
+      { label: 'Style', labelEs: 'Estilo', value: 'Brut Nature' },
+      { label: 'Aging', labelEs: 'Crianza', value: 'Gran Reserva' },
+      { label: 'Volume', labelEs: 'Volumen', value: '750ml' },
+      { label: 'ABV', labelEs: 'Graduación', value: '12.5%' },
+    ],
+    style: 'Brut Nature',
+    agingClass: 'Gran Reserva (180 months)',
+    grapes: 'Parellada, Xarel·lo, Macabeu',
+    abv: 12.5,
+    tastingNotes: {
+      nose: 'Dried apricot, toasted almonds, beeswax, complexity',
+      palate: 'Nutty richness, aged fruit, mineral backbone',
+      finish: 'Exceptionally long, layered, profound'
+    },
+    tastingNotesEs: {
+      nose: 'Albaricoque seco, almendras tostadas, cera de abeja, complejidad',
+      palate: 'Riqueza de frutos secos, fruta añejada, columna mineral',
+      finish: 'Excepcionalmente largo, estratificado, profundo'
+    },
+    servingSuggestion: 'Meditative drinking, no food needed',
+    servingSuggestionEs: 'Bebida meditativa, sin necesidad de comida',
+    limited: true,
     inStock: true,
   },
 ];
