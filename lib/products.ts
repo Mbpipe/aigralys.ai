@@ -61,8 +61,8 @@ export const PRODUCTS: Product[] = [
     ritual: 'Cut. Light. Pause. Let the first draw transport you to a different era. This is not smoking—it is ceremony.',
     ritualEs: 'Corta. Enciende. Pausa. Deja que la primera calada te transporte a otra época. Esto no es fumar—es ceremonia.',
     images: [
-      'https://images.unsplash.com/photo-1556139943-4a4634d5dd62?w=1200&q=80',
-      'https://images.unsplash.com/photo-1609113075024-b7d0bbf8e6a6?w=1200&q=80'
+      '/assets/puros/cohiba-reserva-01.jpg',
+      '/assets/puros/cohiba-reserva-02.jpg'
     ],
     specifications: [
       { label: 'Length', labelEs: 'Longitud', value: '165mm' },
@@ -86,7 +86,7 @@ export const PRODUCTS: Product[] = [
     originEs: 'La Habana, Cuba',
     ritual: 'Pour whiskey. Light cigar. Silence phone. This moment belongs to you.',
     ritualEs: 'Sirve whisky. Enciende el puro. Silencia el teléfono. Este momento te pertenece.',
-    images: ['https://images.unsplash.com/photo-1602524206710-d40af24f4bf9?w=1200&q=80'],
+    images: ['/assets/puros/montecristo-80.jpg'],
     specifications: [
       { label: 'Length', labelEs: 'Longitud', value: '178mm' },
       { label: 'Ring Gauge', labelEs: 'Cepo', value: '56' },
@@ -111,8 +111,8 @@ export const PRODUCTS: Product[] = [
     ritual: 'Mechanical heartbeat on your wrist. Wind it. Feel the balance wheel oscillate. Time slows down.',
     ritualEs: 'Latido mecánico en tu muñeca. Dale cuerda. Siente oscilar el volante. El tiempo se ralentiza.',
     images: [
-      'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=1200&q=80',
-      'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=1200&q=80'
+      '/assets/relojes/royal-oak-01.jpg',
+      '/assets/relojes/royal-oak-02.jpg'
     ],
     specifications: [
       { label: 'Movement', labelEs: 'Movimiento', value: 'Automático Calibre 2121' },
@@ -136,7 +136,7 @@ export const PRODUCTS: Product[] = [
     originEs: 'Shiojiri, Japón',
     ritual: 'Observe the sweep. No tick. Pure flow. Zazen for the wrist.',
     ritualEs: 'Observa el barrido. Sin tic-tac. Flujo puro. Zazen para la muñeca.',
-    images: ['https://images.unsplash.com/photo-1594534475808-b18fc33b045e?w=1200&q=80'],
+    images: ['/assets/relojes/grand-seiko.jpg'],
     specifications: [
       { label: 'Movement', labelEs: 'Movimiento', value: 'Spring Drive 9R65' },
       { label: 'Power Reserve', labelEs: 'Reserva de Marcha', value: '72 horas' },
@@ -161,8 +161,8 @@ export const PRODUCTS: Product[] = [
     ritual: 'One drop. Behind the ear. Let it warm on skin. The scent reveals itself slowly—like trust.',
     ritualEs: 'Una gota. Detrás de la oreja. Déjalo calentar en la piel. El aroma se revela lentamente—como la confianza.',
     images: [
-      'https://images.unsplash.com/photo-1615634260167-c8cdede054de?w=1200&q=80',
-      'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=1200&q=80'
+      '/assets/perfumes/oud-eternal-01.jpg',
+      '/assets/perfumes/oud-eternal-02.jpg'
     ],
     specifications: [
       { label: 'Concentration', labelEs: 'Concentración', value: 'Extrait de Parfum' },
@@ -186,7 +186,7 @@ export const PRODUCTS: Product[] = [
     originEs: 'Grasse, Francia',
     ritual: 'Spray once. Walk through the mist. The scent finds you.',
     ritualEs: 'Rocía una vez. Camina a través de la niebla. El aroma te encuentra.',
-    images: ['https://images.unsplash.com/photo-1541643600914-78b084683601?w=1200&q=80'],
+    images: ['/assets/perfumes/tobacco-noir.jpg'],
     specifications: [
       { label: 'Concentration', labelEs: 'Concentración', value: 'Eau de Parfum' },
       { label: 'Volume', labelEs: 'Volumen', value: '100ml' },
@@ -210,7 +210,7 @@ export const PRODUCTS: Product[] = [
     originEs: 'Florencia, Italia',
     ritual: 'Morning coffee. Open journal. Write three thoughts. No distractions.',
     ritualEs: 'Café matutino. Abre el diario. Escribe tres pensamientos. Sin distracciones.',
-    images: ['https://images.unsplash.com/photo-1544947950-fa07a98b0225?w=1200&q=80'],
+    images: ['/assets/accesorios/diario-florentino.jpg'],
     specifications: [
       { label: 'Material', labelEs: 'Material', value: 'Cuero italiano grano completo' },
       { label: 'Pages', labelEs: 'Páginas', value: '240 hojas, marfil' },
@@ -232,7 +232,7 @@ export const PRODUCTS: Product[] = [
     originEs: 'Sheffield, Inglaterra',
     ritual: 'Feel the weight. One clean cut. Precision matters.',
     ritualEs: 'Siente el peso. Un corte limpio. La precisión importa.',
-    images: ['https://images.unsplash.com/photo-1610461888400-5f7baeb3d0d8?w=1200&q=80'],
+    images: ['/assets/accesorios/cortador-damasco.jpg'],
     specifications: [
       { label: 'Material', labelEs: 'Material', value: 'Acero Damasco' },
       { label: 'Blade', labelEs: 'Hoja', value: 'Autoafilable' },
