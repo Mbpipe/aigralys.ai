@@ -21,7 +21,7 @@ export default function Header() {
           <Link href="/" className="flex items-center space-x-3 group">
           <div className="relative w-16 h-16 transition-opacity duration-500 group-hover:opacity-80">
             <Image
-              src="/dignitas-logo.png"
+              src="/dignitas-logo-v2.png"
               alt="Dignitas"
               fill
               className="object-contain"

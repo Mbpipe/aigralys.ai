@@ -47,7 +47,7 @@ export default function HomePage() {
             className="mb-8"
           >
             <div className="w-32 h-32 relative opacity-80">
-              <img src="/dignitas-logo.png" alt="Dignitas" className="w-full h-full object-contain" />
+              <img src="/dignitas-logo-v2.png" alt="Dignitas" className="w-full h-full object-contain" />
             </div>
           </motion.div>
 

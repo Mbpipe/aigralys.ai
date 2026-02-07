@@ -11,7 +11,7 @@ export default function Footer() {
             <div className="flex items-center space-x-3 mb-6">
               <div className="relative w-14 h-14">
                 <Image
-                  src="/dignitas-logo.png"
+                  src="/dignitas-logo-v2.png"
                   alt="Dignitas"
                   fill
                   className="object-contain opacity-90"
