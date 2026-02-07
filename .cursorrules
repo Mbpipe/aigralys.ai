@@ -1,0 +1,194 @@
+# Dignitas Project - AI Assistant Rules
+
+## Project Overview
+This is the Dignitas luxury goods e-commerce site built with Next.js 14, deployed to GitHub Pages.
+
+**Live Sites:**
+- Root: https://aigralys.ai (from `main` branch)
+- Dignitas: https://aigralys.ai/dignitas (from `dignitas` branch)
+
+**Repository:** https://github.com/Mbpipe/aigralys.ai
+
+## CRITICAL: Safe Development Workflow
+
+### Branch Structure (MUST FOLLOW)
+- `main` → Production (aigralys.ai) - **PROTECTED**
+- `dignitas` → Production (aigralys.ai/dignitas) - **PROTECTED**
+- `dev-main` → Development for root site - **USE THIS**
+- `dev-dignitas` → Development for Dignitas - **USE THIS**
+- `feature/*` → Feature branches - **USE THIS**
+
+### Rule #1: NEVER Push Directly to Production
+❌ NEVER: `git push origin main`
+❌ NEVER: `git push origin dignitas`
+✅ ALWAYS: Work in `dev-main`, `dev-dignitas`, or `feature/*` branches
+
+### Rule #2: Always Check Documentation First
+Before making ANY changes:
+1. Read `DEVELOPMENT_STRATEGY.md` for full workflow
+2. Check `.github/QUICK_REFERENCE.md` for quick commands
+3. Verify current branch: `git branch`
+
+### Rule #3: Standard Workflow for Changes
+```bash
+# 1. Switch to development branch
+git checkout dev-main  # or dev-dignitas
+
+# 2. Pull latest changes
+git pull origin dev-main  # or dev-dignitas
+
+# 3. Make changes to files
+
+# 4. Test locally BEFORE committing
+npm run dev          # Development server
+npm run build        # Production build test
+npx serve out        # Test production build
+
+# 5. Commit and push to dev branch
+git add .
+git commit -m "descriptive message"
+git push origin dev-main  # or dev-dignitas
+
+# 6. ONLY when tested and confirmed working
+git checkout main  # or dignitas
+git merge dev-main  # or dev-dignitas
+git push origin main  # or dignitas
+```
+
+### Rule #4: Create Backups Before Major Changes
+```bash
+# Before significant changes:
+git tag -a backup-$(date +%Y-%m-%d-%H%M) -m "Backup before: [description]"
+git push origin --tags
+```
+
+**Existing Backups:**
+- `backup-dignitas-2026-02-07` - Working state (Feb 7, 2026)
+
+### Rule #5: Emergency Rollback Procedure
+If production breaks:
+```bash
+git checkout main  # or dignitas
+git reset --hard backup-dignitas-2026-02-07  # or latest backup
+git push --force origin main  # or dignitas
+```
+
+## Deployment Information
+
+### Automatic Deployment
+- Changes to `main` or `dignitas` branches trigger GitHub Actions
+- Workflow file: `.github/workflows/deploy-both.yml`
+- Deploys to `gh-pages` branch
+- Monitor: https://github.com/Mbpipe/aigralys.ai/actions
+
+### Configuration Files
+- `next.config.js` on `main`: `basePath: ''` (root site)
+- `next.config.js` on `dignitas`: `basePath: '/dignitas'` (subdirectory)
+- `CNAME`: Contains `aigralys.ai` for custom domain
+- `.nojekyll`: Disables Jekyll to serve `_next` assets
+
+## Tech Stack
+- **Framework:** Next.js 14 (Static Export)
+- **Language:** TypeScript
+- **Styling:** TailwindCSS
+- **Animation:** Framer Motion
+- **i18n:** next-intl
+- **Deployment:** GitHub Pages
+
+## Common Tasks
+
+### Adding/Updating Products
+- File: `lib/products.ts`
+- Images: `public/assets/[category]/`
+- Always work in dev branch first!
+
+### Updating Content
+- Components: `components/`
+- Pages: `app/` directory
+- Test locally before deploying!
+
+### Updating Images
+1. Add image to `public/assets/[category]/`
+2. Update references in `lib/products.ts` or component
+3. Test with `npm run build && npx serve out`
+4. Commit to dev branch, test, then merge to production
+
+## When User Asks to Make Changes
+
+### Your Response Pattern:
+1. ✅ "I'll make this change in the `dev-main` branch first for testing"
+2. ✅ Check current branch: `git branch`
+3. ✅ Switch to dev branch if needed: `git checkout dev-main`
+4. ✅ Make the changes
+5. ✅ Remind user to test locally: `npm run dev` or `npm run build`
+6. ✅ After user confirms, offer to merge to production
+
+### NEVER Say:
+- ❌ "I'll push this directly to main"
+- ❌ "This is a small change, we can skip testing"
+- ❌ "Let me update production quickly"
+
+## File Structure
+```
+dignitas-source/
+├── .cursorrules              # This file (AI instructions)
+├── DEVELOPMENT_STRATEGY.md   # Full development guide
+├── .github/
+│   ├── QUICK_REFERENCE.md    # Quick command reference
+│   └── workflows/
+│       └── deploy-both.yml   # Deployment automation
+├── app/                      # Next.js pages
+├── components/               # React components
+├── lib/                      # Utilities and data
+│   └── products.ts          # Product catalog
+├── public/                   # Static assets
+│   └── assets/              # Product images
+├── next.config.js           # Next.js configuration
+├── CNAME                    # Custom domain
+└── package.json             # Dependencies
+```
+
+## Monitoring and Debugging
+
+### Check Deployment Status
+- GitHub Actions: https://github.com/Mbpipe/aigralys.ai/actions
+- Live site: https://aigralys.ai
+- Live Dignitas: https://aigralys.ai/dignitas
+
+### Common Issues
+1. **Site shows 404**: Check CNAME file is in gh-pages
+2. **Assets not loading**: Verify .nojekyll exists in gh-pages
+3. **Wrong content**: Check basePath in next.config.js
+4. **Deployment fails**: Check GitHub Actions logs
+
+## Best Practices Checklist
+
+Before ANY code changes:
+- [ ] Confirm current branch is NOT main or dignitas
+- [ ] Pull latest changes from dev branch
+- [ ] Have user confirm what they want changed
+
+After making changes:
+- [ ] Run `npm run dev` to test locally
+- [ ] Run `npm run build` to verify production build
+- [ ] Check for TypeScript/linting errors
+- [ ] Commit with descriptive message
+- [ ] Push to dev branch first
+- [ ] Wait for user confirmation before merging to production
+
+## Important Notes
+
+- **Two identical sites**: Both `main` and `dignitas` branches contain the same Dignitas luxury site content
+- **No separate AI consulting site**: The repository only contains Dignitas
+- **Custom domain**: aigralys.ai points to GitHub Pages
+- **Static site**: No server-side rendering, pure static export
+
+## Emergency Contacts
+
+- Repository: https://github.com/Mbpipe/aigralys.ai
+- Documentation: See DEVELOPMENT_STRATEGY.md
+- Backups: All tags starting with `backup-*`
+
+---
+
+**Remember:** Safety first. Always develop in dev branches, test locally, then deploy to production.
