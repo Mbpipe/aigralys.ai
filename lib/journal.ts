@@ -11,80 +11,80 @@ export interface Article {
 
 export const ARTICLES: Article[] = [
   {
-    slug: 'the-art-of-cigar-selection',
-    title: 'The Art of Cigar Selection',
+    slug: 'el-arte-de-seleccionar-puros',
+    title: 'El arte de seleccionar puros',
     excerpt:
-      'Understanding terroir, aging, and ritual. How the finest cigars are chosen by men who know what matters.',
+      'Comprender el terroir, el añejamiento y el ritual. Cómo los mejores puros son elegidos por hombres que saben lo que importa.',
     content: `
-      <p>A cigar is not just tobacco wrapped in leaf. It is soil. It is time. It is the hands of men who understand patience.</p>
+      <p>Un puro no es solo tabaco envuelto en hoja. Es tierra. Es tiempo. Son las manos de hombres que entienden la paciencia.</p>
       
-      <p>The best cigars begin in volcanic earth—places like Vuelta Abajo in Cuba, where minerals give the tobacco its soul. The leaves are harvested by hand. No machine can feel when the leaf is ready.</p>
+      <p>Los mejores puros comienzan en tierra volcánica—lugares como Vuelta Abajo en Cuba, donde los minerales le dan al tabaco su alma. Las hojas se cosechan a mano. Ninguna máquina puede sentir cuándo la hoja está lista.</p>
       
-      <p>Then comes aging. Seven years. Ten years. The tobacco sits in cedar chambers, temperature controlled, humidity precise. Like wine, it develops complexity. The harshness fades. What remains is smooth, deep, contemplative.</p>
+      <p>Luego viene el añejamiento. Siete años. Diez años. El tabaco reposa en cámaras de cedro, temperatura controlada, humedad precisa. Como el vino, desarrolla complejidad. La aspereza se desvanece. Lo que queda es suave, profundo, contemplativo.</p>
       
-      <p>When you light a cigar, you are not smoking. You are participating in a ritual that spans centuries. You are choosing to slow down in a world obsessed with speed.</p>
+      <p>Cuando enciendes un puro, no estás fumando. Estás participando en un ritual que abarca siglos. Estás eligiendo ir más despacio en un mundo obsesionado con la velocidad.</p>
       
-      <p>The cigar will last an hour, maybe two. That is the point. You cannot rush it. You must be present.</p>
+      <p>El puro durará una hora, tal vez dos. Ese es el punto. No puedes apresurarlo. Debes estar presente.</p>
     `,
     imageSrc: '/assets/journal/cigar-selection.jpg',
     readTime: '6 min',
     publishedAt: '2026-01-15',
   },
   {
-    slug: 'mechanical-watches-in-digital-age',
-    title: 'Why Mechanical Watches Still Matter',
+    slug: 'relojes-mecanicos-en-era-digital',
+    title: 'Por qué los relojes mecánicos aún importan',
     excerpt:
-      'In an age of atomic precision, the appeal of mechanical timekeeping grows stronger. This is about more than telling time.',
+      'En una era de precisión atómica, el atractivo de la relojería mecánica se vuelve más fuerte. Esto es más que dar la hora.',
     content: `
-      <p>Your phone tells more accurate time than any mechanical watch ever will. So why do men still wind movements by hand?</p>
+      <p>Tu teléfono da la hora más precisa que cualquier reloj mecánico jamás lo hará. Entonces, ¿por qué los hombres aún dan cuerda a movimientos a mano?</p>
       
-      <p>Because a mechanical watch is not about accuracy. It is about craft. About connection. About carrying a small miracle of engineering on your wrist.</p>
+      <p>Porque un reloj mecánico no se trata de precisión. Se trata de oficio. De conexión. De llevar un pequeño milagro de ingeniería en tu muñeca.</p>
       
-      <p>Inside that case are hundreds of tiny parts—gears, springs, jewels—working in perfect harmony. No battery. No chip. Just physics, refined over centuries.</p>
+      <p>Dentro de esa caja hay cientos de piezas diminutas—engranajes, resortes, rubíes—trabajando en perfecta armonía. Sin batería. Sin chip. Solo física, refinada durante siglos.</p>
       
-      <p>When you wind a watch, you are part of its function. The watch needs you. And in a strange way, you need it—a reminder that some things cannot be optimized, only appreciated.</p>
+      <p>Cuando das cuerda a un reloj, eres parte de su función. El reloj te necesita. Y de forma extraña, tú lo necesitas a él—un recordatorio de que algunas cosas no pueden optimizarse, solo apreciarse.</p>
       
-      <p>A Grand Seiko Spring Drive. An Audemars Piguet Royal Oak. These are not purchases. They are inheritances-in-waiting. Objects that will outlive you, carrying your story forward.</p>
+      <p>Un Grand Seiko Spring Drive. Un Audemars Piguet Royal Oak. Estos no son compras. Son herencias en espera. Objetos que te sobrevivirán, llevando tu historia hacia adelante.</p>
     `,
     imageSrc: '/assets/journal/mechanical-watches.jpg',
     readTime: '5 min',
     publishedAt: '2026-01-08',
   },
   {
-    slug: 'oud-fragrance-guide',
-    title: 'Understanding Oud: The Gold of Perfumery',
+    slug: 'guia-del-oud',
+    title: 'Comprender el Oud: El oro de la perfumería',
     excerpt:
-      'From Assam forests to Parisian boutiques, oud represents the pinnacle of masculine fragrance. A guide to liquid gold.',
+      'Desde los bosques de Assam hasta las boutiques parisinas, el oud representa la cúspide de la fragancia masculina. Una guía del oro líquido.',
     content: `
-      <p>Oud is not a perfume. It is a phenomenon. Formed when the Aquilaria tree becomes infected with mold, it produces a dark resin to protect itself. That resin, aged for decades, becomes oud—the most expensive natural raw material in perfumery.</p>
+      <p>El oud no es un perfume. Es un fenómeno. Formado cuando el árbol Aquilaria se infecta con moho, produce una resina oscura para protegerse. Esa resina, añejada durante décadas, se convierte en oud—la materia prima natural más cara de la perfumería.</p>
       
-      <p>The scent is difficult to describe. Woody, animalic, slightly sweet, deeply complex. It is not for everyone. That is part of its appeal.</p>
+      <p>El aroma es difícil de describir. Amaderado, animal, ligeramente dulce, profundamente complejo. No es para todos. Esa es parte de su atractivo.</p>
       
-      <p>In the Middle East, oud has been worn for thousands of years. It is burned as incense. It is applied as oil. It signals refinement, depth, seriousness.</p>
+      <p>En el Medio Oriente, el oud se ha usado durante miles de años. Se quema como incienso. Se aplica como aceite. Señala refinamiento, profundidad, seriedad.</p>
       
-      <p>Western perfumers have only recently embraced it, blending oud with rose, saffron, amber. The results are intoxicating—fragrances that evolve over hours, that make people turn their heads.</p>
+      <p>Los perfumistas occidentales solo recientemente lo han adoptado, mezclando oud con rosa, azafrán, ámbar. Los resultados son embriagadores—fragancias que evolucionan durante horas, que hacen que la gente gire su cabeza.</p>
       
-      <p>One drop behind the ear. That is all you need. Oud announces itself slowly. It does not scream. It whispers—and people lean in to listen.</p>
+      <p>Una gota detrás de la oreja. Eso es todo lo que necesitas. El oud se anuncia lentamente. No grita. Susurra—y la gente se acerca para escuchar.</p>
     `,
     imageSrc: '/assets/journal/oud-guide.jpg',
     readTime: '7 min',
     publishedAt: '2025-12-20',
   },
   {
-    slug: 'building-morning-ritual',
-    title: 'Building a Morning Ritual That Matters',
+    slug: 'construir-ritual-matutino',
+    title: 'Construir un ritual matutino que importa',
     excerpt:
-      'The first hour sets the tone for everything that follows. How the finest men begin their day with intention.',
+      'La primera hora marca el tono para todo lo que sigue. Cómo los hombres más finos comienzan su día con intención.',
     content: `
-      <p>You do not need to wake at 4am. You do not need an ice bath. You do not need a manifesting journal.</p>
+      <p>No necesitas despertar a las 4am. No necesitas un baño de hielo. No necesitas un diario de manifestación.</p>
       
-      <p>What you need is consistency. A sequence of actions, repeated daily, that ground you before the noise begins.</p>
+      <p>Lo que necesitas es consistencia. Una secuencia de acciones, repetidas diariamente, que te arraiguen antes de que comience el ruido.</p>
       
-      <p>For some, it is coffee—real coffee, not rushed. French press. Hand-ground beans. The ritual of preparation. For others, it is writing. Three pages. Stream of consciousness. Brain dump.</p>
+      <p>Para algunos, es café—café real, sin prisa. Prensa francesa. Granos molidos a mano. El ritual de preparación. Para otros, es escribir. Tres páginas. Flujo de conciencia. Volcado cerebral.</p>
       
-      <p>The objects matter. A well-made journal. A quality pen. A proper mug. These are not luxuries. They are invitations to take yourself seriously.</p>
+      <p>Los objetos importan. Un diario bien hecho. Una pluma de calidad. Una taza apropiada. Estos no son lujos. Son invitaciones a tomarte en serio.</p>
       
-      <p>The morning is yours. The world has not yet made its demands. Use that time to decide who you want to be today.</p>
+      <p>La mañana es tuya. El mundo aún no ha hecho sus demandas. Usa ese tiempo para decidir quién quieres ser hoy.</p>
     `,
     imageSrc: '/assets/journal/morning-ritual.jpg',
     readTime: '4 min',

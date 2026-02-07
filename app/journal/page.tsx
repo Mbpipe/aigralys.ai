@@ -10,13 +10,13 @@ export default function JournalPage() {
       {/* Header */}
       <div className="max-w-7xl mx-auto text-center mb-20">
         <p className="text-sm tracking-luxury text-gold uppercase mb-4">
-          The Journal
+          El Diario
         </p>
         <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-warm-white mb-6">
-          Rituals & Reflections
+          Rituales y Reflexiones
         </h1>
         <p className="text-lg text-warm-white/60 max-w-2xl mx-auto">
-          Essays on craftsmanship, ritual, and the quiet art of living well.
+          Ensayos sobre artesanía, ritual y el arte silencioso de vivir bien.
         </p>
       </div>
 
