@@ -99,25 +99,25 @@ export const PRODUCTS: Product[] = [
   // RELOJES
   {
     id: 'reloj-royal-oak-heritage',
-    name: 'Royal Oak Heritage',
-    nameEs: 'Royal Oak Heritage',
+    name: 'AP Royal Oak Chronograph Blue Dial',
+    nameEs: 'AP Royal Oak Cronógrafo Esfera Azul',
     category: 'watches',
     price: 42000,
     currency: 'USD',
-    story: 'Gérald Genta\'s 1972 vision, reimagined. The octagonal bezel that changed horology forever.',
-    storyEs: 'La visión de Gérald Genta de 1972, reimaginada. El bisel octagonal que cambió la relojería para siempre.',
+    story: 'Gérald Genta\'s 1972 vision, reimagined. The iconic blue "Tapisserie" dial with chronograph complication.',
+    storyEs: 'La visión de Gérald Genta de 1972, reimaginada. La icónica esfera azul "Tapisserie" con complicación cronógrafo.',
     origin: 'Le Brassus, Switzerland',
     originEs: 'Le Brassus, Suiza',
-    ritual: 'Mechanical heartbeat on your wrist. Wind it. Feel the balance wheel oscillate. Time slows down.',
-    ritualEs: 'Latido mecánico en tu muñeca. Dale cuerda. Siente oscilar el volante. El tiempo se ralentiza.',
+    ritual: 'Mechanical heartbeat on your wrist. The chronograph: precision timing for life\'s decisive moments.',
+    ritualEs: 'Latido mecánico en tu muñeca. El cronógrafo: medición precisa para los momentos decisivos de la vida.',
     images: [
       '/assets/relojes/royal-oak-01.jpg',
       '/assets/relojes/royal-oak-02.jpg'
     ],
     specifications: [
-      { label: 'Movement', labelEs: 'Movimiento', value: 'Automático Calibre 2121' },
+      { label: 'Movement', labelEs: 'Movimiento', value: 'Automático Calibre 2385' },
       { label: 'Power Reserve', labelEs: 'Reserva de Marcha', value: '40 horas' },
-      { label: 'Case', labelEs: 'Caja', value: 'Acero inoxidable, 39mm' },
+      { label: 'Case', labelEs: 'Caja', value: 'Acero inoxidable, 41mm' },
       { label: 'Water Resistance', labelEs: 'Resistencia al Agua', value: '50m' },
     ],
     limited: true,
