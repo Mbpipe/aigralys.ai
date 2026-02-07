@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { getArticleBySlug } from '@/lib/journal';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { withBasePath } from '@/lib/withBasePath';
 
 export default function ArticlePage({ params }: { params: { slug: string } }) {
   const article = getArticleBySlug(params.slug);
@@ -23,7 +24,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
       >
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${article.imageSrc})` }}
+          style={{ backgroundImage: `url(${withBasePath(article.imageSrc)})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-charcoal/60 via-charcoal/30 to-charcoal" />
       </motion.div>

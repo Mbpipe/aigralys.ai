@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
+import { withBasePath } from '@/lib/withBasePath';
 
 interface HeroSlowMomentProps {
   title: string;
@@ -37,7 +38,7 @@ export default function HeroSlowMoment({
       <motion.div style={{ y }} className="absolute inset-0">
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${imageSrc})` }}
+          style={{ backgroundImage: `url(${withBasePath(imageSrc)})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-charcoal/70 via-charcoal/30 to-charcoal" />
       </motion.div>

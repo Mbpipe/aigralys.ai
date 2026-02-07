@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { getProductById, PRODUCTS } from '@/lib/products';
+import { withBasePath } from '@/lib/withBasePath';
 import { notFound } from 'next/navigation';
 
 export default function ProductPage({ params }: { params: { id: string } }) {
@@ -32,7 +33,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             <div className="relative aspect-[4/5] mb-6 overflow-hidden bg-charcoal/20">
               <div
                 className="w-full h-full bg-cover bg-center transition-all duration-700"
-                style={{ backgroundImage: `url(${product.images[selectedImage]})` }}
+                style={{ backgroundImage: `url(${withBasePath(product.images[selectedImage])})` }}
               />
               {product.limited && (
                 <div className="absolute top-6 right-6 px-4 py-2 bg-gold text-charcoal text-sm tracking-wider font-medium">
@@ -56,7 +57,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                   >
                     <div
                       className="w-full h-full bg-cover bg-center"
-                      style={{ backgroundImage: `url(${img})` }}
+                      style={{ backgroundImage: `url(${withBasePath(img)})` }}
                     />
                   </button>
                 ))}
@@ -152,7 +153,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                   <div className="relative aspect-[3/4] overflow-hidden mb-4 bg-charcoal/20">
                     <div
                       className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                      style={{ backgroundImage: `url(${p.images[0]})` }}
+                      style={{ backgroundImage: `url(${withBasePath(p.images[0])})` }}
                     />
                   </div>
                   <h3 className="font-serif text-xl text-warm-white group-hover:text-gold transition-colors">

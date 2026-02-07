@@ -4,6 +4,7 @@ import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import Link from 'next/link';
 import type { Product } from '@/lib/products';
+import { withBasePath } from '@/lib/withBasePath';
 
 interface PremiumProductCardProps {
   product: Product;
@@ -26,7 +27,7 @@ export default function PremiumProductCard({ product, index = 0 }: PremiumProduc
         <div className="relative aspect-[3/4] overflow-hidden mb-6 bg-charcoal/20">
           <div
             className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-            style={{ backgroundImage: `url(${product.images[0]})` }}
+            style={{ backgroundImage: `url(${withBasePath(product.images[0])})` }}
           />
           
           {product.limited && (

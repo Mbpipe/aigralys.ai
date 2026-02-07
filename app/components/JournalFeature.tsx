@@ -3,6 +3,7 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import Link from 'next/link';
+import { withBasePath } from '@/lib/withBasePath';
 
 interface JournalFeatureProps {
   title: string;
@@ -37,7 +38,7 @@ export default function JournalFeature({
         <div className="relative aspect-[16/10] overflow-hidden mb-6 bg-charcoal/20">
           <div
             className="w-full h-full bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
-            style={{ backgroundImage: `url(${imageSrc})` }}
+            style={{ backgroundImage: `url(${withBasePath(imageSrc)})` }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-charcoal/20 to-transparent" />
         </div>
