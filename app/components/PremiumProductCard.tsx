@@ -14,6 +14,12 @@ interface PremiumProductCardProps {
 export default function PremiumProductCard({ product, index = 0 }: PremiumProductCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const imageScale = product.imageScale && product.imageScale > 0 ? product.imageScale : 1;
+  const imageStyle = {
+    backgroundImage: `url(${withBasePath(product.images[0])})`,
+    backgroundSize: imageScale === 1 ? undefined : `${Math.round(imageScale * 100)}%`,
+    backgroundRepeat: imageScale === 1 ? undefined : 'no-repeat',
+  };
 
   return (
     <motion.div
@@ -27,7 +33,7 @@ export default function PremiumProductCard({ product, index = 0 }: PremiumProduc
         <div className="relative aspect-[3/4] overflow-hidden mb-6 bg-charcoal/20">
           <div
             className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-            style={{ backgroundImage: `url(${withBasePath(product.images[0])})` }}
+            style={imageStyle}
           />
           
           {product.limited && (

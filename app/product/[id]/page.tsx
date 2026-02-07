@@ -9,6 +9,12 @@ import { notFound } from 'next/navigation';
 export default function ProductPage({ params }: { params: { id: string } }) {
   const product = getProductById(params.id);
   const [selectedImage, setSelectedImage] = useState(0);
+  const imageScale = product?.imageScale && product.imageScale > 0 ? product.imageScale : 1;
+  const mainImageStyle = {
+    backgroundImage: `url(${withBasePath(product?.images[selectedImage] || '')})`,
+    backgroundSize: imageScale === 1 ? undefined : `${Math.round(imageScale * 100)}%`,
+    backgroundRepeat: imageScale === 1 ? undefined : 'no-repeat',
+  };
 
   if (!product) {
     notFound();
@@ -33,7 +39,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             <div className="relative aspect-[4/5] mb-6 overflow-hidden bg-charcoal/20">
               <div
                 className="w-full h-full bg-cover bg-center transition-all duration-700"
-                style={{ backgroundImage: `url(${withBasePath(product.images[selectedImage])})` }}
+                style={mainImageStyle}
               />
               {product.limited && (
                 <div className="absolute top-6 right-6 px-4 py-2 bg-gold text-charcoal text-sm tracking-wider font-medium">

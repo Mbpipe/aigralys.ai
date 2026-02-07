@@ -14,6 +14,7 @@ export interface Product {
   ritual: string;
   ritualEs: string;
   images: string[];
+  imageScale?: number;
   specifications: { label: string; labelEs: string; value: string }[];
   limited?: boolean;
   inStock: boolean;
@@ -114,6 +115,7 @@ export const PRODUCTS: Product[] = [
       '/assets/relojes/royal-oak-v3-01.jpg',
       '/assets/relojes/royal-oak-v3-02.jpg'
     ],
+    imageScale: 0.9,
     specifications: [
       { label: 'Movement', labelEs: 'Movimiento', value: 'Automático Calibre 2385' },
       { label: 'Power Reserve', labelEs: 'Reserva de Marcha', value: '40 horas' },

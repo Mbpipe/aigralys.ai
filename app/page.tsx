@@ -171,7 +171,7 @@ export default function HomePage() {
           <EditorialSection
             title="El latido mecánico"
             description="El tiempo debe sentirse, no solo verse. Precisión suiza. Artesanía japonesa. Cada tic, un recordatorio de que lo fino se mueve despacio."
-            imageSrc="/assets/editorial/hero-relojes.jpg"
+            imageSrc="/assets/editorial/hero-relojes-02.jpg"
             imagePosition="right"
             link="/shop?category=watches"
             linkText="Explorar relojes"
