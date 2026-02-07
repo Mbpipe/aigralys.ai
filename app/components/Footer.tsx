@@ -9,7 +9,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="relative w-10 h-10">
+              <div className="relative w-14 h-14">
                 <Image
                   src="/dignitas-logo.png"
                   alt="Dignitas"

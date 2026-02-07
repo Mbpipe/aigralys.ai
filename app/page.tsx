@@ -46,7 +46,7 @@ export default function HomePage() {
             transition={{ duration: 2, delay: 0.5 }}
             className="mb-8"
           >
-            <div className="w-20 h-20 relative opacity-80">
+            <div className="w-32 h-32 relative opacity-80">
               <img src="/dignitas-logo.png" alt="Dignitas" className="w-full h-full object-contain" />
             </div>
           </motion.div>

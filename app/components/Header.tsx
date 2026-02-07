@@ -19,14 +19,14 @@ export default function Header() {
         <div className="flex items-center justify-between h-24">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="relative w-12 h-12 transition-opacity duration-500 group-hover:opacity-80">
-              <Image
-                src="/dignitas-logo.png"
-                alt="Dignitas"
-                fill
-                className="object-contain"
-              />
-            </div>
+          <div className="relative w-16 h-16 transition-opacity duration-500 group-hover:opacity-80">
+            <Image
+              src="/dignitas-logo.png"
+              alt="Dignitas"
+              fill
+              className="object-contain"
+            />
+          </div>
             <span className="font-serif text-2xl tracking-[0.2em] text-warm-white opacity-90 group-hover:text-gold transition-colors duration-700">
               DIGNITAS
             </span>
