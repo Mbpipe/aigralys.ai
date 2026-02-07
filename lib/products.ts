@@ -111,8 +111,8 @@ export const PRODUCTS: Product[] = [
     ritual: 'Mechanical heartbeat on your wrist. The chronograph: precision timing for life\'s decisive moments.',
     ritualEs: 'Latido mecánico en tu muñeca. El cronógrafo: medición precisa para los momentos decisivos de la vida.',
     images: [
-      '/assets/relojes/royal-oak-v2-01.jpg',
-      '/assets/relojes/royal-oak-v2-02.jpg'
+      '/assets/relojes/royal-oak-v3-01.jpg',
+      '/assets/relojes/royal-oak-v3-02.jpg'
     ],
     specifications: [
       { label: 'Movement', labelEs: 'Movimiento', value: 'Automático Calibre 2385' },
