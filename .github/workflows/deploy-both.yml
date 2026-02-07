@@ -58,6 +58,11 @@ jobs:
       - name: Deploy to gh-pages
         run: |
           cd root-build
+          
+          # Preserve critical GitHub Pages files
+          echo "aigralys.ai" > CNAME
+          touch .nojekyll
+          
           git init
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
