@@ -38,6 +38,7 @@ jobs:
           npm ci
           npm run build
           mv out ../root-build
+          if [ -f CNAME ]; then cp CNAME ../root-build/CNAME; fi
 
       # Build Dignitas (/dignitas)
       - name: Checkout dignitas
@@ -58,6 +59,7 @@ jobs:
       - name: Deploy to gh-pages
         run: |
           cd root-build
+          touch .nojekyll
           git init
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"

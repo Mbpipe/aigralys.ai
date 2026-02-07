@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
-  basePath: '/dignitas',
+  basePath: '',  // Root site (aigralys.ai) - no basePath. /dignitas is built from dignitas branch.
   images: {
     unoptimized: true,
     remotePatterns: [
