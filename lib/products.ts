@@ -304,7 +304,7 @@ export const PRODUCTS: Product[] = [
     ritual: 'Silence phone. Pour neat. Small sips. This is contemplation, not consumption.',
     ritualEs: 'Silencia el teléfono. Sirve puro. Sorbos pequeños. Esto es contemplación, no consumo.',
     images: [
-      '/assets/destilados/whisky-bottle-dark.jpg',
+      '/assets/destilados/yamazaki-18-hero.jpg',
       '/assets/destilados/whisky-tumbler-wood.jpg'
     ],
     specifications: [
