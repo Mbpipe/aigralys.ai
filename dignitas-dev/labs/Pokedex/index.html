@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokédex - Tu Enciclopedia Pokémon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="pokedex-container">
+        <!-- Rotom eyes decoration -->
+        <div class="rotom-eyes">
+            <div class="rotom-eye left">
+                <div class="eye-inner"></div>
+            </div>
+            <div class="rotom-eye right">
+                <div class="eye-inner"></div>
+            </div>
+        </div>
+        
+        <!-- Main screen -->
+        <div class="pokedex-screen">
+            <!-- Header -->
+            <header class="pokedex-header">
+                <div class="header-decoration">
+                    <span class="deco-circle"></span>
+                    <span class="deco-circle"></span>
+                    <span class="deco-circle"></span>
+                </div>
+                <h1>POKÉDEX</h1>
+                <p class="subtitle">Enciclopedia Pokémon</p>
+            </header>
+
+            <!-- Search Section -->
+            <div class="search-section">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Buscar Pokémon..." autocomplete="off">
+                    <button id="searchBtn" class="search-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Type Filter -->
+                <div class="type-filter">
+                    <select id="typeFilter">
+                        <option value="">Todos los tipos</option>
+                        <option value="normal">Normal</option>
+                        <option value="fire">Fuego</option>
+                        <option value="water">Agua</option>
+                        <option value="electric">Eléctrico</option>
+                        <option value="grass">Planta</option>
+                        <option value="ice">Hielo</option>
+                        <option value="fighting">Lucha</option>
+                        <option value="poison">Veneno</option>
+                        <option value="ground">Tierra</option>
+                        <option value="flying">Volador</option>
+                        <option value="psychic">Psíquico</option>
+                        <option value="bug">Bicho</option>
+                        <option value="rock">Roca</option>
+                        <option value="ghost">Fantasma</option>
+                        <option value="dragon">Dragón</option>
+                        <option value="dark">Siniestro</option>
+                        <option value="steel">Acero</option>
+                        <option value="fairy">Hada</option>
+                    </select>
+                    
+                    <select id="generationFilter">
+                        <option value="">Todas las generaciones</option>
+                        <option value="1">Gen I (Kanto)</option>
+                        <option value="2">Gen II (Johto)</option>
+                        <option value="3">Gen III (Hoenn)</option>
+                        <option value="4">Gen IV (Sinnoh)</option>
+                        <option value="5">Gen V (Teselia)</option>
+                        <option value="6">Gen VI (Kalos)</option>
+                        <option value="7">Gen VII (Alola)</option>
+                        <option value="8">Gen VIII (Galar)</option>
+                        <option value="9">Gen IX (Paldea)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Pokemon List View -->
+            <main class="pokemon-list-container" id="listView">
+                <div class="loading" id="loading">
+                    <div class="pokeball-loader">
+                        <div class="pokeball-top"></div>
+                        <div class="pokeball-center"></div>
+                        <div class="pokeball-bottom"></div>
+                    </div>
+                    <p>Cargando Pokémon...</p>
+                </div>
+                <div class="pokemon-grid" id="pokemonGrid"></div>
+                <div class="load-more-container">
+                    <button id="loadMoreBtn" class="load-more-btn">Cargar más Pokémon</button>
+                </div>
+            </main>
+
+            <!-- Pokemon Detail View -->
+            <div class="pokemon-detail" id="detailView">
+                <button class="back-btn" id="backBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m15 18-6-6 6-6"></path>
+                    </svg>
+                    Volver
+                </button>
+                <div class="detail-content" id="detailContent"></div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="pokedex-footer">
+                <p>Datos obtenidos de <a href="https://pokeapi.co/" target="_blank">PokéAPI</a></p>
+                <p>Inspirado en <a href="https://www.wikidex.net/wiki/Lista_de_Pok%C3%A9mon" target="_blank">WikiDex</a></p>
+            </footer>
+        </div>
+        
+        <!-- Rotom arm decorations -->
+        <div class="rotom-arm left-arm"></div>
+        <div class="rotom-arm right-arm"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
