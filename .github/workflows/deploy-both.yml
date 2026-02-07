@@ -1,0 +1,66 @@
+name: Deploy Both Sites to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - dignitas
+  workflow_dispatch:
+
+permissions:
+  contents: write  # Changed from 'read' to 'write' to allow pushing to gh-pages
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Build Aigralys (main site)
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: aigralys
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Aigralys (root site)
+        run: |
+          cd aigralys
+          npm ci
+          npm run build
+          mv out ../root-build
+
+      # Build Dignitas (/dignitas)
+      - name: Checkout dignitas
+        uses: actions/checkout@v4
+        with:
+          ref: dignitas
+          path: dignitas
+
+      - name: Build Dignitas (with basePath)
+        run: |
+          cd dignitas
+          npm ci
+          npm run build
+          mkdir -p ../root-build/dignitas
+          cp -r out/* ../root-build/dignitas/
+
+      # Deploy combined build directly to gh-pages
+      - name: Deploy to gh-pages
+        run: |
+          cd root-build
+          git init
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "🚀 Deploy: Aigralys + Dignitas [$(date +'%Y-%m-%d %H:%M:%S')]"
+          git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:gh-pages

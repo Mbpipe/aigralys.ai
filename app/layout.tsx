@@ -1,46 +1,38 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
+import './globals.css';
+import type { Metadata } from 'next';
+import { Cormorant_Garamond, Inter } from 'next/font/google';
+import Header from './components/Header';
+import Footer from './components/Footer';
 
-const inter = Inter({ 
+const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-})
+  weight: ['300', '400', '600', '700'],
+  variable: '--font-serif',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600'],
+  variable: '--font-sans',
+});
 
 export const metadata: Metadata = {
-  title: 'Aigralys - IA Agéntica para ecosistemas complejos',
-  description: 'Consultoría y Workshops en Inteligencia Artificial Agéntica. IA aplicada al negocio real.',
-  keywords: 'IA Agéntica, Workshops IA, Consultoría AI, Agentes Inteligentes, Aigralys',
-  authors: [{ name: 'Aigralys' }],
-  openGraph: {
-    title: 'Aigralys - IA Agéntica para ecosistemas complejos',
-    description: 'Consultoría y Workshops en Inteligencia Artificial Agéntica.',
-    url: 'https://www.aigralys.ai',
-    siteName: 'Aigralys',
-    locale: 'es_AR',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Aigralys - IA Agéntica para ecosistemas complejos',
-    description: 'Consultoría y Workshops en Inteligencia Artificial Agéntica.',
-  },
-  viewport: 'width=device-width, initial-scale=1',
-  themeColor: '#1C1C1E',
-}
+  title: 'Dignitas — Refugio de Lujo Masculino',
+  description: 'Un refugio digital curado para hombres que comprenden que la dignidad no se compra—se cultiva. Puros premium, relojes, perfumes árabes y accesorios nobles.',
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={inter.variable}>
-      <body className={inter.className}>
+    <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
+      <body className="bg-charcoal font-sans antialiased">
+        <Header />
         {children}
+        <Footer />
       </body>
     </html>
-  )
+  );
 }
-

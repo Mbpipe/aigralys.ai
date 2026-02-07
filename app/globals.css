@@ -1,94 +1,75 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --font-inter: 'Inter', sans-serif;
-  --font-satoshi: 'Inter', sans-serif; /* Fallback hasta cargar Satoshi */
-  --font-aeonik: 'Inter', sans-serif; /* Fallback hasta cargar Aeonik */
-}
-
+/* Luxury Baseline */
 @layer base {
-  body {
-    @apply bg-grafito text-humo font-body antialiased;
-    overflow-x: hidden;
-  }
-
   html {
     scroll-behavior: smooth;
+  }
+
+  body {
+    @apply text-warm-white bg-charcoal;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-charcoal;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gold/30;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gold/50;
   }
 }
 
 @layer utilities {
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-azul to-cian;
-  }
-
-  .glass {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10;
-  }
-
-  .glow {
-    box-shadow: 0 0 40px rgba(10, 132, 255, 0.3);
-  }
-
-  .section-padding {
-    @apply px-6 md:px-12 lg:px-24 py-16 md:py-24 lg:py-32;
+  .text-balance {
+    text-wrap: balance;
   }
 }
 
-/* Glassmorphism effect */
-.glass-effect {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Gradient overlay for hero */
-.hero-gradient {
-  background: radial-gradient(circle at 50% 0%, rgba(10, 132, 255, 0.15) 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, rgba(93, 225, 230, 0.1) 0%, transparent 50%);
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-grafito;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-azul/50 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-azul;
-}
-
-/* Hide scrollbar for carousel thumbnails */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-/* Flow diagrams: hide complex absolute layouts on mobile, show horizontal scroll instead */
-@media (max-width: 768px) {
-  /* Allow horizontal scrolling on mobile for flow diagrams */
-  section {
-    overflow-x: auto !important;
-    scroll-snap-type: x proximity;
+/* Prose Styling for Journal Articles */
+@layer components {
+  .prose-gold {
+    @apply max-w-none;
   }
   
-  /* Make flow diagrams scrollable horizontally on mobile */
-  section > div:first-child {
-    min-width: 600px;
+  .prose-gold h1,
+  .prose-gold h2,
+  .prose-gold h3 {
+    @apply text-warm-white font-serif;
+  }
+  
+  .prose-gold p {
+    @apply text-warm-white/80 leading-relaxed mb-6;
+  }
+  
+  .prose-gold strong {
+    @apply text-warm-white font-semibold;
+  }
+  
+  .prose-gold a {
+    @apply text-gold no-underline;
+  }
+  
+  .prose-gold a:hover {
+    @apply text-warm-white;
+  }
+  
+  .prose-gold blockquote {
+    @apply border-l-2 border-gold text-warm-white/70 pl-4;
+  }
+  
+  .prose-gold code {
+    @apply text-gold bg-charcoal/50 px-1 rounded;
   }
 }
