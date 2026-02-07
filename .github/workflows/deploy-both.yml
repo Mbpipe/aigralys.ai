@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dignitas
+      - dignitas-dev
   workflow_dispatch:
 
 permissions:
@@ -54,6 +55,21 @@ jobs:
           mkdir -p ../root-build/dignitas
           cp -r out/* ../root-build/dignitas/
 
+      # Build Dignitas Dev (/dignitas-dev)
+      - name: Checkout dignitas-dev
+        uses: actions/checkout@v4
+        with:
+          ref: dignitas-dev
+          path: dignitas-dev
+
+      - name: Build Dignitas Dev (with basePath)
+        run: |
+          cd dignitas-dev
+          npm ci
+          npm run build
+          mkdir -p ../root-build/dignitas-dev
+          cp -r out/* ../root-build/dignitas-dev/
+
       # Deploy combined build directly to gh-pages
       - name: Deploy to gh-pages
         run: |
@@ -67,5 +83,5 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "🚀 Deploy: Aigralys + Dignitas [$(date +'%Y-%m-%d %H:%M:%S')]"
+          git commit -m "🚀 Deploy: Aigralys + Dignitas + Dignitas-Dev [$(date +'%Y-%m-%d %H:%M:%S')]"
           git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:gh-pages

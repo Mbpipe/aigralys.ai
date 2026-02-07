@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
-  basePath: '/dignitas',
+  basePath: '/dignitas-dev',
   images: {
     unoptimized: true,
     remotePatterns: [
