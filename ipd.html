@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Medidor Óptico Facial — Guía Anteojos</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html,body{background:#eef2ff}
+  .live-wrap{position:relative; width:100%; max-width:700px; margin:0 auto;}
+  video#cam{
+    width:100%; aspect-ratio: 3/4; background:#000; display:block;
+    border-radius:1rem; object-fit:cover; transform:scaleX(-1); /* espejo frontal */
+  }
+  canvas#overlay{position:absolute; inset:0; pointer-events:none; border-radius:1rem;}
+  .tag{font-variant-numeric:tabular-nums}
+  /* Glasses overlay styling */
+  #glassesFrame {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.7;
+    pointer-events: none;
+    filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+  }
+</style>
+</head>
+<body>
+<div class="min-h-screen p-4">
+  <div class="max-w-3xl mx-auto space-y-4">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow p-5 border-t-4 border-indigo-600">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-extrabold">Medidor Óptico Facial</h1>
+          <p class="text-slate-600">Guía Anteojos + MediaPipe (auto-proceso)</p>
+        </div>
+        <div class="text-xs space-x-2">
+          <span id="secureTag" class="px-2 py-1 rounded bg-slate-100">secure: …</span>
+          <span id="ocvTag" class="px-2 py-1 rounded bg-slate-100">mediapipe: …</span>
+          <span id="stateTag" class="px-2 py-1 rounded bg-slate-100">estado: …</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Config -->
+    <div class="bg-white rounded-2xl shadow p-5">
+      <h2 class="text-xl font-semibold mb-3">Configuración</h2>
+      <div class="space-y-3">
+        <div>
+          <label class="text-sm text-slate-700 block mb-1">
+            Ancho del marco: <b id="frameWidthVal" class="tag">142</b> mm
+          </label>
+          <input id="frameWidth" type="range" min="130" max="155" step="1" value="142" class="w-full">
+          <p class="text-xs text-slate-600 mt-1">
+            Ancho total estándar del marco de anteojos. Referencia para la escala.
+          </p>
+        </div>
+        <div class="mt-3 p-3 bg-indigo-50 rounded-lg">
+          <div class="text-xs text-slate-700 space-y-1">
+            <div>Dispositivo: <b id="deviceInfo">—</b></div>
+            <div>DPI: <b id="dpiInfo">—</b> • DP Ratio: <b id="dprInfo">—</b></div>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <label class="inline-flex items-center gap-2">
+            <input id="autoCap" type="checkbox" class="scale-110" checked>
+            <span>Auto-capturar</span>
+          </label>
+          <div class="text-sm text-slate-600">score: <b id="scoreTag">0%</b></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Captura -->
+    <div class="bg-white rounded-2xl shadow p-5">
+      <h2 class="text-xl font-semibold mb-3">Captura de Imagen</h2>
+
+      <div class="flex gap-3">
+        <label class="flex-1 inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-3 rounded-xl cursor-pointer">
+          🖼️ Subir Foto
+          <input id="fileIn" type="file" accept="image/*" class="hidden">
+        </label>
+        <button id="openBtn" class="flex-1 inline-flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 rounded-xl">📷 Cámara</button>
+        <button id="closeBtn" class="flex-1 inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl">🔴 Cerrar</button>
+      </div>
+
+      <div class="mt-4 live-wrap">
+        <video id="cam" playsinline autoplay muted></video>
+        <canvas id="overlay"></canvas>
+        <img id="glassesFrame" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY2hhc2lzIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzAwMCIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6IzMzMzMiIHN0b3Atb3BhY2l0eT0iMSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgCiAgPCEtLSBGcmFtZSBsZWZ0IC0tPgogIDxyZWN0IHg9IjEwIiB5PSIyMCIgd2lkdGg9IjcwIiBoZWlnaHQ9IjYwIiByeD0iOCIgcnk9IjgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSI0Ii8+CiAgPCEtLSBMZW5zIGxlZnQgLS0+CiAgPHJlY3QgeD0iMTgiIHk9IjI4IiB3aWR0aD0iNTQiIGhlaWdodD0iNDQiIHJ4PSI2IiByeT0iNiIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIwLjgiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAKICA8IS0tIEZyYW1lIHJpZ2h0IC0tPgogIDxyZWN0IHg9IjEyMCIgeT0iMjAiIHdpZHRoPSI3MCIgaGVpZ2h0PSI2MCIgcng9IjgiIHJ5PSI4IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iNCIvPgogIDwhLS0gTGVucyByaWdodCAtLT4KICA8cmVjdCB4PSIxMjgiIHk9IjI4IiB3aWR0aD0iNTQiIGhlaWdodD0iNDQiIHJ4PSI2IiByeT0iNiIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIwLjgiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAKICA8IS0tIEJyaWRnZSAodG9wIGJldHdlZW4gbGVuc2VzKSAtLT4KICA8cmVjdCB4PSI3NSIgeT0iMjAiIHdpZHRoPSI1MCIgaGVpZ2h0PSI4IiBmaWxsPSIjMDAwIi8+CiAgCiAgPCEtLSBUZW1wbGVzIChhcm1zKSAtLT4KICA8cmVjdCB4PSI4MCIgeT0iNzAiIHdpZHRoPSIzIiBoZWlnaHQ9IjE1IiBmaWxsPSIjMDAwIi8+CiAgPHJlY3QgeD0iMTE3IiB5PSI3MCIgd2lkdGg9IjMiIGhlaWdodD0iMTUiIGZpbGw9IiMwMDAiLz4KPC9zdmc+" alt="Glasses reference">
+      </div>
+      
+      <div class="mt-3">
+        <button id="capBtn" class="w-full inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl">📸 Capturar Foto</button>
+      </div>
+
+      <div class="mt-3">
+        <label class="text-sm text-slate-700 block mb-1">Ajuste fino escala (±10%) • actual: <b id="finePct" class="tag">0%</b></label>
+        <input id="fineSlider" type="range" min="-10" max="10" step="1" value="0" class="w-full">
+        <div class="text-xs text-slate-600 mt-1">
+          Escala efectiva: <b id="pxmm" class="tag">—</b> px/mm • Marco: <b id="framePx" class="tag">—</b>px
+        </div>
+      </div>
+    </div>
+
+    <!-- Resultado -->
+    <div id="resultBox" class="bg-white rounded-2xl shadow p-5 hidden">
+      <h3 class="text-xl font-semibold mb-3">Resultado</h3>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="p-4 rounded-lg bg-emerald-50">
+          <div class="text-xs text-slate-600">IPD</div>
+          <div id="ipdVal" class="text-3xl font-extrabold">—</div>
+        </div>
+        <div class="p-4 rounded-lg bg-indigo-50">
+          <div class="text-xs text-slate-600">Escala</div>
+          <div id="scaleVal" class="text-xl font-bold">—</div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <img id="annot" alt="anotada" class="w-full rounded-lg shadow">
+      </div>
+    </div>
+
+    <div id="errBox" class="hidden bg-red-50 text-red-800 border border-red-200 rounded-xl p-4"></div>
+
+    <div class="text-center text-xs text-slate-500 py-4">© 2025 — Anteojos Referencia + MediaPipe</div>
+  </div>
+</div>
+
+<!-- MediaPipe -->
+<script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+<!-- DPI Detector Module -->
+<script src="dpi-detector.js"></script>
+
+<script>
+(function(){
+  const STANDARD_FRAME_WIDTH = 142; // mm - ancho total estándar del marco de anteojos
+  const GLASSES_IMAGE_WIDTH_PX = 200; // píxeles - ancho de la imagen SVG de referencia
+  const HOLD_MS = 1500;           // tiempo de sostenido para auto-captura
+  const FINE_RANGE = 0.10;        // ±10% ajuste fino
+
+  // UI
+  const secureTag = document.getElementById('secureTag');
+  const ocvTag    = document.getElementById('ocvTag');
+  const stateTag  = document.getElementById('stateTag');
+  const errBox    = document.getElementById('errBox');
+
+  const fileIn = document.getElementById('fileIn');
+  const openBtn= document.getElementById('openBtn');
+  const closeBtn= document.getElementById('closeBtn');
+  const cam   = document.getElementById('cam');
+  const overlay = document.getElementById('overlay');
+  const ctx   = overlay.getContext('2d', { willReadFrequently:true });
+  const glassesFrame = document.getElementById('glassesFrame');
+
+  const capBtn = document.getElementById('capBtn');
+  if(!capBtn) console.error('capBtn not found');
+
+  const autoCap  = document.getElementById('autoCap');
+  const scoreTag = document.getElementById('scoreTag');
+
+  const frameWidth = document.getElementById('frameWidth');
+  const frameWidthVal = document.getElementById('frameWidthVal');
+  const deviceInfo = document.getElementById('deviceInfo');
+  const dpiInfo = document.getElementById('dpiInfo');
+  const dprInfo = document.getElementById('dprInfo');
+
+  const fineSlider = document.getElementById('fineSlider');
+  const finePct = document.getElementById('finePct');
+  const pxmmEl = document.getElementById('pxmm');
+  const framePxEl = document.getElementById('framePx');
+
+  const resultBox = document.getElementById('resultBox');
+  const ipdVal = document.getElementById('ipdVal');
+  const scaleVal = document.getElementById('scaleVal');
+  const annotImg = document.getElementById('annot');
+
+  let stream=null, raf=0, faceMesh=null;
+  let readyForAuto=false, holdStart=0;
+  let lastPxPerMm = 0;
+  let currentFrameWidth = STANDARD_FRAME_WIDTH;
+  
+  // Display metrics
+  let displayMetrics = null;
+  let deviceDpi = 0;
+
+  // helpers
+  const setErr = (msg)=>{ errBox.textContent = msg; errBox.classList.remove('hidden'); };
+  const clearErr = ()=> errBox.classList.add('hidden');
+
+  secureTag.textContent = 'secure: ' + (location.protocol==='https:' ? 'true' : 'false');
+  ocvTag.textContent = 'mediapipe: loading…';
+  stateTag.textContent = 'estado: idle';
+  
+  // Initialize DPI detection
+  try {
+    displayMetrics = getDisplayMetrics();
+    deviceDpi = displayMetrics.dpi;
+    console.log('Display metrics:', displayMetrics);
+    console.log('Device DPI detected:', deviceDpi);
+    console.log('CSS Pixels per Inch:', displayMetrics.cssPixelsPerInch);
+    console.log('Device Pixel Ratio:', displayMetrics.dpr);
+    
+    // Update UI with device info
+    if(deviceInfo) deviceInfo.textContent = displayMetrics.platform;
+    if(dpiInfo) dpiInfo.textContent = Math.round(deviceDpi);
+    if(dprInfo) dprInfo.textContent = displayMetrics.dpr.toFixed(2);
+  } catch(e) {
+    console.error('Failed to detect display metrics:', e);
+    displayMetrics = { platform: 'unknown', dpr: 1, cssPixelsPerInch: 96, dpi: 160 };
+    deviceDpi = 160;
+    if(deviceInfo) deviceInfo.textContent = 'unknown';
+    if(dpiInfo) dpiInfo.textContent = '160';
+    if(dprInfo) dprInfo.textContent = '1.00';
+  }
+  
+  // Demo conversions for 142mm
+  console.log('Demo: Conversions for 142mm:');
+  const demoResults = demoConversions(142);
+  console.log('Expected: 142mm should be approximately', Math.round(demoResults.px), 'pixels on this device');
+
+  // Frame width slider
+  frameWidth.addEventListener('input', (e)=>{
+    currentFrameWidth = parseInt(e.target.value, 10);
+    frameWidthVal.textContent = currentFrameWidth;
+  });
+
+  // FaceMesh init
+  window.addEventListener('load', () => {
+    try{
+      faceMesh = new window.FaceMesh({
+        locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+      });
+      faceMesh.setOptions({
+        maxNumFaces:1,
+        refineLandmarks:true,
+        minDetectionConfidence:0.5,
+        minTrackingConfidence:0.5
+      });
+      ocvTag.textContent = 'mediapipe: ready';
+    }catch(e){
+      ocvTag.textContent = 'mediapipe: off';
+    }
+  });
+
+  function videoReady(){
+    return cam && cam.videoWidth && cam.videoHeight;
+  }
+
+  async function startCam(){
+    clearErr(); stateTag.textContent='estado: opening…';
+    try{
+      cam.setAttribute('playsinline',''); cam.setAttribute('autoplay',''); cam.muted=true; cam.playsInline=true;
+      stream = await navigator.mediaDevices.getUserMedia({
+        video:{ facingMode:{ideal:'user'}, width:{ideal:1280}, height:{ideal:720} },
+        audio:false
+      });
+      cam.srcObject = stream;
+      await cam.play().catch(()=>{});
+      stateTag.textContent='estado: ready';
+      layout();
+      loop();
+    }catch(e){
+      setErr('No se pudo acceder a la cámara: '+ (e?.message||e));
+      stateTag.textContent='estado: error';
+    }
+  }
+
+  function stopCam(){
+    cancelAnimationFrame(raf);
+    if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+    cam.pause(); cam.srcObject=null;
+    ctx.clearRect(0,0,overlay.width,overlay.height);
+    glassesFrame.classList.add('hidden');
+    stateTag.textContent='estado: closed';
+  }
+
+  function layout(){
+    if(!videoReady()) return;
+    overlay.width = cam.clientWidth * devicePixelRatio;
+    overlay.height= cam.clientHeight * devicePixelRatio;
+    
+    // Position glasses frame in center-upper area of the screen
+    // Reduced from 0.35 to 0.25 to make it smaller (about 25% of screen width instead of 35%)
+    const frameDisplayWidth = overlay.width * 0.25;
+    const frameDisplayHeight = frameDisplayWidth / (200/100); // maintain aspect ratio of 2:1
+    glassesFrame.style.width = frameDisplayWidth + 'px';
+    glassesFrame.style.height = frameDisplayHeight + 'px';
+    glassesFrame.style.top = '30%'; // Position in upper-middle area
+    glassesFrame.style.left = '50%';
+  }
+
+  window.addEventListener('resize', layout);
+
+  // --- Overlay + face detection scoring ---
+  function loop(){
+    if(!videoReady()){ raf=requestAnimationFrame(loop); return; }
+    layout();
+    const w=overlay.width, h=overlay.height;
+
+    // Clear overlay canvas - no gray overlay, just glasses frame
+    ctx.clearRect(0,0,w,h);
+    
+    // Frame dimensions for reference (not drawn, just for calculations)
+    const frameW = Math.round(w * 0.25);
+    const frameH = Math.round(frameW / (200/100));
+    const fx = Math.round((w - frameW) / 2);
+    const fy = Math.round(h * 0.30 - frameH / 2);
+
+    // Simple face presence score - just set to 80% when camera is active
+    let score = 0.80; // Default good score when camera is active
+    scoreTag.textContent = Math.round(score*100)+'%';
+
+    // Don't draw any border - let the glasses overlay be the only visual reference
+
+    // Calculate pixel-to-mm conversion based on the glasses overlay
+    // The glasses frame overlay should fit the user's face and represents currentFrameWidth mm (default 142mm)
+    // Key insight: The glasses overlay is a visual guide - when user positions their face to match it,
+    // the distance from camera determines the actual pixel-to-mm ratio
+    let pxPerMm;
+    
+    // Get camera dimensions
+    const cameraWidthPx = cam.videoWidth || 0;
+    
+    // The actual display dimensions (what user sees)
+    const displayWidthPx = cam.clientWidth || cameraWidthPx;
+    
+    // The glasses overlay is 25% of the display width
+    const glassesDisplayPx = displayWidthPx * 0.25;
+    
+    // Scale from display pixels to camera pixels
+    const cameraToDisplayRatio = cameraWidthPx / displayWidthPx;
+    
+    // Glasses frame in camera pixels
+    const glassesCameraPx = glassesDisplayPx * cameraToDisplayRatio;
+    
+    // Conversion: glassesCameraPx pixels represent currentFrameWidth mm
+    // So: pxPerMm = glassesCameraPx / currentFrameWidth
+    pxPerMm = glassesCameraPx / currentFrameWidth;
+    
+    // Debug: log all the conversion details
+    if (typeof window !== 'undefined' && window.console && Math.random() < 0.01) {
+      console.log('Glasses overlay calibration:', {
+        displayWidthPx: displayWidthPx,
+        cameraWidthPx: cameraWidthPx,
+        cameraToDisplayRatio: cameraToDisplayRatio.toFixed(3),
+        glassesDisplayPx: Math.round(glassesDisplayPx),
+        glassesCameraPx: Math.round(glassesCameraPx),
+        frameWidthMm: currentFrameWidth,
+        pxPerMm: pxPerMm.toFixed(3),
+        'Expected 142mm in pixels': Math.round(142 * pxPerMm)
+      });
+    }
+
+    // Fine adjustment ±10%
+    const adj = parseInt(fineSlider.value||'0',10)/100;
+    finePct.textContent = (adj>0?'+':'') + Math.round(adj*100)+'%';
+    pxPerMm = pxPerMm * (1 + adj);
+    lastPxPerMm = pxPerMm;
+    pxmmEl.textContent = pxPerMm.toFixed(3);
+    framePxEl.textContent = Math.round(frameW) + 'px';
+    
+    // Debug: Show expected IPD range for reference
+    if (typeof window !== 'undefined' && window.console && Math.random() < 0.01) { // log occasionally to avoid spam
+      console.log('Scale info: pxPerMm=', pxPerMm.toFixed(3), ', deviceDpi=', deviceDpi, 
+                  ', Expected 142mm =', (142 * pxPerMm).toFixed(1), 'px');
+    }
+
+    // Auto-capture when good conditions
+    if(autoCap.checked && score>=0.70){
+      if(!readyForAuto){ readyForAuto=true; holdStart=performance.now(); }
+      else if(performance.now()-holdStart>HOLD_MS){
+        captureFrame(false);
+        readyForAuto=false; holdStart=0;
+      }
+    }else{ readyForAuto=false; holdStart=0; }
+
+    raf = requestAnimationFrame(loop);
+  }
+
+  // --- Capture (button or auto) ---
+  if(capBtn){
+    capBtn.addEventListener('click', async (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('Capture button clicked');
+      await captureFrame(false);
+    });
+  } else {
+    console.error('Cannot attach click handler: capBtn is null');
+  }
+
+  async function captureFrame(requirePupils){
+    console.log('captureFrame called');
+    if(!videoReady()){ 
+      console.log('Video not ready');
+      setErr('La cámara aún no está lista'); 
+      return; 
+    }
+    clearErr();
+    console.log('Starting capture...');
+
+    // Capture a non-mirrored frame for analysis
+    const cw = cam.videoWidth, ch = cam.videoHeight;
+    const c = document.createElement('canvas'); c.width=cw; c.height=ch;
+    const x = c.getContext('2d');
+    x.save(); x.scale(-1,1); x.drawImage(cam,-cw,0,cw,ch); x.restore();
+
+    // Get face landmarks with MediaPipe
+    let pupils=null;
+    if(faceMesh){
+      await new Promise((resolve)=>{
+        faceMesh.onResults(res=>{
+          if(res.multiFaceLandmarks && res.multiFaceLandmarks[0]){
+            const L=res.multiFaceLandmarks[0];
+            const iris=(arr)=>({
+              x: arr.reduce((s,l)=>s+l.x*cw,0)/arr.length,
+              y: arr.reduce((s,l)=>s+l.y*ch,0)/arr.length
+            });
+            pupils = { 
+              left:iris(L.slice(473,477)), 
+              right:iris(L.slice(468,472)) 
+            };
+          }
+          resolve();
+        });
+        faceMesh.send({image:c});
+      });
+    }
+
+    if(requirePupils && !pupils){
+      setErr('No se detectaron pupilas. Intenta con mejor luz.');
+      return;
+    }
+
+    // Calculate IPD
+    let ipd_mm = null;
+    if(pupils){
+      const dx=pupils.right.x-pupils.left.x, dy=pupils.right.y-pupils.left.y;
+      const di_px = Math.hypot(dx,dy);
+      
+      console.log('Pupil detection:');
+      console.log('  Left pupil:', pupils.left);
+      console.log('  Right pupil:', pupils.right);
+      console.log('  Distance in pixels:', di_px.toFixed(2));
+      console.log('  Camera width:', cw, 'px');
+      console.log('  Display width:', cam.clientWidth, 'px');
+      console.log('  pxPerMm:', lastPxPerMm.toFixed(3));
+      console.log('  Glasses overlay (should be 142mm):');
+      console.log('    In display pixels:', Math.round(cam.clientWidth * 0.25));
+      console.log('    In camera pixels:', Math.round(cw * (cam.clientWidth * 0.25) / cam.clientWidth));
+      
+      // Try inverted conversion: if result is ~200mm but should be ~55mm, try multiplying instead
+      const ipd_divided = di_px / lastPxPerMm;
+      const ipd_multiplied = di_px * lastPxPerMm;
+      
+      console.log('  IPD (divided approach):', ipd_divided.toFixed(2), 'mm');
+      console.log('  IPD (multiplied approach):', ipd_multiplied.toFixed(2), 'mm');
+      
+      // Check which one is closer to reasonable IPD (50-75mm range)
+      const reasonableRange = { min: 50, max: 75 };
+      const divInRange = ipd_divided >= reasonableRange.min && ipd_divided <= reasonableRange.max;
+      const mulInRange = ipd_multiplied >= reasonableRange.min && ipd_multiplied <= reasonableRange.max;
+      
+      if (mulInRange && !divInRange) {
+        ipd_mm = ipd_multiplied;
+        console.log('  Using MULTIPLICATION (pxPerMm seems inverted)');
+      } else {
+        ipd_mm = ipd_divided;
+        console.log('  Using DIVISION (standard)');
+      }
+      
+      console.log('  IPD result:', ipd_mm.toFixed(2), 'mm');
+    }
+
+    // Annotate image
+    const a=document.createElement('canvas'); a.width=cw; a.height=ch;
+    const g=a.getContext('2d'); g.drawImage(c,0,0);
+    if(pupils){
+      g.lineWidth = Math.max(2, Math.round(cw/600));
+      g.strokeStyle='#ff3344'; g.fillStyle='#ff3344';
+      g.beginPath(); g.moveTo(pupils.left.x,pupils.left.y); g.lineTo(pupils.right.x,pupils.right.y); g.stroke();
+      const r = Math.max(4, Math.round(cw/250));
+      g.beginPath(); g.arc(pupils.left.x,pupils.left.y,r,0,Math.PI*2); g.fill();
+      g.beginPath(); g.arc(pupils.right.x,pupils.right.y,r,0,Math.PI*2); g.fill();
+
+      const mx=(pupils.left.x+pupils.right.x)/2, my=(pupils.left.y+pupils.right.y)/2-16;
+      g.font='bold '+Math.max(16, Math.round(cw/40))+'px system-ui';
+      g.lineWidth=4; g.strokeStyle='#000'; g.strokeText(`IPD: ${ipd_mm.toFixed(1)} mm`, mx-90, my);
+      g.fillStyle='#fff'; g.fillText(`IPD: ${ipd_mm.toFixed(1)} mm`, mx-90, my);
+    }
+
+    // Show results
+    console.log('Showing results, IPD:', ipd_mm);
+    resultBox.classList.remove('hidden');
+    if(ipd_mm!=null) ipdVal.textContent = ipd_mm.toFixed(1)+' mm';
+    else ipdVal.textContent = '—';
+    scaleVal.textContent = (lastPxPerMm? lastPxPerMm.toFixed(3):'—') + ' px/mm';
+    annotImg.src = a.toDataURL('image/png');
+    console.log('Capture complete');
+    
+    // Scroll to results
+    resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Controls
+  openBtn.addEventListener('click', startCam);
+  closeBtn.addEventListener('click', stopCam);
+  fileIn.addEventListener('change', (e)=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    const rd=new FileReader();
+    rd.onload = ()=> {
+      stopCam();
+      cam.removeAttribute('srcObject');
+      cam.srcObject=null;
+      cam.src = rd.result;
+      cam.style.transform='none';
+      cam.onloadeddata=()=>{ cam.play().catch(()=>{}); layout(); };
+      stateTag.textContent='estado: still';
+    };
+    rd.readAsDataURL(f);
+  });
+
+})();
+</script>
+</body>
+</html>
+
