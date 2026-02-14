@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { withBasePath } from '@/lib/withBasePath';
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -21,7 +22,7 @@ export default function Header() {
           <Link href="/" className="flex items-center space-x-3 group">
           <div className="relative w-16 h-16 transition-opacity duration-500 group-hover:opacity-80">
             <Image
-              src="/dignitas/dignitas-logo-v2.png"
+              src={withBasePath('/dignitas-logo-v2.png')}
               alt="Dignitas"
               fill
               className="object-contain"

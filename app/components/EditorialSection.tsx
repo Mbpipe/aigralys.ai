@@ -3,6 +3,7 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import Link from 'next/link';
+import { withBasePath } from '@/lib/withBasePath';
 
 interface EditorialSectionProps {
   title: string;
@@ -26,10 +27,7 @@ export default function EditorialSection({
 
   const isLeft = imagePosition === 'left';
   
-  // Add basePath for GitHub Pages deployment
-  const fullImageSrc = process.env.NODE_ENV === 'production' 
-    ? `/dignitas${imageSrc}` 
-    : imageSrc;
+  const fullImageSrc = withBasePath(imageSrc);
 
   return (
     <div

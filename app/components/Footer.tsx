@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { withBasePath } from '@/lib/withBasePath';
 
 export default function Footer() {
   return (
@@ -11,7 +12,7 @@ export default function Footer() {
             <div className="flex items-center space-x-3 mb-6">
               <div className="relative w-14 h-14">
                 <Image
-                  src="/dignitas/dignitas-logo-v2.png"
+                  src={withBasePath('/dignitas-logo-v2.png')}
                   alt="Dignitas"
                   fill
                   className="object-contain opacity-90"

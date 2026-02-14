@@ -4,7 +4,7 @@ export function withBasePath(src: string): string {
   if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:')) {
     return src;
   }
-  if (src.startsWith('/dignitas/')) return src;
-  if (src.startsWith('/')) return `/dignitas${src}`;
+  if (src.startsWith('/dignitas-dev/')) return src;
+  if (src.startsWith('/')) return `/dignitas-dev${src}`;
   return src;
 }

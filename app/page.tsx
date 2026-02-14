@@ -6,6 +6,7 @@ import EditorialSection from './components/EditorialSection';
 import RitualBlock from './components/RitualBlock';
 import PremiumProductCard from './components/PremiumProductCard';
 import { getFeaturedProducts } from '@/lib/products';
+import { withBasePath } from '@/lib/withBasePath';
 
 export default function HomePage() {
   const featured = getFeaturedProducts();
@@ -30,7 +31,7 @@ export default function HomePage() {
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage: `url(${process.env.NODE_ENV === 'production' ? '/dignitas' : ''}/assets/editorial/hero-background.png)`,
+              backgroundImage: `url(${withBasePath('/assets/editorial/hero-background.png')})`,
             }}
           />
           {/* Darker, more atmospheric overlay */}
@@ -47,7 +48,7 @@ export default function HomePage() {
             className="mb-8"
           >
             <div className="w-32 h-32 relative opacity-80">
-              <img src="/dignitas/dignitas-logo-v2.png" alt="Dignitas" className="w-full h-full object-contain" />
+              <img src={withBasePath('/dignitas-logo-v2.png')} alt="Dignitas" className="w-full h-full object-contain" />
             </div>
           </motion.div>
 
