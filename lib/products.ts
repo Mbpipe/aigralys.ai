@@ -260,7 +260,7 @@ export const PRODUCTS: Product[] = [
     ritual: 'Pour. Add a single drop of water. Wait. Let the whisky breathe. The first sip is ceremony.',
     ritualEs: 'Sirve. Añade una sola gota de agua. Espera. Deja que el whisky respire. El primer sorbo es ceremonia.',
     images: [
-      '/assets/destilados/whisky-hero-01.jpg',
+      '/assets/destilados/lagavulin-16-hero.png',
       '/assets/destilados/whisky-glass-warm.jpg'
     ],
     specifications: [
