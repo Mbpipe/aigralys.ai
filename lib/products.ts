@@ -347,10 +347,7 @@ export const PRODUCTS: Product[] = [
     originEs: 'Speyside, Escocia',
     ritual: 'Late evening. Dim lights. This whisky deserves your full attention.',
     ritualEs: 'Noche avanzada. Luces tenues. Este whisky merece tu plena atención.',
-    images: [
-      '/assets/destilados/whisky-tumbler-wood.jpg',
-      '/assets/destilados/whisky-close-up.jpg'
-    ],
+    images: ['/assets/destilados/glenfiddich-21.jpg'],
     specifications: [
       { label: 'Age', labelEs: 'Edad', value: '21 años' },
       { label: 'ABV', labelEs: 'Graduación', value: '40%' },
