@@ -62,7 +62,7 @@ export const PRODUCTS: Product[] = [
     ritual: 'Cut. Light. Pause. Let the first draw transport you to a different era. This is not smoking—it is ceremony.',
     ritualEs: 'Corta. Enciende. Pausa. Deja que la primera calada te transporte a otra época. Esto no es fumar—es ceremonia.',
     images: [
-      '/assets/puros/cohiba-reserva-01.jpg',
+      '/assets/puros/cohiba-reserva-01-v2.jpg',
       '/assets/puros/cohiba-reserva-02.jpg'
     ],
     specifications: [
