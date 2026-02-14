@@ -86,7 +86,7 @@ export const ARTICLES: Article[] = [
       
       <p>La mañana es tuya. El mundo aún no ha hecho sus demandas. Usa ese tiempo para decidir quién quieres ser hoy.</p>
     `,
-    imageSrc: '/assets/journal/morning-ritual.jpg',
+    imageSrc: '/assets/editorial/about-hero.jpg',
     readTime: '4 min',
     publishedAt: '2025-12-10',
   },
