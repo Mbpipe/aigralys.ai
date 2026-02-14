@@ -26,7 +26,7 @@ export const ARTICLES: Article[] = [
       
       <p>El puro durará una hora, tal vez dos. Ese es el punto. No puedes apresurarlo. Debes estar presente.</p>
     `,
-    imageSrc: '/assets/journal/cigar-selection.jpg',
+    imageSrc: '/assets/journal/seleccionar-puros-hero.png',
     readTime: '6 min',
     publishedAt: '2026-01-15',
   },

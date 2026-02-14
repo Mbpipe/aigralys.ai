@@ -11,7 +11,7 @@ export default function AboutPage() {
       <HeroSlowMoment
         title="Filosofía de la Dignidad"
         subtitle="Nuestro manifiesto"
-        imageSrc="/assets/editorial/about-hero.jpg"
+        imageSrc="/assets/editorial/filosofia-hero.png"
         height="tall"
       />
 
